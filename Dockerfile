@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:16.04
+FROM ubuntu
 
-MAINTAINER Dockerfiles
+MAINTAINER Serious Sam
 
 # Install required packages and remove the apt packages cache when done.
+
+COPY sources.list /etc/apt/sources.list
 
 RUN apt-get update && \
     apt-get upgrade -y && \ 	
@@ -29,11 +31,11 @@ RUN apt-get update && \
 	nginx \
 	supervisor \
 	sqlite3 && \
-	pip3 install -U pip setuptools && \
+	pip3 install -U pip setuptools -i https://pypi.douban.com/simple && \
    rm -rf /var/lib/apt/lists/*
 
 # install uwsgi now because it takes a little while
-RUN pip3 install uwsgi
+RUN pip3 install uwsgi -i https://pypi.douban.com/simple
 
 # setup all the configfiles
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
@@ -44,7 +46,7 @@ COPY supervisor-app.conf /etc/supervisor/conf.d/
 # to prevent re-installing (all your) dependencies when you made a change a line or two in your app.
 
 COPY app/requirements.txt /home/docker/code/app/
-RUN pip3 install -r /home/docker/code/app/requirements.txt
+RUN pip3 install -r /home/docker/code/app/requirements.txt -i https://pypi.douban.com/simple
 
 # add (the rest of) our code
 COPY . /home/docker/code/
