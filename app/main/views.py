@@ -11,11 +11,7 @@ from main import models
 
 # Create your views here.
 def index(request):
-    return render(request, 'index.html')
-
-
-def front(request, url):
-    return render(request, '%s.html' % url)
+    return HttpResponse(u"Samkit is running...")
 
 
 def auth(request):

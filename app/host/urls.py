@@ -22,7 +22,7 @@ from main import views
 urlpatterns = [
     url(r'^api/', views.api, name='api'),
     url(r'^auth/', views.auth, name='auth'),
-    # url(r'^$', views.index, name='index'),
+    url(r'^$', views.index, name='index'),
     # url(r'^([^/]+).html$', views.front, name='front'),
     url(r'^admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
