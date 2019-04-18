@@ -1,8 +1,6 @@
-# PyCharm files
-.idea/
-
-# Django migrations
+# Django migrations / statics
 migrations/
+app/static/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
