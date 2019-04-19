@@ -57,10 +57,30 @@ class Project(models.Model):
     def all(cls, *_, **__):
         result = []
         for prj in cls.objects.all():
-            if prj.name == '|':
-                continue
             result.append({'id': str(prj.id), 'name': prj.name, 'info': prj.info})
         return result
+
+    @classmethod
+    def set(cls, form):
+        print(form)
+        prj_id = form.get('id', [None])[0]
+
+        if prj_id:
+            prj = cls.objects.get(id=prj_id)
+            prj.name = form.get('name', [prj.name])[0]
+            prj.info = form.get('info', [prj.info])[0]
+            prj.url = form.get('url', [prj.url])[0]
+            prj.fps = int(form.get('fps', [prj.fps])[0])
+            prj.camera = form.get('camera', [prj.camera])[0]
+        else:
+            prj = cls(
+                name=form.get('name', ['undefined'])[0],
+                info=form.get('info', [u'未命名'])[0],
+                url=form.get('url', ['/'])[0],
+                fps=int(form.get('fps', [30])[0]),
+                camera=form.get('camera', ['MainCam'])[0],
+            )
+        prj.save()
     
     def __str__(self):
         return self.name
@@ -125,7 +145,6 @@ class Tag(models.Model):
 class Entity(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    project = models.ForeignKey(Project, default=uuid.uuid4, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, default=uuid.uuid4, on_delete=models.CASCADE)
     link = models.ManyToManyField("Entity", blank=True)
     name = models.CharField(max_length=100)
@@ -137,9 +156,10 @@ class Entity(models.Model):
     def get(cls, **kwargs):
         result = []
         keywords = {}
-        mapper = {'project': 'project__name',
-                  'genus': 'tag__genus__name',
-                  }
+        mapper = {
+            'project': 'tag__project__name',
+            'genus': 'tag__genus__name',
+        }
         for key in kwargs:
             if key in mapper:
                 keywords[mapper[key]] = kwargs[key]
@@ -153,7 +173,7 @@ class Entity(models.Model):
             for l in ent.link.all():
                 link.append(str(l.id))
 
-            result.append({'id': str(ent.id), 'project': ent.project.name,
+            result.append({'id': str(ent.id), 'project': ent.tag.project.name,
                            'name': ent.name, 'info': ent.info,
                            'genus': ent.tag.genus.name, 'genus_info': ent.tag.genus.info,
                            'tag': ent.tag.name, 'tag_info': ent.tag.info,
@@ -188,18 +208,16 @@ class Entity(models.Model):
             ent.url = ent.name
             ent.tag = tag
             ent.link.clear()
-            for link_id in form.get('link', []):
-                link = Entity.objects.get(id=link_id)
-                ent.link.add(link)
         else:
             prj = Project.objects.get(id=form['project'][0])
             ent = Entity(project=prj, tag=tag,
                          name=form['name'][0], info=form['info'][0],
                          url=form['name'][0])
             ent.save()
-            for link_id in form.get('link', []):
-                link = Entity.objects.get(id=link_id)
-                ent.link.add(link)
+
+        for link_id in form.get('link', []):
+            link = Entity.objects.get(id=link_id)
+            ent.link.add(link)
 
         if 'thumb' in form:
             ent.thumb = form['thumb']
@@ -210,26 +228,27 @@ class Entity(models.Model):
         return self.tag.genus
 
     def path(self):
-        project = self.project.url
+        project = self.tag.project.url
         tag = self.tag.url
         genus = self.tag.genus.url
         edition = Edition.objects.get(name='publish').url_head
         entity = self.url
         result = {}
-        for stage_obj in Stage.objects.filter(genus=self.tag.genus, project=self.project):
+        for stage_obj in Stage.objects.filter(genus=self.tag.genus, project=self.tag.project):
             stage = stage_obj.url
             result[stage_obj.name] = stage_obj.path.format(**locals())
         return result
     
     def save(self, *args, **kwargs):
         if self.genus().name == 'batch':
-            tags = Tag.objects.filter(name=self.name, project=self.project)
+            project = self.tag.project
+            tags = Tag.objects.filter(name=self.name, project=project)
             if len(tags):
                 return
             
             genus = Genus.objects.get(name='shot')
             data = {'name':    self.name,
-                    'project': self.project,
+                    'project': project,
                     'genus':   genus,
                     'info':    self.name,
                     'url':     self.name}
@@ -245,7 +264,7 @@ class Entity(models.Model):
     
     def __str__(self):
         name = str(self.name)
-        project = str(self.project)
+        project = str(self.tag.project)
         tag = str(self.tag.name)
         return '{name} [ {project} | {tag} ]'.format(**locals())
 
@@ -302,7 +321,31 @@ class Task(models.Model):
     entity = models.ForeignKey(Entity, default=uuid.uuid4, on_delete=models.CASCADE)
     stage = models.ForeignKey(Stage, default=uuid.uuid4, on_delete=models.CASCADE)
     status = models.ForeignKey(Status, default=uuid.uuid4, on_delete=models.CASCADE)
-    # entity = models.ForeignKey(Entity, default=uuid.uuid4, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
+
+    @classmethod
+    def get(cls, **kwargs):
+        result = []
+        keywords = {}
+        mapper = {
+            'project': 'stage__project__name',
+            'genus': 'genus__name',
+            'stage': 'stage__name',
+            'entity': 'entity__name',
+        }
+        for key in kwargs:
+            if key in mapper:
+                keywords[mapper[key]] = kwargs[key]
+            else:
+                keywords[key] = kwargs[key]
+        for tsk in cls.objects.filter(**keywords):
+            result.append({
+                'project': tsk.stage.project.name,
+                'genus': tsk.stage.genus.name,
+                'genus_info': tsk.stage.genus.info,
+                'path': tsk.stage.path,
+            })
+        return result
     
     def __str__(self):
         return '%s - %s' % (self.stage.name, self.entity)

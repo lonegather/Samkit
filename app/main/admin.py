@@ -54,7 +54,7 @@ class TagAdmin(admin.ModelAdmin):
 class EntityAdmin(admin.ModelAdmin):
     
     list_display = ('name', 'info', 'tag', 'genus', 'path', 'thumb')
-    list_filter = ('project', 'tag')
+    list_filter = ('tag', )
     ordering = ('name', )
     search_fields = ('name', )
     

@@ -59,11 +59,12 @@ def api_get(request, table):
 def api_set(request, table):
     form = dict(request.POST)
     modify_dict = {
+        'project': models.Project.set,
         'entity': models.Entity.set,
     }
     if request.FILES:
         for f in request.FILES:
             form[f] = request.FILES[f]
     modify_dict[table](form)
-    Group('global').send({'text': '%s changed' % form['name']})
+    # Group('global').send({'text': '%s changed' % form['name']})
     return HttpResponse("")

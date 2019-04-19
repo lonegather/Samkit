@@ -35,9 +35,7 @@ def reset_data():
     
     #Project
     for data in [
-        {'name':'|'                                                            },
-        {'name':'PT | S02', 'info':u'哈喽葡星人 第二季', 'url':'file:///P:/PT/S02'},
-        {'name':'MB | S01', 'info':u'百变布鲁可 第一季', 'url':'file:///P:/MB/S01'},
+        {'name':'TEMPLATE', 'info':u'模板项目', 'url':'file:///P:/TEMPLATE'},
     ]: models.Project(**data).save()
     
     #Edition
@@ -54,49 +52,44 @@ def reset_data():
     ]: models.Genus(**data).save()
     
     #Tag
-    prj_all = models.Project.objects.get(name='|')
+    prj = models.Project.objects.get(name='TEMPLATE')
     gns_batch = models.Genus.objects.get(name='batch')
     gns_asset = models.Genus.objects.get(name='asset')
     for data in [
-        {'project':prj_all, 'genus':gns_batch, 'name':'scene',   'info':u'场次', 'url':''     },
-        {'project':prj_all, 'genus':gns_batch, 'name':'episode', 'info':u'集数', 'url':''     },
-        {'project':prj_all, 'genus':gns_asset, 'name':'CH',      'info':u'角色', 'url':'char' },
-        {'project':prj_all, 'genus':gns_asset, 'name':'PR',      'info':u'道具', 'url':'prop' },
-        {'project':prj_all, 'genus':gns_asset, 'name':'SC',      'info':u'场景', 'url':'scene'},
+        {'project': prj, 'genus': gns_batch, 'name': 'scene', 'info': u'场次', 'url': ''},
+        {'project': prj, 'genus': gns_batch, 'name': 'episode', 'info': u'集数', 'url': ''},
+        {'project': prj, 'genus': gns_asset, 'name': 'CH', 'info': u'角色', 'url': 'char'},
+        {'project': prj, 'genus': gns_asset, 'name': 'PR', 'info': u'道具', 'url': 'prop'},
+        {'project': prj, 'genus': gns_asset, 'name': 'SC', 'info': u'场景', 'url': 'scene'},
     ]: models.Tag(**data).save()
     
     #Stage
-    prj_pt02 = models.Project.objects.get(name='PT | S02')
-    prj_mb01 = models.Project.objects.get(name='MB | S01')
     gns_shot = models.Genus.objects.get(name='shot')
-    for prj in [prj_pt02, prj_mb01]:
-        for data in [
-            {'project':prj, 'genus':gns_batch, 'name':'script',      'info':u'剧本', 'path':'{project}/{stage}/{entity}',                         'url':'scp'},
-            {'project':prj, 'genus':gns_batch, 'name':'storyboard',  'info':u'分镜', 'path':'{project}/{stage}/{entity}',                         'url':'stb'},
-            {'project':prj, 'genus':gns_batch, 'name':'dubbing',     'info':u'配音', 'path':'{project}/{stage}/{entity}',                         'url':'dub'},
-            {'project':prj, 'genus':gns_asset, 'name':'design',      'info':u'原画', 'path':'{project}/{edition}/{genus}/{tag}/{entity}/{stage}', 'url':'dsn'},
-            {'project':prj, 'genus':gns_asset, 'name':'modeling',    'info':u'建模', 'path':'{project}/{edition}/{genus}/{tag}/{entity}/{stage}', 'url':'mdl'},
-            {'project':prj, 'genus':gns_asset, 'name':'texture',     'info':u'贴图', 'path':'{project}/{edition}/{genus}/{tag}/{entity}/{stage}', 'url':'txt'},
-            {'project':prj, 'genus':gns_asset, 'name':'shader',      'info':u'材质', 'path':'{project}/{edition}/{genus}/{tag}/{entity}/{stage}', 'url':'shd'},
-            {'project':prj, 'genus':gns_asset, 'name':'rigging',     'info':u'绑定', 'path':'{project}/{edition}/{genus}/{tag}/{entity}/{stage}', 'url':'rig'},
-            {'project':prj, 'genus':gns_asset, 'name':'preview',     'info':u'预览', 'path':'{project}/{edition}/{genus}/{tag}/{entity}/{stage}', 'url':'prv'},
-            {'project':prj, 'genus':gns_shot,  'name':'layout',      'info':u'布局', 'path':'{project}/{edition}/{genus}/{stage}/{tag}',          'url':'lyt'},
-            {'project':prj, 'genus':gns_shot,  'name':'animation',   'info':u'动画', 'path':'{project}/{edition}/{genus}/{stage}/{tag}',          'url':'anm'},
-            {'project':prj, 'genus':gns_shot,  'name':'cfx',         'info':u'解算', 'path':'{project}/{edition}/{genus}/{stage}/{tag}',          'url':'cfx'},
-            {'project':prj, 'genus':gns_shot,  'name':'lighting',    'info':u'灯光', 'path':'{project}/{edition}/{genus}/{stage}/{tag}',          'url':'lgt'},
-            {'project':prj, 'genus':gns_shot,  'name':'rendering',   'info':u'渲染', 'path':'{project}/{edition}/{genus}/{stage}/{tag}/{entity}', 'url':'rnd'},
-            {'project':prj, 'genus':gns_shot,  'name':'vfx',         'info':u'特效', 'path':'{project}/{edition}/{genus}/{stage}/{tag}/{entity}', 'url':'vfx'},
-            {'project':prj, 'genus':gns_shot,  'name':'compositing', 'info':u'合成', 'path':'{project}/{edition}/{genus}/{stage}/{tag}/{entity}', 'url':'cmp'},
-        ]: models.Stage(**data).save()
+    for data in [
+        {'project':prj, 'genus':gns_batch, 'name':'script',      'info':u'剧本', 'path':'{project}/{stage}/{entity}',               'url':'scp'},
+        {'project':prj, 'genus':gns_batch, 'name':'storyboard',  'info':u'分镜', 'path':'{project}/{stage}/{entity}',               'url':'stb'},
+        {'project':prj, 'genus':gns_batch, 'name':'dubbing',     'info':u'配音', 'path':'{project}/{stage}/{entity}',               'url':'dub'},
+        {'project':prj, 'genus':gns_asset, 'name':'design',      'info':u'原画', 'path':'{project}/{genus}/{tag}/{entity}/{stage}', 'url':'dsn'},
+        {'project':prj, 'genus':gns_asset, 'name':'modeling',    'info':u'建模', 'path':'{project}/{genus}/{tag}/{entity}/{stage}', 'url':'mdl'},
+        {'project':prj, 'genus':gns_asset, 'name':'texture',     'info':u'贴图', 'path':'{project}/{genus}/{tag}/{entity}/{stage}', 'url':'txt'},
+        {'project':prj, 'genus':gns_asset, 'name':'shader',      'info':u'材质', 'path':'{project}/{genus}/{tag}/{entity}/{stage}', 'url':'shd'},
+        {'project':prj, 'genus':gns_asset, 'name':'rigging',     'info':u'绑定', 'path':'{project}/{genus}/{tag}/{entity}/{stage}', 'url':'rig'},
+        {'project':prj, 'genus':gns_asset, 'name':'preview',     'info':u'预览', 'path':'{project}/{genus}/{tag}/{entity}/{stage}', 'url':'prv'},
+        {'project':prj, 'genus':gns_shot,  'name':'layout',      'info':u'布局', 'path':'{project}/{genus}/{stage}/{tag}',          'url':'lyt'},
+        {'project':prj, 'genus':gns_shot,  'name':'animation',   'info':u'动画', 'path':'{project}/{genus}/{stage}/{tag}',          'url':'anm'},
+        {'project':prj, 'genus':gns_shot,  'name':'cfx',         'info':u'解算', 'path':'{project}/{genus}/{stage}/{tag}',          'url':'cfx'},
+        {'project':prj, 'genus':gns_shot,  'name':'lighting',    'info':u'灯光', 'path':'{project}/{genus}/{stage}/{tag}',          'url':'lgt'},
+        {'project':prj, 'genus':gns_shot,  'name':'rendering',   'info':u'渲染', 'path':'{project}/{genus}/{stage}/{tag}/{entity}', 'url':'rnd'},
+        {'project':prj, 'genus':gns_shot,  'name':'vfx',         'info':u'特效', 'path':'{project}/{genus}/{stage}/{tag}/{entity}', 'url':'vfx'},
+        {'project':prj, 'genus':gns_shot,  'name':'compositing', 'info':u'合成', 'path':'{project}/{genus}/{stage}/{tag}/{entity}', 'url':'cmp'},
+    ]: models.Stage(**data).save()
 
     # Entity
-    tag_eps = models.Tag.objects.get(name='episode')
-    tag_ch  = models.Tag.objects.get(name='CH')
+    tag_eps = models.Tag.objects.get(name='episode', project=prj)
+    tag_ch  = models.Tag.objects.get(name='CH', project=prj)
     for data in [
-        {'project':prj_mb01, 'tag':tag_eps, 'name':'EP01',  'url':'EP01' },
-        {'project':prj_pt02, 'tag':tag_eps, 'name':'EP01',  'url':'EP01' },
-        {'project':prj_mb01, 'tag':tag_ch,  'name':'Danny', 'url':'Danny'},
-        {'project':prj_pt02, 'tag':tag_ch,  'name':'Houye', 'url':'Houye'},
+        {'tag':tag_eps, 'name':'EP01',  'url':'EP01' },
+        {'tag':tag_ch,  'name':'Danny', 'url':'Danny'},
     ]: models.Entity(**data).save()
     
     #Status
