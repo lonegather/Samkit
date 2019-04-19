@@ -1,3 +1,6 @@
+#Pycharm project settings
+.idea/
+
 # Django migrations / statics
 migrations/
 app/static/
