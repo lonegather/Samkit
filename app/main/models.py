@@ -51,7 +51,8 @@ class Project(models.Model):
     info = models.CharField(max_length=200, blank=True)
     fps = models.IntegerField(default=25)
     camera = models.CharField(max_length=50, default='MainCAM')
-    url = models.CharField(max_length=200, default='/')
+    url = models.CharField(max_length=200, default='project')
+    root = models.CharField(max_length=200, default='file:///P:')
 
     @classmethod
     def all(cls, *_, **__):
@@ -321,7 +322,7 @@ class Task(models.Model):
     entity = models.ForeignKey(Entity, default=uuid.uuid4, on_delete=models.CASCADE)
     stage = models.ForeignKey(Stage, default=uuid.uuid4, on_delete=models.CASCADE)
     status = models.ForeignKey(Status, default=uuid.uuid4, on_delete=models.CASCADE)
-    owner = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
 
     @classmethod
     def get(cls, **kwargs):
@@ -346,6 +347,10 @@ class Task(models.Model):
                 'path': tsk.stage.path,
             })
         return result
+
+    @classmethod
+    def setup(cls, entity):
+        project = entity.tag.project
     
     def __str__(self):
         return '%s - %s' % (self.stage.name, self.entity)

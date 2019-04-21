@@ -50,6 +50,7 @@ def api_get(request, table):
         'project': models.Project.all,
         'entity': models.Entity.get,
         'stage': models.Stage.get,
+        'task': models.Task.get,
     }
     for key in request.GET:
         flt[key] = request.GET[key]
