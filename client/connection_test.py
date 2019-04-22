@@ -37,5 +37,5 @@ def update(table, **fields):
 
 
 if __name__ == '__main__':
-    # print(login('sam', 'serious.2019'))
-    update('project', id='ebe4c4e6-eea8-4e28-a209-1650d1f932b1', fps='24')
+    print(login(u'sam', u'sn25184369'))
+    # update('project', id='74bb0d9a-5394-40e1-a63d-8deb31f3abb8', fps='24')

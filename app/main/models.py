@@ -51,7 +51,6 @@ class Project(models.Model):
     info = models.CharField(max_length=200, blank=True)
     fps = models.IntegerField(default=25)
     camera = models.CharField(max_length=50, default='MainCAM')
-    url = models.CharField(max_length=200, default='project')
     root = models.CharField(max_length=200, default='file:///P:')
 
     @classmethod
@@ -70,14 +69,12 @@ class Project(models.Model):
             prj = cls.objects.get(id=prj_id)
             prj.name = form.get('name', [prj.name])[0]
             prj.info = form.get('info', [prj.info])[0]
-            prj.url = form.get('url', [prj.url])[0]
             prj.fps = int(form.get('fps', [prj.fps])[0])
             prj.camera = form.get('camera', [prj.camera])[0]
         else:
             prj = cls(
                 name=form.get('name', ['undefined'])[0],
                 info=form.get('info', [u'未命名'])[0],
-                url=form.get('url', ['/'])[0],
                 fps=int(form.get('fps', [30])[0]),
                 camera=form.get('camera', ['MainCam'])[0],
             )
@@ -105,7 +102,6 @@ class Genus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=10)
     info = models.CharField(max_length=50, blank=True)
-    url = models.CharField(max_length=200, blank=True)
     
     def __str__(self):
         return self.name
@@ -119,7 +115,6 @@ class Tag(models.Model):
     genus = models.ForeignKey(Genus, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     info = models.CharField(max_length=50, blank=True)
-    url = models.CharField(max_length=200, blank=True)
 
     @classmethod
     def get(cls, **kwargs):
@@ -150,7 +145,6 @@ class Entity(models.Model):
     link = models.ManyToManyField("Entity", blank=True)
     name = models.CharField(max_length=100)
     info = models.CharField(max_length=200, blank=True)
-    url = models.CharField(max_length=200, blank=True)
     thumb = models.ImageField(upload_to="thumbs", default="thumbs/default.png")
 
     @classmethod
@@ -206,14 +200,13 @@ class Entity(models.Model):
             ent = Entity.objects.get(id=ent_id)
             ent.name = form['name'][0]
             ent.info = form['info'][0]
-            ent.url = ent.name
             ent.tag = tag
             ent.link.clear()
         else:
             prj = Project.objects.get(id=form['project'][0])
             ent = Entity(project=prj, tag=tag,
-                         name=form['name'][0], info=form['info'][0],
-                         url=form['name'][0])
+                         name=form['name'][0],
+                         info=form['info'][0])
             ent.save()
 
         for link_id in form.get('link', []):
@@ -229,15 +222,16 @@ class Entity(models.Model):
         return self.tag.genus
 
     def path(self):
-        project = self.tag.project.url
-        tag = self.tag.url
-        genus = self.tag.genus.url
+        root = self.tag.project.root
+        project = self.tag.project.name
+        tag = self.tag.name
+        genus = self.tag.genus.name
         edition = Edition.objects.get(name='publish').url_head
-        entity = self.url
+        entity = self.name
         result = {}
         for stage_obj in Stage.objects.filter(genus=self.tag.genus, project=self.tag.project):
-            stage = stage_obj.url
-            result[stage_obj.name] = stage_obj.path.format(**locals())
+            stage = stage_obj.name
+            result[stage] = stage_obj.path.format(**locals())
         return result
     
     def save(self, *args, **kwargs):
@@ -251,8 +245,7 @@ class Entity(models.Model):
             data = {'name':    self.name,
                     'project': project,
                     'genus':   genus,
-                    'info':    self.name,
-                    'url':     self.name}
+                    'info':    self.name}
             Tag(**data).save()
             
         models.Model.save(self, *args, **kwargs)
@@ -297,7 +290,6 @@ class Stage(models.Model):
     name = models.CharField(max_length=50)
     info = models.CharField(max_length=50, blank=True)
     path = models.CharField(max_length=200, default='/')
-    url = models.CharField(max_length=200, blank=True)
     
     def __str__(self):
         return self.name
