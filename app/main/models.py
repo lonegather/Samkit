@@ -168,12 +168,18 @@ class Entity(models.Model):
             for l in ent.link.all():
                 link.append(str(l.id))
 
-            result.append({'id': str(ent.id), 'project': ent.tag.project.name,
-                           'name': ent.name, 'info': ent.info,
-                           'genus': ent.tag.genus.name, 'genus_info': ent.tag.genus.info,
-                           'tag': ent.tag.name, 'tag_info': ent.tag.info,
-                           'link': link, 'path': ent.path(), 'thumb': ent.thumb.url,
-                           })
+            result.append({
+                'id': str(ent.id),
+                'project': ent.tag.project.name,
+                'name': ent.name,
+                'info': ent.info,
+                'genus': ent.tag.genus.name,
+                'genus_info': ent.tag.genus.info,
+                'tag': ent.tag.name,
+                'tag_info': ent.tag.info,
+                'link': link,
+                'thumb': ent.thumb.url,
+            })
         return result
 
     @classmethod
@@ -220,19 +226,6 @@ class Entity(models.Model):
     
     def genus(self):
         return self.tag.genus
-
-    def path(self):
-        root = self.tag.project.root
-        project = self.tag.project.name
-        tag = self.tag.name
-        genus = self.tag.genus.name
-        edition = Edition.objects.get(name='publish').url_head
-        entity = self.name
-        result = {}
-        for stage_obj in Stage.objects.filter(genus=self.tag.genus, project=self.tag.project):
-            stage = stage_obj.name
-            result[stage] = stage_obj.path.format(**locals())
-        return result
     
     def save(self, *args, **kwargs):
         if self.genus().name == 'batch':
@@ -336,9 +329,25 @@ class Task(models.Model):
                 'project': tsk.stage.project.name,
                 'genus': tsk.stage.genus.name,
                 'genus_info': tsk.stage.genus.info,
-                'path': tsk.stage.path,
+                'tag': tsk.entity.tag.name,
+                'tag_info': tsk.entity.tag.info,
+                'entity': tsk.entity.name,
+                'entity_info': tsk.entity.info,
+                'stage': tsk.stage.name,
+                'stage_info': tsk.stage.info,
+                'path': tsk.path(),
             })
         return result
+
+    def path(self):
+        root = self.stage.project.root
+        project = self.stage.project.name
+        tag = self.entity.tag.name
+        genus = self.stage.genus.name
+        edition = Edition.objects.get(name='publish').url_head
+        entity = self.entity.name
+        stage = self.stage.name
+        return self.stage.path.format(**locals())
 
     @classmethod
     def setup(cls, entity):

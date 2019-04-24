@@ -53,7 +53,7 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(models.Entity)
 class EntityAdmin(admin.ModelAdmin):
     
-    list_display = ('name', 'info', 'tag', 'genus', 'path', 'thumb')
+    list_display = ('name', 'info', 'tag', 'genus', 'thumb')
     list_filter = ('tag', )
     ordering = ('name', )
     search_fields = ('name', )
@@ -77,7 +77,8 @@ class StatusAdmin(admin.ModelAdmin):
 @admin.register(models.Task)
 class TaskAdmin(admin.ModelAdmin):
     
-    list_display = ('entity', 'stage', 'status')
+    list_display = ('entity', 'stage', 'path', 'status')
+    list_filter = ('entity', 'stage')
     ordering = ('entity', )
     search_fields = ('entity', )
 
