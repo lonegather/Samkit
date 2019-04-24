@@ -292,7 +292,6 @@ class Stage(models.Model):
 class Status(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    edition = models.ForeignKey(Edition, default=uuid.uuid4, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     info = models.CharField(max_length=50, blank=True)
     

@@ -90,16 +90,14 @@ def reset():
     models.Entity(tag=tag_ep01, name='SC001').save()
     
     # Status
-    edt_work = models.Edition.objects.get(name='work')
-    edt_publish = models.Edition.objects.get(name='publish')
     for data in [
-        {'edition':edt_work,    'name':u'initialized', 'info':u'初始化'},
-        {'edition':edt_work,    'name':u'assigned',    'info':u'已分配'},
-        {'edition':edt_work,    'name':u'submitted',   'info':u'已提交'},
-        {'edition':edt_publish, 'name':u'approved',    'info':u'已通过'},
-        {'edition':edt_work,    'name':u'unapproved',  'info':u'未通过'},
-        {'edition':edt_publish, 'name':u'expired',     'info':u'已过期'},
-        {'edition':edt_publish, 'name':u'ignored',     'info':u'已忽略'},
+        {'name':u'initialized', 'info':u'初始化'},
+        {'name':u'assigned',    'info':u'已分配'},
+        {'name':u'submitted',   'info':u'已提交'},
+        {'name':u'approved',    'info':u'已通过'},
+        {'name':u'unapproved',  'info':u'未通过'},
+        {'name':u'expired',     'info':u'已过期'},
+        {'name':u'ignored',     'info':u'已忽略'},
     ]: models.Status(**data).save()
     
     #Task
