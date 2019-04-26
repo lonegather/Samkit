@@ -1,9 +1,12 @@
-#Pycharm project settings
+# Pycharm project settings
 .idea/
 
 # Django migrations / statics
 migrations/
 app/static/
+
+# Portable Python distribution
+maya/pydist
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
