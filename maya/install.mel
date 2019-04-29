@@ -223,6 +223,10 @@ proc loadModuleExtended(string $moduleFile, string $path)
     // path is available in the MAYA_SCRIPT_PATH.
     string $scriptPath = $path + $separator + "scripts";
     python("import sys; sys.path.append('" + $scriptPath + "')");
+
+    string $syncPath = $scriptPath + $separator + "syncPath.py";
+    if (`filetest -e $syncPath` == 1)
+        python("import __main__; execfile('" + $syncPath + "', __main__.__dict__ )");
     
     // see if a userSetup.py is present in the script folder. If this is the 
     // case execute that file.

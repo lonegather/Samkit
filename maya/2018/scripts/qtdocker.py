@@ -5,7 +5,11 @@ from maya.OpenMayaUI import MQtUtil
 from shiboken2 import wrapInstance
 
 from PySide2.QtWidgets import QWidget
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QFile
+from PySide2.QtUiTools import QUiLoader
+
+
+module_path = cmds.moduleInfo(path=True, moduleName='Samkit').replace('/', '\\')
 
 
 def dock_window(dialog_class):
@@ -44,7 +48,6 @@ class Docker(QWidget):
     instances = list()
     CONTROL_NAME = 'docker_control'
     DOCK_LABEL_NAME = 'Docker'
-    UI_PATH = ''
 
     @staticmethod
     def delete_instances():
@@ -69,3 +72,19 @@ class Docker(QWidget):
 
     def content(self):
         return QWidget()
+
+
+class DockerMain(Docker):
+
+    CONTROL_NAME = 'samkit_workspcae_control'
+    DOCK_LABEL_NAME = 'Samkit'
+    UI_PATH = '%s\\ui\\main.ui' % module_path
+
+    def content(self):
+        loader = QUiLoader()
+        file = QFile(self.UI_PATH)
+        file.open(QFile.ReadOnly)
+        widget = loader.load(file, self)
+        file.close()
+
+        return widget
