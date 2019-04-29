@@ -1,5 +1,5 @@
 from maya import cmds, mel
-from qtdocker import dock_window, DockerMain
+from qtdocker import DockerMain
 
 
 def setup(*_):
@@ -19,7 +19,7 @@ def setup(*_):
     )
     cmds.formLayout(layout, e=True, attachForm=[(btn, 'right', 1), (btn, 'top', 1)])
 
-    win = dock_window(DockerMain)
+    DockerMain.setup()
     cmds.inViewMessage(message='Samkit Ready', position='midCenter', fade=True)
 
 

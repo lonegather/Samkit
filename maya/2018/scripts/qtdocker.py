@@ -1,90 +1,72 @@
-import weakref
-
-import maya.cmds as cmds
+from maya import cmds
 from maya.OpenMayaUI import MQtUtil
-from shiboken2 import wrapInstance
-
-from PySide2.QtWidgets import QWidget
+from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+from PySide2.QtWidgets import QWidget, QVBoxLayout
 from PySide2.QtCore import Qt, QFile
 from PySide2.QtUiTools import QUiLoader
+from shiboken2 import wrapInstance
 
 
-module_path = cmds.moduleInfo(path=True, moduleName='Samkit').replace('/', '\\')
+class Docker(MayaQWidgetDockableMixin, QWidget):
 
-
-def dock_window(dialog_class):
-    try:
-        cmds.deleteUI(dialog_class.CONTROL_NAME)
-    except: pass
-
-    # building the workspace control with maya.cmds
-    main_control = cmds.workspaceControl(
-        dialog_class.CONTROL_NAME,
-        ttc=["AttributeEditor", -1],
-        iw=300,
-        mw=True,
-        wp='preferred',
-        label=dialog_class.DOCK_LABEL_NAME
-    )
-
-    # now lets get a C++ pointer to it using OpenMaya
-    control_widget = MQtUtil.findControl(dialog_class.CONTROL_NAME)
-    # convert the C++ pointer to Qt object we can use
-    control_wrap = wrapInstance(long(control_widget), QWidget)
-
-    # control_wrap is the widget of the docking window and now we can start working with it:
-    control_wrap.setAttribute(Qt.WA_DeleteOnClose)
-    win = dialog_class(control_wrap)
-
-    # after maya is ready we should restore the window since it may not be visible
-    cmds.evalDeferred(lambda *args: cmds.workspaceControl(main_control, e=True, rs=True))
-
-    # will return the class of the dock content.
-    return win
-
-
-class Docker(QWidget):
-
-    instances = list()
+    instance = None
     CONTROL_NAME = 'docker_control'
     DOCK_LABEL_NAME = 'Docker'
 
-    @staticmethod
-    def delete_instances():
-        for ins in Docker.instances:
-            try:
-                ins.setParent(None)
-                ins.deleteLater()
-                Docker.instances.remove(ins)
-            except: pass
-            del ins
+    @classmethod
+    def setup(cls, restore=False):
+        ''' When the control is restoring, the workspace control has already been created and
+            all that needs to be done is restoring its UI.
+        '''
+        if restore:
+            # Grab the created workspace control with the following.
+            restoredControl = MQtUtil.getCurrentParent()
+
+        if cls.instance is None:
+            print('Creating mixin widget', cls.CONTROL_NAME)
+            cls.instance = cls()
+            cls.instance.setObjectName(cls.CONTROL_NAME)
+
+        if restore:
+            print('Restoring mixin widget', cls.CONTROL_NAME)
+            # Add custom mixin widget to the workspace control
+            mixinPtr = MQtUtil.findControl(cls.CONTROL_NAME)
+            MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(restoredControl))
+        else:
+            print('Creating workspace control', cls)
+            # Create a workspace control for the mixin widget by passing all the needed parameters.
+            cls.instance.show(
+                dockable=True,
+                height=600,
+                width=480,
+                label=cls.DOCK_LABEL_NAME,
+                uiScript='%s.setup(restore=True)' % cls
+            )
+
+        return cls.instance
 
     def __init__(self, parent=None):
-        super(Docker, self).__init__(parent)
-
-        # let's keep track of our docks so we only have one at a time.
-        Docker.delete_instances()
-        self.__class__.instances.append(weakref.proxy(self))
-
-        layout = parent.layout()
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.addWidget(self.content())
-
-    def content(self):
-        return QWidget()
+        super(Docker, self).__init__(parent=parent)
+        self.setWindowTitle(self.DOCK_LABEL_NAME)
+        self.setAttribute(Qt.WA_DeleteOnClose)
 
 
 class DockerMain(Docker):
 
-    CONTROL_NAME = 'samkit_workspcae_control'
+    CONTROL_NAME = 'samkit_docker_control'
     DOCK_LABEL_NAME = 'Samkit'
-    UI_PATH = '%s\\ui\\main.ui' % module_path
+    UI_PATH = '%s\\ui\\main.ui' % cmds.moduleInfo(path=True, moduleName='Samkit').replace('/', '\\')
 
-    def content(self):
+    def __init__(self, parent=None):
+        super(DockerMain, self).__init__(parent=parent)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
         loader = QUiLoader()
         file = QFile(self.UI_PATH)
         file.open(QFile.ReadOnly)
-        widget = loader.load(file, self)
+        self.ui = loader.load(file)
+        layout.addWidget(self.ui)
         file.close()
 
-        return widget
+        print("init from DockerMain")
