@@ -105,6 +105,24 @@ class Genus(models.Model):
     
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get(cls, **kwargs):
+        result = []
+        keywords = {}
+        mapper = {}
+        for key in kwargs:
+            if key in mapper:
+                keywords[mapper[key]] = kwargs[key]
+            else:
+                keywords[key] = kwargs[key]
+        for genus in cls.objects.filter(**keywords):
+            result.append({
+                'id': str(genus.id),
+                'name': genus.name,
+                'info': genus.info,
+            })
+        return result
     
 
 @python_2_unicode_compatible
@@ -120,17 +138,26 @@ class Tag(models.Model):
     def get(cls, **kwargs):
         result = []
         keywords = {}
-        mapper = {'project': 'project__name',
-                  'genus': 'genus__name',
-                  }
+        mapper = {
+            'project_id': 'project__id',
+            'project': 'project__name',
+            'genus_id': 'genus__id',
+            'genus': 'genus__name',
+        }
         for key in kwargs:
             if key in mapper:
                 keywords[mapper[key]] = kwargs[key]
             else:
                 keywords[key] = kwargs[key]
         for tag in cls.objects.filter(**keywords):
-            result.append({'name': tag.name, 'info': tag.info, 'project': tag.project.name,
-                           'genus': tag.genus.name, 'genus_info': tag.genus.info})
+            result.append({
+                'id': str(tag.id),
+                'name': tag.name,
+                'info': tag.info,
+                'genus_id': str(tag.genus.id),
+                'genus_name': tag.genus.name,
+                'genus_info': tag.genus.info,
+            })
         return result
     
     def __str__(self):
@@ -152,8 +179,11 @@ class Entity(models.Model):
         result = []
         keywords = {}
         mapper = {
+            'project_id': 'tag__project__id',
             'project': 'tag__project__name',
             'genus': 'tag__genus__name',
+            'tag_id': 'tag__id',
+            'tag': 'tag__name',
         }
         for key in kwargs:
             if key in mapper:
@@ -170,12 +200,13 @@ class Entity(models.Model):
 
             result.append({
                 'id': str(ent.id),
-                'project': ent.tag.project.name,
                 'name': ent.name,
                 'info': ent.info,
-                'genus': ent.tag.genus.name,
+                'genus_id': str(ent.tag.genus.id),
+                'genus_name': ent.tag.genus.name,
                 'genus_info': ent.tag.genus.info,
-                'tag': ent.tag.name,
+                'tag_id': str(ent.tag.id),
+                'tag_name': ent.tag.name,
                 'tag_info': ent.tag.info,
                 'link': link,
                 'thumb': ent.thumb.url,
@@ -191,10 +222,18 @@ class Entity(models.Model):
             ent = cls.objects.get(id=i)
             for l in ent.link.all():
                 link.append(str(l.id))
-            result.append({'id': str(ent.id), 'name': ent.name, 'info': ent.info,
-                           'genus': ent.tag.genus.name, 'genus_info': ent.tag.genus.info,
-                           'tag': ent.tag.name, 'tag_info': ent.tag.info,
-                           })
+            result.append({
+                'id': str(ent.id),
+                'project': ent.tag.project.name,
+                'name': ent.name,
+                'info': ent.info,
+                'genus': ent.tag.genus.name,
+                'genus_info': ent.tag.genus.info,
+                'tag': ent.tag.name,
+                'tag_info': ent.tag.info,
+                'link': link,
+                'thumb': ent.thumb.url,
+            })
         return result
 
     @classmethod
@@ -231,23 +270,26 @@ class Entity(models.Model):
         if self.genus().name == 'batch':
             project = self.tag.project
             tags = Tag.objects.filter(name=self.name, project=project)
-            if len(tags):
-                return
-            
-            genus = Genus.objects.get(name='shot')
-            data = {'name':    self.name,
+            if not len(tags):
+                genus = Genus.objects.get(name='shot')
+                data = {
+                    'name': self.name,
                     'project': project,
-                    'genus':   genus,
-                    'info':    self.name}
-            Tag(**data).save()
-            
-        models.Model.save(self, *args, **kwargs)
+                    'genus': genus,
+                    'info': self.info
+                }
+                Tag(**data).save()
+            else:
+                tag = tags[0]
+                tag.info = self.info
+                tag.save()
+        super(Entity, self).save(*args, **kwargs)
         
     def delete(self, using=None, keep_parents=False):
         if self.genus().name == 'batch':
-            Tag.objects.get(project=self.project, name=self.name).delete()
+            Tag.objects.get(project=self.tag.project, name=self.name).delete()
         
-        return models.Model.delete(self, using=using, keep_parents=keep_parents)
+        return super(Entity, self).delete(using=using, keep_parents=keep_parents)
     
     def __str__(self):
         name = str(self.name)
@@ -343,13 +385,12 @@ class Task(models.Model):
         project = self.stage.project.name
         tag = self.entity.tag.name
         genus = self.stage.genus.name
-        edition = Edition.objects.get(name='publish').url_head
         entity = self.entity.name
         stage = self.stage.name
         return self.stage.path.format(**locals())
 
     @classmethod
-    def setup(cls, entity):
+    def setup(cls, entity, stage=None):
         project = entity.tag.project
     
     def __str__(self):

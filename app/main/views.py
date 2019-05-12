@@ -15,19 +15,22 @@ def index(request):
 
 
 def auth(request):
-    response = {}
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        response['session'] = request.session.session_key
-        response['name'] = user.username
-        response['info'] = user.profile.name
-        response['role'] = user.profile.role.name
-        response['department'] = user.profile.department.name
+    if request.method == 'GET':
+        return HttpResponse(json.dumps(request.user.is_authenticated))
+    elif request.method == 'POST':
+        response = {}
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            response['session'] = request.session.session_key
+            response['name'] = user.username
+            response['info'] = user.profile.name
+            response['role'] = user.profile.role.name
+            response['department'] = user.profile.department.name
 
-    return HttpResponse(json.dumps(response))
+        return HttpResponse(json.dumps(response))
 
 
 def api(request):
@@ -51,6 +54,8 @@ def api_get(request, table):
         'entity': models.Entity.get,
         'stage': models.Stage.get,
         'task': models.Task.get,
+        'genus': models.Genus.get,
+        'tag': models.Tag.get,
     }
     for key in request.GET:
         flt[key] = request.GET[key]
