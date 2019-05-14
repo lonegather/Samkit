@@ -32,3 +32,26 @@ class AssetDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QSize(self.ITEM_WIDTH, self.ITEM_HEIGHT)
+
+
+class AssetWrapperDelegate(QStyledItemDelegate):
+
+    ITEM_WIDTH = 100
+    ITEM_HEIGHT = 130
+
+    def paint(self, painter, option, index):
+        pass
+
+    def sizeHint(self, option, index):
+        return QSize(self.ITEM_WIDTH, self.ITEM_HEIGHT)
+
+
+class TaskDelegate(QStyledItemDelegate):
+
+    def __init__(self, parent=None):
+        super(TaskDelegate, self).__init__(parent)
+
+    def paint(self, painter, option, index):
+        # option.state = QStyle.State_None
+        option.rect = option.rect.adjusted(0, 3, 0, 0)
+        super(TaskDelegate, self).paint(painter, option, index)

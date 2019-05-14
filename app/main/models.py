@@ -359,6 +359,8 @@ class Task(models.Model):
             'genus': 'genus__name',
             'stage': 'stage__name',
             'entity': 'entity__name',
+            'entity_id': 'entity__id',
+            'owner': 'owner__username',
         }
         for key in kwargs:
             if key in mapper:
@@ -367,6 +369,7 @@ class Task(models.Model):
                 keywords[key] = kwargs[key]
         for tsk in cls.objects.filter(**keywords):
             result.append({
+                'id': str(tsk.id),
                 'project': tsk.stage.project.name,
                 'genus': tsk.stage.genus.name,
                 'genus_info': tsk.stage.genus.info,
@@ -377,6 +380,7 @@ class Task(models.Model):
                 'stage': tsk.stage.name,
                 'stage_info': tsk.stage.info,
                 'path': tsk.path(),
+                'owner': str(tsk.owner.username if tsk.owner else ''),
             })
         return result
 
@@ -388,6 +392,21 @@ class Task(models.Model):
         entity = self.entity.name
         stage = self.stage.name
         return self.stage.path.format(**locals())
+
+    @classmethod
+    def set(cls, form):
+        tsk_id = form.get('id', [None])[0]
+        username = form.get('owner', [''])[0]
+
+        if tsk_id:
+            tsk = cls.objects.get(id=tsk_id)
+            if username:
+                tsk.owner = User.objects.get(username=username)
+        else:
+            # TODO: Create new task
+            pass
+
+        tsk.save()
 
     @classmethod
     def setup(cls, entity, stage=None):

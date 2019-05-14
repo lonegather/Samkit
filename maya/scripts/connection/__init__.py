@@ -28,15 +28,13 @@ def access(force=False):
         session.cookies.update(cookies)
         try:
             if not json.loads(session.get("http://%s/auth/" % host).text):
+                cmds.optionVar(remove=OPT_USERNAME)
                 cmds.optionVar(remove=OPT_COOKIES)
                 return AUTH_FAILED
             else:
                 return AUTH_SUCCESS
         except ConnectionError:
-            cmds.optionVar(remove=OPT_HOST)
-            cmds.optionVar(remove=OPT_PROJECT)
-            cmds.optionVar(remove=OPT_PROJECT_ID)
-            cmds.optionVar(remove=OPT_COOKIES)
+            clear_ov()
             return CONNECT_FAILED
 
 
@@ -51,3 +49,8 @@ def get_data(table, **filters):
         return []
     except ConnectionError:
         return []
+
+
+def set_data(table, **filters):
+    host = cmds.optionVar(q=OPT_HOST)
+    return update(session, host, table, **filters)

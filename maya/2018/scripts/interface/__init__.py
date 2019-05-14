@@ -2,22 +2,26 @@ import json
 import requests
 from requests.exceptions import ConnectionError
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from PySide2.QtWidgets import QDialog, QWidget, QVBoxLayout
+from PySide2.QtWidgets import QDialog, QWidget, QVBoxLayout, QSizePolicy
 from PySide2.QtGui import QImage
-from PySide2.QtCore import QFile, QObject, Signal, QUrl
+from PySide2.QtCore import QFile, QObject, Signal, QUrl, Qt
 from PySide2.QtUiTools import QUiLoader
 from shiboken2 import wrapInstance
 
+from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from maya.OpenMayaUI import MQtUtil
 from maya import cmds
 
 from connection.utils import *
 
 
-def get_auth():
+def get_main_window():
     maya_win_ptr = MQtUtil.mainWindow()
-    maya_win = wrapInstance(long(maya_win_ptr), QWidget)
-    dialog = AuthDialog(maya_win)
+    return wrapInstance(long(maya_win_ptr), QWidget)
+
+
+def get_auth():
+    dialog = AuthDialog(get_main_window())
     if dialog.exec_() == QDialog.Accepted:
         return dialog.get_info()
     else:
@@ -33,6 +37,42 @@ def setup_ui(container, ui):
     container.ui = loader.load(file)
     layout.addWidget(container.ui)
     file.close()
+
+
+class Docker(MayaQWidgetDockableMixin, QWidget):
+
+    instance = None
+    CONTROL_NAME = 'docker_control'
+    DOCK_LABEL_NAME = 'Docker'
+
+    @classmethod
+    def setup(cls, restore=False):
+        if cls.instance is None:
+            docker = '%sWorkspaceControl' % cls.CONTROL_NAME
+            if cmds.workspaceControl(docker, exists=True):
+                cmds.deleteUI(docker)
+            cls.instance = cls()
+            cls.instance.setObjectName(cls.CONTROL_NAME)
+
+        if restore:
+            restored_control = MQtUtil.getCurrentParent()
+            mixin_ptr = MQtUtil.findControl(cls.CONTROL_NAME)
+            MQtUtil.addWidgetToMayaLayout(long(mixin_ptr), long(restored_control))
+        else:
+            cls.instance.show(
+                area='right',
+                dockable=True,
+                label=cls.DOCK_LABEL_NAME,
+                uiScript='%s.setup(restore=True)' % cls
+            )
+
+        return cls.instance
+
+    def __init__(self, parent=None):
+        super(Docker, self).__init__(parent=parent)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.setWindowTitle(self.DOCK_LABEL_NAME)
+        self.setAttribute(Qt.WA_DeleteOnClose)
 
 
 class AuthDialog(QDialog):

@@ -76,13 +76,17 @@ class TagModel(QAbstractListModel):
 
 class AssetModel(QAbstractListModel):
 
-    IconRole = Qt.UserRole + 1
+    GenusRole = Qt.UserRole + 1
+    IconRole = Qt.UserRole + 2
+    IdRole = Qt.UserRole + 3
     
     def __init__(self, tag, parent=None):
         super(AssetModel, self).__init__(parent)
         self._map = {
             Qt.DisplayRole: 'info',
+            self.GenusRole: 'genus_name',
             self.IconRole: 'image',
+            self.IdRole: 'id',
         }
         # DATA FORMAT: [id, name, info, genus_id, genus_name, genus_info, tag_id, tag_name, tag_info, link, thumb]
         self._data = []
@@ -94,9 +98,10 @@ class AssetModel(QAbstractListModel):
     def update(self, tag_id=None):
         tag_id = tag_id if tag_id else self._tag.current_id
         self._data = get_data('entity', tag_id=tag_id, project_id=cmds.optionVar(q=OPT_PROJECT_ID))
+        if not self._data:
+            self.dataChanged.emit(QModelIndex(), QModelIndex())
         for asset in self._data:
             self._hub.get(asset['thumb'])
-        self.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def rowCount(self, *_):
         return len(self._data)
@@ -113,3 +118,38 @@ class AssetModel(QAbstractListModel):
                     data['image'] = image
 
         self.dataChanged.emit(QModelIndex(), QModelIndex())
+
+    def get_wrapper_data(self):
+        result = []
+        for asset in self._data:
+            result.append({
+                'id': asset['id'],
+                'name': asset['name'],
+                'info': asset['info'],
+                'image': asset.get('image', None),
+            })
+        return result
+
+
+class StageModel(QAbstractListModel):
+
+    IdRole = Qt.UserRole + 1
+    PathRole = Qt.UserRole + 2
+    OwnerRole = Qt.UserRole + 3
+
+    def __init__(self, asset_id, parent=None):
+        super(StageModel, self).__init__(parent)
+        self._map = {
+            Qt.DisplayRole: 'stage_info',
+            self.IdRole: 'id',
+            self.PathRole: 'path',
+            self.OwnerRole: 'owner'
+        }
+        self._data = get_data('task', entity_id=asset_id)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if self._data:
+            return self._data[index.row()].get(self._map.get(role, None), None)
+
+    def rowCount(self, *_):
+        return len(self._data)

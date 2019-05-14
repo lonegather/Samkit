@@ -67,6 +67,7 @@ def api_set(request, table):
     modify_dict = {
         'project': models.Project.set,
         'entity': models.Entity.set,
+        'task': models.Task.set,
     }
     if request.FILES:
         for f in request.FILES:

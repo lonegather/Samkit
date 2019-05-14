@@ -2,8 +2,8 @@ from maya import cmds, mel
 
 
 def setup(*_):
-    print('--------Samkit starting--------')
-    from interface.qtdocker import DockerMain
+
+    from interface.widget import DockerMain
     import connection
 
     DockerMain.setup()
