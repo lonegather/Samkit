@@ -3,7 +3,6 @@ from PySide2.QtGui import QPen, QColor
 from PySide2.QtCore import QSize, Qt
 
 from .model import AssetModel
-from connection.utils import *
 
 
 class AssetDelegate(QStyledItemDelegate):

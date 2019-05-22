@@ -2,16 +2,17 @@ from maya import cmds
 from PySide2.QtWidgets import \
     QWidget, \
     QListView, \
-    QHBoxLayout, \
     QListWidgetItem, \
-    QDialog
+    QToolButton, \
+    QMenu, \
+    QAction
 from PySide2.QtGui import QIcon
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, Signal
 
 import connection
 from connection.utils import *
-from interface import setup_ui, get_main_window, Docker
-from .model import GenusModel, TagModel, AssetModel, StageModel
+from interface import setup_ui, Docker
+from .model import GenusModel, TagModel, AssetModel
 from .delegate import AssetDelegate, TaskDelegate
 
 
@@ -40,6 +41,7 @@ class DockerMain(Docker):
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
         self.ui.lv_asset.setItemDelegate(AssetDelegate())
+        self.ui.tb_checkout.setPopupMode(QToolButton.InstantPopup)
         self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % MODULE_PATH))
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\connect.png' % MODULE_PATH))
         self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
@@ -62,7 +64,7 @@ class DockerMain(Docker):
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
         self.ui.tb_connect.clicked.connect(lambda *_: self.status_update(force=True))
-        self.ui.tb_checkout.clicked.connect(self.checkout)
+        self.ui.lv_asset.clicked.connect(self.build_menu)
         self.ui.tb_refresh.clicked.connect(
             lambda *_: genus_model.update(
                 self.ui.cb_genus.currentIndex()
@@ -95,20 +97,27 @@ class DockerMain(Docker):
         self.ui.cb_tag.setVisible(False)
         self.ui.cb_tag.setVisible(True)
 
-    def checkout(self, *_):
+    def build_menu(self, *_):
         current_index = self.ui.lv_asset.currentIndex()
         asset_id = current_index.data(AssetModel.IdRole)
-        dialog = StageDialog(asset_id, get_main_window())
-        if dialog.exec_() == QDialog.Accepted:
-            data = dialog.get_info()
-            if not data['owner'] and cmds.optionVar(exists=OPT_USERNAME):
-                if connection.set_data(
-                    'task',
-                    id=data['id'],
-                    owner=cmds.optionVar(q=OPT_USERNAME)
-                ):
-                    self.ui.tw_main.setCurrentIndex(1)
-                    self.ws_refresh()
+        data_task = connection.get_data('task', entity_id=asset_id)
+
+        menu = QMenu(self)
+        for task in data_task:
+            if not task['owner'] and cmds.optionVar(exists=OPT_USERNAME):
+                action = TaskAction(task, self)
+                action.Checked.connect(self.checkout)
+                menu.addAction(action)
+        self.ui.tb_checkout.setMenu(menu)
+
+    def checkout(self, task):
+        connection.set_data(
+            'task',
+            id=task['id'],
+            owner=cmds.optionVar(q=OPT_USERNAME)
+        )
+        self.ui.tw_main.setCurrentIndex(1)
+        self.ws_refresh()
 
     def ws_refresh(self, *_):
         if not cmds.optionVar(exists=OPT_USERNAME):
@@ -118,7 +127,7 @@ class DockerMain(Docker):
         while self.ui.lw_task.count():
             self.ui.lw_task.takeItem(0)
         for task in data:
-            widget = TaskItem(task['stage_info'])
+            widget = TaskItem(task)
             item = QListWidgetItem()
             item.setSizeHint(widget.sizeHint())
             self.ui.lw_task.addItem(item)
@@ -128,46 +137,24 @@ class DockerMain(Docker):
             it.setFlags(it.flags() & ~Qt.ItemIsSelectable)'''
 
 
-class AssetSegment(QWidget):
+class TaskAction(QAction):
 
-    def __init__(self, parent=None):
-        super(AssetSegment, self).__init__(parent)
-        layout = QHBoxLayout(self)
+    Checked = Signal(object)
 
-        self.setLayout(layout)
-
-
-class StageDialog(QDialog):
-
-    UI_PATH = '%s\\ui\\stage.ui' % MODULE_PATH
-
-    def __init__(self, asset_id, parent=None):
-        super(StageDialog, self).__init__(parent)
-        setup_ui(self, self.UI_PATH)
-        self.ui.accepted.connect(self.accept)
-        self.ui.rejected.connect(self.reject)
-        self.ui.lv_stage.setModel(StageModel(asset_id))
-        self.ui.lv_stage.clicked.connect(self.change)
-        self._data = None
-
-    def change(self, index):
-        self._data = {
-            'id': index.data(StageModel.IdRole),
-            'info': index.data(Qt.DisplayRole),
-            'path': index.data(StageModel.PathRole),
-            'owner': index.data(StageModel.OwnerRole),
-        }
-
-    def get_info(self):
-        return self._data
+    def __init__(self, task, parent=None):
+        self._data = task
+        super(TaskAction, self).__init__(task['stage_info'], parent)
+        self.triggered.connect(lambda *_: self.Checked.emit(self._data))
 
 
 class TaskItem(QWidget):
 
     UI_PATH = '%s\\ui\\task.ui' % MODULE_PATH
 
-    def __init__(self, stage, parent=None):
+    def __init__(self, task, parent=None):
         super(TaskItem, self).__init__(parent)
         setup_ui(self, self.UI_PATH)
+        self._data = task
 
-        self.ui.lbl_stage.setText(stage)
+        self.ui.lbl_name.setText(task['entity'])
+        self.ui.lbl_stage.setText(task['stage_info'])

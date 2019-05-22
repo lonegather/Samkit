@@ -138,18 +138,6 @@
        <item>
         <widget class="QListView" name="lv_asset"/>
        </item>
-       <item>
-        <widget class="QTreeWidget" name="tw_asset">
-         <attribute name="headerVisible">
-          <bool>false</bool>
-         </attribute>
-         <column>
-          <property name="text">
-           <string notr="true">1</string>
-          </property>
-         </column>
-        </widget>
-       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab">

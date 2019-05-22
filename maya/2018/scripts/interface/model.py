@@ -129,27 +129,3 @@ class AssetModel(QAbstractListModel):
                 'image': asset.get('image', None),
             })
         return result
-
-
-class StageModel(QAbstractListModel):
-
-    IdRole = Qt.UserRole + 1
-    PathRole = Qt.UserRole + 2
-    OwnerRole = Qt.UserRole + 3
-
-    def __init__(self, asset_id, parent=None):
-        super(StageModel, self).__init__(parent)
-        self._map = {
-            Qt.DisplayRole: 'stage_info',
-            self.IdRole: 'id',
-            self.PathRole: 'path',
-            self.OwnerRole: 'owner'
-        }
-        self._data = get_data('task', entity_id=asset_id)
-
-    def data(self, index, role=Qt.DisplayRole):
-        if self._data:
-            return self._data[index.row()].get(self._map.get(role, None), None)
-
-    def rowCount(self, *_):
-        return len(self._data)
