@@ -95,8 +95,14 @@
          </item>
          <item>
           <widget class="QToolButton" name="tb_reference">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string/>
+           </property>
+           <property name="popupMode">
+            <enum>QToolButton::InstantPopup</enum>
            </property>
            <property name="autoRaise">
             <bool>true</bool>
@@ -105,8 +111,14 @@
          </item>
          <item>
           <widget class="QToolButton" name="tb_checkout">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string/>
+           </property>
+           <property name="popupMode">
+            <enum>QToolButton::InstantPopup</enum>
            </property>
            <property name="autoRaise">
             <bool>true</bool>
@@ -224,6 +236,16 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QToolButton" name="tb_local">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

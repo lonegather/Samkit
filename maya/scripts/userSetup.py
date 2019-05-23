@@ -5,7 +5,7 @@ def setup(*_):
 
     from interface.widget import DockerMain
     import connection
-
+    print('----------Samkit Start----------')
     DockerMain.setup()
     layout = mel.eval('$tmp = $gAttributeEditorButton').split('|attributeEditorButton')[0]
     button = cmds.formLayout(layout, q=True, ca=True)[0]

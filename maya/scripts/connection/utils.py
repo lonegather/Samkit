@@ -10,6 +10,7 @@ __all__ = [
     'OPT_USERNAME',
     'OPT_PROJECT',
     'OPT_PROJECT_ID',
+    'OPT_PROJECT_ROOT',
     'OPT_COOKIES',
     'AUTH_SUCCESS',
     'AUTH_FAILED',
@@ -25,6 +26,7 @@ OPT_HOST = 'samkit_host'
 OPT_USERNAME = 'samkit_username'
 OPT_PROJECT = 'samkit_project'
 OPT_PROJECT_ID = 'samkit_project_id'
+OPT_PROJECT_ROOT = 'samkit_project_root'
 OPT_COOKIES = 'samkit_cookies'
 AUTH_SUCCESS = 0
 AUTH_FAILED = 1
@@ -37,11 +39,12 @@ def clear_ov():
     cmds.optionVar(remove=OPT_USERNAME)
     cmds.optionVar(remove=OPT_PROJECT)
     cmds.optionVar(remove=OPT_PROJECT_ID)
+    cmds.optionVar(remove=OPT_PROJECT_ROOT)
     cmds.optionVar(remove=OPT_COOKIES)
 
 
 # DO NOT USE ADMIN ACCOUNT FOR TESTING
-def login(session, host, project, prj_id, username, password):
+def login(session, host, username, password):
     server = "http://%s/auth/" % host
     kwargs = {
         'username': username,
@@ -49,9 +52,6 @@ def login(session, host, project, prj_id, username, password):
     }
     try:
         response = session.post(server, data=kwargs)
-        cmds.optionVar(sv=(OPT_HOST, host))
-        cmds.optionVar(sv=(OPT_PROJECT, project))
-        cmds.optionVar(sv=(OPT_PROJECT_ID, prj_id))
         if json.loads(response.text):
             cmds.optionVar(sv=(OPT_USERNAME, json.loads(response.text)['name']))
             cmds.optionVar(sv=(OPT_COOKIES, pickle.dumps(session.cookies)))
@@ -61,10 +61,8 @@ def login(session, host, project, prj_id, username, password):
             cmds.optionVar(remove=OPT_COOKIES)
             return AUTH_FAILED
     except ConnectionError:
-        clear_ov()
         return CONNECT_FAILED
     except ValueError:
-        clear_ov()
         return CONNECT_FAILED
 
 

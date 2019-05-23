@@ -3,12 +3,12 @@ from PySide2.QtWidgets import \
     QWidget, \
     QListView, \
     QListWidgetItem, \
-    QToolButton, \
     QMenu, \
     QAction
 from PySide2.QtGui import QIcon
-from PySide2.QtCore import Qt, Signal
+from PySide2.QtCore import Signal
 
+import action
 import connection
 from connection.utils import *
 from interface import setup_ui, Docker
@@ -41,7 +41,6 @@ class DockerMain(Docker):
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
         self.ui.lv_asset.setItemDelegate(AssetDelegate())
-        self.ui.tb_checkout.setPopupMode(QToolButton.InstantPopup)
         self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % MODULE_PATH))
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\connect.png' % MODULE_PATH))
         self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
@@ -64,7 +63,7 @@ class DockerMain(Docker):
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
         self.ui.tb_connect.clicked.connect(lambda *_: self.status_update(force=True))
-        self.ui.lv_asset.clicked.connect(self.build_menu)
+        self.ui.lv_asset.clicked.connect(lambda *_: self.build_menu())
         self.ui.tb_refresh.clicked.connect(
             lambda *_: genus_model.update(
                 self.ui.cb_genus.currentIndex()
@@ -90,6 +89,7 @@ class DockerMain(Docker):
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
 
         self.ui.cb_genus.model().update(self.ui.cb_genus.currentIndex())
+        self.build_menu()
         self.ws_refresh()
 
     def refresh(self, *_):
@@ -102,13 +102,29 @@ class DockerMain(Docker):
         asset_id = current_index.data(AssetModel.IdRole)
         data_task = connection.get_data('task', entity_id=asset_id)
 
-        menu = QMenu(self)
+        if not data_task:
+            self.ui.tb_checkout.setMenu(None)
+            self.ui.tb_reference.setMenu(None)
+            self.ui.tb_checkout.setEnabled(False)
+            self.ui.tb_reference.setEnabled(False)
+            return
+
+        checkout_menu = QMenu(self)
+        reference_menu = QMenu(self)
         for task in data_task:
-            if not task['owner'] and cmds.optionVar(exists=OPT_USERNAME):
-                action = TaskAction(task, self)
-                action.Checked.connect(self.checkout)
-                menu.addAction(action)
-        self.ui.tb_checkout.setMenu(menu)
+            checkout_action = TaskCheckoutAction(task, self)
+            reference_action = TaskReferenceAction(task, self)
+            checkout_action.Checked.connect(self.checkout)
+            reference_action.Referred.connect(self.reference)
+            checkout_menu.addAction(checkout_action)
+            reference_menu.addAction(reference_action)
+            owner = task['owner']
+            if owner:
+                checkout_action.setEnabled(False)
+        self.ui.tb_checkout.setEnabled(cmds.optionVar(exists=OPT_USERNAME))
+        self.ui.tb_reference.setEnabled(True)
+        self.ui.tb_checkout.setMenu(checkout_menu if cmds.optionVar(exists=OPT_USERNAME) else None)
+        self.ui.tb_reference.setMenu(reference_menu)
 
     def checkout(self, task):
         connection.set_data(
@@ -116,8 +132,13 @@ class DockerMain(Docker):
             id=task['id'],
             owner=cmds.optionVar(q=OPT_USERNAME)
         )
+        action.checkout(task['path'])
         self.ui.tw_main.setCurrentIndex(1)
+        self.build_menu()
         self.ws_refresh()
+
+    def reference(self, task):
+        action
 
     def ws_refresh(self, *_):
         if not cmds.optionVar(exists=OPT_USERNAME):
@@ -137,14 +158,24 @@ class DockerMain(Docker):
             it.setFlags(it.flags() & ~Qt.ItemIsSelectable)'''
 
 
-class TaskAction(QAction):
+class TaskCheckoutAction(QAction):
 
     Checked = Signal(object)
 
     def __init__(self, task, parent=None):
         self._data = task
-        super(TaskAction, self).__init__(task['stage_info'], parent)
+        super(TaskCheckoutAction, self).__init__(task['stage_info'], parent)
         self.triggered.connect(lambda *_: self.Checked.emit(self._data))
+
+
+class TaskReferenceAction(QAction):
+
+    Referred = Signal(object)
+
+    def __init__(self, task, parent=None):
+        self._data = task
+        super(TaskReferenceAction, self).__init__(task['stage_info'], parent)
+        self.triggered.connect(lambda *_: self.Referred.emit(self._data))
 
 
 class TaskItem(QWidget):

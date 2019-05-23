@@ -25,7 +25,7 @@ def get_auth():
     if dialog.exec_() == QDialog.Accepted:
         return dialog.get_info()
     else:
-        return '*', '', '', '', ''
+        return '*', '', '', '', '', ''
 
 
 def setup_ui(container, ui):
@@ -93,9 +93,11 @@ class AuthDialog(QDialog):
         self.ui.btn_test.clicked.connect(self.test)
         self.ui.bbox.setEnabled(False)
         self.project_id = []
+        self.project_root = []
 
     def test(self, *_):
         self.project_id = []
+        self.project_root = []
         while self.ui.cb_project.count():
             self.ui.cb_project.removeItem(0)
         host = self.ui.le_host.text()
@@ -107,6 +109,7 @@ class AuthDialog(QDialog):
             for p in projects:
                 self.ui.cb_project.addItem(p['info'])
                 self.project_id.append(p['id'])
+                self.project_root.append(p['root'])
             self.ui.btn_test.setStyleSheet('color: #000000; background-color: #33CC33')
         except ConnectionError:
             self.ui.btn_test.setStyleSheet('color: #000000; background-color: #CC3333')
@@ -119,9 +122,11 @@ class AuthDialog(QDialog):
         host = self.ui.le_host.text()
         port = self.ui.le_port.text()
         prj_id = self.project_id[self.ui.cb_project.currentIndex()] if len(self.project_id) else ''
+        prj_root = self.project_root[self.ui.cb_project.currentIndex()] if len(self.project_root) else ''
         return '%s:%s' % (host, port) if (host and port) else '', \
                self.ui.cb_project.currentText(), \
                prj_id, \
+               prj_root, \
                self.ui.le_usr.text(), \
                self.ui.le_pwd.text()
 

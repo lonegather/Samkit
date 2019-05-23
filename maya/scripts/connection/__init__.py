@@ -17,10 +17,21 @@ def access(force=False):
 
     if force or not host:
         print('Get host and user info from user.')
-        host, project, prj_id, username, password = interface.get_auth()
+        host, project, prj_id, prj_root, username, password = interface.get_auth()
+        print(host, project, prj_id, prj_root, username, password)
         if host == '*':
             return AUTH_ABORT
-        return login(session, host, project, prj_id, username, password) if host else CONNECT_FAILED
+        result = login(session, host, username, password) if host else CONNECT_FAILED
+
+        cmds.optionVar(sv=(OPT_HOST, host))
+        cmds.optionVar(sv=(OPT_PROJECT, project))
+        cmds.optionVar(sv=(OPT_PROJECT_ID, prj_id))
+        cmds.optionVar(sv=(OPT_PROJECT_ROOT, prj_root))
+
+        if result == CONNECT_FAILED:
+            clear_ov()
+
+        return result
     else:
         print('Retrieve host and cookies from optionVar.')
         if not cookies:

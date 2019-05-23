@@ -57,7 +57,12 @@ class Project(models.Model):
     def all(cls, *_, **__):
         result = []
         for prj in cls.objects.all():
-            result.append({'id': str(prj.id), 'name': prj.name, 'info': prj.info})
+            result.append({
+                'id': str(prj.id),
+                'name': prj.name,
+                'info': prj.info,
+                'root': prj.root,
+            })
         return result
 
     @classmethod
@@ -146,9 +151,9 @@ class Tag(models.Model):
         }
         for key in kwargs:
             if key in mapper:
-                keywords[mapper[key]] = kwargs[key]
+                keywords[mapper[key]] = uuid.UUID(kwargs[key]) if key in ['project_id', 'genus_id'] else kwargs[key]
             else:
-                keywords[key] = kwargs[key]
+                keywords[key] = uuid.UUID(kwargs[key]) if key == 'id' else kwargs[key]
         for tag in cls.objects.filter(**keywords):
             result.append({
                 'id': str(tag.id),
@@ -187,12 +192,9 @@ class Entity(models.Model):
         }
         for key in kwargs:
             if key in mapper:
-                keywords[mapper[key]] = kwargs[key]
+                keywords[mapper[key]] = uuid.UUID(kwargs[key]) if key in ['project_id'] else kwargs[key]
             else:
-                if key == 'id':
-                    keywords[key] = uuid.UUID(kwargs[key])
-                else:
-                    keywords[key] = kwargs[key]
+                keywords[key] = uuid.UUID(kwargs[key]) if key == 'id' else kwargs[key]
         for ent in cls.objects.filter(**keywords):
             link = []
             for l in ent.link.all():
@@ -310,9 +312,9 @@ class Stage(models.Model):
                   }
         for key in kwargs:
             if key in mapper:
-                keywords[mapper[key]] = kwargs[key]
+                keywords[mapper[key]] = uuid.UUID(kwargs[key]) if key in [] else kwargs[key]
             else:
-                keywords[key] = kwargs[key]
+                keywords[key] = uuid.UUID(kwargs[key]) if key == 'id' else kwargs[key]
         for stg in cls.objects.filter(**keywords):
             result.append({'name': stg.name, 'info': stg.info, 'project': stg.project.name,
                            'genus': stg.genus.name, 'genus_info': stg.genus.info,
@@ -364,9 +366,10 @@ class Task(models.Model):
         }
         for key in kwargs:
             if key in mapper:
-                keywords[mapper[key]] = kwargs[key]
+                keywords[mapper[key]] = uuid.UUID(kwargs[key]) if key in ['entity_id'] else kwargs[key]
             else:
-                keywords[key] = kwargs[key]
+                keywords[key] = uuid.UUID(kwargs[key]) if key == 'id' else kwargs[key]
+
         for tsk in cls.objects.filter(**keywords):
             result.append({
                 'id': str(tsk.id),
