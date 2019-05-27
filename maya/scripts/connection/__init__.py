@@ -17,8 +17,7 @@ def access(force=False):
 
     if force or not host:
         print('Get host and user info from user.')
-        host, project, prj_id, prj_root, username, password = interface.get_auth()
-        print(host, project, prj_id, prj_root, username, password)
+        host, project, prj_id, prj_root, workspace, username, password = interface.get_auth()
         if host == '*':
             return AUTH_ABORT
         result = login(session, host, username, password) if host else CONNECT_FAILED
@@ -27,6 +26,7 @@ def access(force=False):
         cmds.optionVar(sv=(OPT_PROJECT, project))
         cmds.optionVar(sv=(OPT_PROJECT_ID, prj_id))
         cmds.optionVar(sv=(OPT_PROJECT_ROOT, prj_root))
+        cmds.optionVar(sv=(OPT_WORKSPACE, workspace))
 
         if result == CONNECT_FAILED:
             clear_ov()

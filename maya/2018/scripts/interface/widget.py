@@ -32,7 +32,6 @@ class DockerMain(Docker):
         genus_model = GenusModel()
         tag_model = TagModel(genus_model)
         asset_model = AssetModel(tag_model)
-        self.ui.cb_genus.activated.connect(self.refresh)
 
         self.ui.cb_genus.setModel(genus_model)
         self.ui.cb_tag.setModel(tag_model)
@@ -41,15 +40,17 @@ class DockerMain(Docker):
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
         self.ui.lv_asset.setItemDelegate(AssetDelegate())
-        self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % MODULE_PATH))
-        self.ui.tb_connect.setIcon(QIcon('%s\\icons\\connect.png' % MODULE_PATH))
-        self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
-        self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
         self.ui.tb_reference.setIcon(QIcon('%s\\icons\\link.png' % MODULE_PATH))
+        self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % MODULE_PATH))
+        self.ui.tb_admin.setIcon(QIcon('%s\\icons\\admin.png' % MODULE_PATH))
+        self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
+        self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % MODULE_PATH))
+        self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
         self.ui.tb_open.setIcon(QIcon('%s\\icons\\edit.png' % MODULE_PATH))
         self.ui.tb_checkin.setIcon(QIcon('%s\\icons\\checkin.png' % MODULE_PATH))
         self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % MODULE_PATH))
         self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % MODULE_PATH))
+        self.ui.tb_local.setIcon(QIcon('%s\\icons\\folder.png' % MODULE_PATH))
         self.ui.lw_task.setStyleSheet("""
             QListWidget {
                 background: #00000000;
@@ -60,6 +61,7 @@ class DockerMain(Docker):
         """)
         self.ui.lw_task.setItemDelegate(TaskDelegate())
 
+        self.ui.cb_genus.activated.connect(self.refresh)
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
         self.ui.tb_connect.clicked.connect(lambda *_: self.status_update(force=True))
@@ -70,7 +72,7 @@ class DockerMain(Docker):
             )
         )
         self.ui.tb_renew.clicked.connect(self.ws_refresh)
-        self.status_update()
+        cmds.evalDeferred(self.status_update)
 
     def status_update(self, force=False):
         self.project_id = ''
@@ -88,7 +90,11 @@ class DockerMain(Docker):
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
 
+        if self.ui.cb_genus.currentIndex() == -1:
+            self.ui.cb_genus.setCurrentIndex(0)
+            self.ui.cb_genus.activated.emit(0)
         self.ui.cb_genus.model().update(self.ui.cb_genus.currentIndex())
+
         self.build_menu()
         self.ws_refresh()
 
@@ -99,8 +105,10 @@ class DockerMain(Docker):
 
     def build_menu(self, *_):
         current_index = self.ui.lv_asset.currentIndex()
+        data_task = []
         asset_id = current_index.data(AssetModel.IdRole)
-        data_task = connection.get_data('task', entity_id=asset_id)
+        if asset_id:
+            data_task = connection.get_data('task', entity_id=asset_id)
 
         if not data_task:
             self.ui.tb_checkout.setMenu(None)

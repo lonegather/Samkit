@@ -19,8 +19,8 @@ class GenusModel(QAbstractListModel):
             self.GenusRole: 'name',
         }
         # DATA FORMAT: [id, name, info]
-        self._data = get_data('genus')
-        self.current_id = self._data[0]['id'] if self._data else ''
+        self._data = []  # get_data('genus')
+        self.current_id = ''  # self._data[0]['id'] if self._data else ''
 
     def update(self, index=0):
         self._data = get_data('genus')
@@ -98,8 +98,7 @@ class AssetModel(QAbstractListModel):
     def update(self, tag_id=None):
         tag_id = tag_id if tag_id else self._tag.current_id
         self._data = get_data('entity', tag_id=tag_id, project_id=cmds.optionVar(q=OPT_PROJECT_ID))
-        if not self._data:
-            self.dataChanged.emit(QModelIndex(), QModelIndex())
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
         for asset in self._data:
             self._hub.get(asset['thumb'])
 

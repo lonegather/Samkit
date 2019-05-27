@@ -126,6 +126,16 @@
           </widget>
          </item>
          <item>
+          <widget class="QToolButton" name="tb_admin">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QToolButton" name="tb_refresh">
            <property name="text">
             <string/>
@@ -185,7 +195,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="tb_checkin">
+          <widget class="QToolButton" name="tb_merge">
            <property name="text">
             <string/>
            </property>
@@ -195,7 +205,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="tb_merge">
+          <widget class="QToolButton" name="tb_checkin">
            <property name="text">
             <string/>
            </property>

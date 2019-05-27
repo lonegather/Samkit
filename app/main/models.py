@@ -366,6 +366,7 @@ class Task(models.Model):
         }
         for key in kwargs:
             if key in mapper:
+                print(key, kwargs[key])
                 keywords[mapper[key]] = uuid.UUID(kwargs[key]) if key in ['entity_id'] else kwargs[key]
             else:
                 keywords[key] = uuid.UUID(kwargs[key]) if key == 'id' else kwargs[key]

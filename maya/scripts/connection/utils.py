@@ -11,6 +11,7 @@ __all__ = [
     'OPT_PROJECT',
     'OPT_PROJECT_ID',
     'OPT_PROJECT_ROOT',
+    'OPT_WORKSPACE',
     'OPT_COOKIES',
     'AUTH_SUCCESS',
     'AUTH_FAILED',
@@ -27,6 +28,7 @@ OPT_USERNAME = 'samkit_username'
 OPT_PROJECT = 'samkit_project'
 OPT_PROJECT_ID = 'samkit_project_id'
 OPT_PROJECT_ROOT = 'samkit_project_root'
+OPT_WORKSPACE = 'samkit_workspace'
 OPT_COOKIES = 'samkit_cookies'
 AUTH_SUCCESS = 0
 AUTH_FAILED = 1
@@ -40,6 +42,7 @@ def clear_ov():
     cmds.optionVar(remove=OPT_PROJECT)
     cmds.optionVar(remove=OPT_PROJECT_ID)
     cmds.optionVar(remove=OPT_PROJECT_ROOT)
+    cmds.optionVar(remove=OPT_WORKSPACE)
     cmds.optionVar(remove=OPT_COOKIES)
 
 
