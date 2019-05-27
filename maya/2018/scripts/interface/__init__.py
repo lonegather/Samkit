@@ -85,16 +85,24 @@ class AuthDialog(QDialog):
         setup_ui(self, self.UI_PATH)
 
         self.setWindowTitle(self.ui.windowTitle())
-        self.ui.tb_browse.setIcon(QIcon('%s\\icons\\folder_open.png' % MODULE_PATH))
+        self.ui.tb_browse.setIcon(QIcon('%s\\icons\\folder.png' % MODULE_PATH))
 
-        self.ui.accepted.connect(self.accept)
-        self.ui.rejected.connect(self.reject)
         server = cmds.optionVar(q=OPT_HOST)
         server = server if server else ':'
         host = server.split(':')[0]
         port = server.split(':')[1]
         self.ui.le_host.setText(host)
         self.ui.le_port.setText(port if port else '8000')
+
+        workspace = cmds.optionVar(q=OPT_WORKSPACE)
+        if not os.path.exists(str(workspace)):
+            workspace = cmds.workspace(q=True, directory=True)
+            workspace = os.path.normpath(workspace)
+            workspace = os.path.dirname(workspace)
+        self.ui.le_workspace.setText(workspace)
+
+        self.ui.accepted.connect(self.accept)
+        self.ui.rejected.connect(self.reject)
         self.ui.btn_test.clicked.connect(self.test)
         self.ui.bbox.setEnabled(False)
         self.project_id = []

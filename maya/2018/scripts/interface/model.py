@@ -22,14 +22,13 @@ class GenusModel(QAbstractListModel):
         self._data = []  # get_data('genus')
         self.current_id = ''  # self._data[0]['id'] if self._data else ''
 
-    def update(self, index=0):
+    def update(self):
         self._data = get_data('genus')
-        index = min(index, len(self._data) - 1)
-        self.notify(index)
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
+        self.notify(0)
 
     def notify(self, index):
         self.current_id = self._data[index]['id'] if self._data else ''
-        self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.genusChanged.emit(self.current_id)
 
     def rowCount(self, *_):
@@ -59,11 +58,11 @@ class TagModel(QAbstractListModel):
 
     def update(self, genus_id):
         self._data = get_data('tag', genus_id=genus_id, project_id=cmds.optionVar(q=OPT_PROJECT_ID))
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.notify(0)
 
     def notify(self, index):
         self.current_id = self._data[index]['id'] if self._data else ''
-        self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.tagChanged.emit(self.current_id)
 
     def rowCount(self, *_):

@@ -61,16 +61,15 @@ class DockerMain(Docker):
         """)
         self.ui.lw_task.setItemDelegate(TaskDelegate())
 
-        self.ui.cb_genus.activated.connect(self.refresh)
+        genus_model.dataChanged.connect(self.redraw_genus)
+        tag_model.dataChanged.connect(self.redraw_tag)
+        asset_model.dataChanged.connect(self.redraw_asset)
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
+
         self.ui.tb_connect.clicked.connect(lambda *_: self.status_update(force=True))
         self.ui.lv_asset.clicked.connect(lambda *_: self.build_menu())
-        self.ui.tb_refresh.clicked.connect(
-            lambda *_: genus_model.update(
-                self.ui.cb_genus.currentIndex()
-            )
-        )
+        self.ui.tb_refresh.clicked.connect(lambda *_: genus_model.update())
         self.ui.tb_renew.clicked.connect(self.ws_refresh)
         cmds.evalDeferred(self.status_update)
 
@@ -78,7 +77,9 @@ class DockerMain(Docker):
         self.project_id = ''
         self.ui.lbl_project.setStyleSheet('background-color: rgba(0, 0, 0, 0);')
         self.ui.lbl_project.setText('Retrieving...')
+
         connection.access(force=force)
+
         self.connected = cmds.optionVar(exists=OPT_HOST)
         self.authorized = cmds.optionVar(exists=OPT_COOKIES)
         self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #CC3333;')
@@ -89,19 +90,24 @@ class DockerMain(Docker):
             self.project_id = cmds.optionVar(q=OPT_PROJECT_ID)
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
+        self.ui.tw_main.setTabEnabled(1, cmds.optionVar(exists=OPT_USERNAME))
 
-        if self.ui.cb_genus.currentIndex() == -1:
-            self.ui.cb_genus.setCurrentIndex(0)
-            self.ui.cb_genus.activated.emit(0)
-        self.ui.cb_genus.model().update(self.ui.cb_genus.currentIndex())
-
+        self.ui.cb_genus.model().update()
         self.build_menu()
         self.ws_refresh()
 
-    def refresh(self, *_):
+    def redraw_genus(self, *_):
+        self.ui.cb_genus.setCurrentIndex(0)
+
+    def redraw_tag(self, *_):
         self.ui.cb_tag.setCurrentIndex(0)
         self.ui.cb_tag.setVisible(False)
         self.ui.cb_tag.setVisible(True)
+
+    def redraw_asset(self, *_):
+        model = self.ui.lv_asset.model()
+        self.ui.lv_asset.setModel(None)
+        self.ui.lv_asset.setModel(model)
 
     def build_menu(self, *_):
         current_index = self.ui.lv_asset.currentIndex()
