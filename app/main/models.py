@@ -5,6 +5,7 @@ import json
 import uuid
 
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -404,8 +405,12 @@ class Task(models.Model):
 
         if tsk_id:
             tsk = cls.objects.get(id=tsk_id)
-            if username:
+            try:
                 tsk.owner = User.objects.get(username=username)
+            except ObjectDoesNotExist:
+                if 'owner' in form:
+                    tsk.owner = None
+
         else:
             # TODO: Create new task
             pass

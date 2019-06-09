@@ -19,8 +19,8 @@ class GenusModel(QAbstractListModel):
             self.GenusRole: 'name',
         }
         # DATA FORMAT: [id, name, info]
-        self._data = []  # get_data('genus')
-        self.current_id = ''  # self._data[0]['id'] if self._data else ''
+        self._data = []
+        self.current_id = ''
 
     def update(self):
         self._data = get_data('genus')
@@ -52,7 +52,7 @@ class TagModel(QAbstractListModel):
         }
         self._genus = genus
         # DATA FORMAT: [id, name, info, genus_id, genus_name, genus_info]
-        self._data = get_data('tag', genus_id=genus.current_id, project_id=cmds.optionVar(q=OPT_PROJECT_ID))
+        self._data = []
         self.current_id = self._data[0]['id'] if self._data else ''
         self._genus.genusChanged.connect(self.update)
 

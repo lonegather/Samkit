@@ -3,7 +3,7 @@ import json
 import requests
 from requests.exceptions import ConnectionError
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from PySide2.QtWidgets import QDialog, QWidget, QVBoxLayout, QSizePolicy
+from PySide2.QtWidgets import QDialog, QWidget, QVBoxLayout, QSizePolicy, QFileDialog
 from PySide2.QtGui import QImage, QIcon
 from PySide2.QtCore import QFile, QObject, Signal, QUrl, Qt
 from PySide2.QtUiTools import QUiLoader
@@ -83,6 +83,8 @@ class AuthDialog(QDialog):
     def __init__(self, parent=None):
         super(AuthDialog, self).__init__(parent)
         setup_ui(self, self.UI_PATH)
+        self.project_id = []
+        self.project_root = []
 
         self.setWindowTitle(self.ui.windowTitle())
         self.ui.tb_browse.setIcon(QIcon('%s\\icons\\folder.png' % MODULE_PATH))
@@ -104,9 +106,7 @@ class AuthDialog(QDialog):
         self.ui.accepted.connect(self.accept)
         self.ui.rejected.connect(self.reject)
         self.ui.btn_test.clicked.connect(self.test)
-        self.ui.bbox.setEnabled(False)
-        self.project_id = []
-        self.project_root = []
+        self.ui.tb_browse.clicked.connect(self.browse)
 
     def test(self, *_):
         self.project_id = []
@@ -131,6 +131,14 @@ class AuthDialog(QDialog):
         finally:
             self.ui.bbox.setEnabled(True)
             self.ui.wgt_workspace.setEnabled(True)
+
+    def browse(self, *_):
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.DirectoryOnly)
+        dialog.setDirectory(self.ui.le_workspace.text())
+        if dialog.exec_():
+            path = dialog.selectedFiles()[0]
+            self.ui.le_workspace.setText(path)
 
     def get_info(self):
         host = self.ui.le_host.text()

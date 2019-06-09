@@ -3,6 +3,7 @@ import sys
 
 reload_list = [
     'action',
+    'action.plugins',
     'connection',
     'connection.utils',
     'interface',
