@@ -62,7 +62,7 @@ class EntityAdmin(admin.ModelAdmin):
 @admin.register(models.Stage)
 class StageAdmin(admin.ModelAdmin):
     
-    list_display = ('name', 'info', 'genus', 'path', 'project')
+    list_display = ('name', 'info', 'genus', 'source', 'data', 'project')
     list_filter = ('genus', 'project')
     ordering = ('name', )
 

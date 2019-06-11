@@ -4,7 +4,7 @@ import requests
 from requests.exceptions import ConnectionError
 from maya import cmds
 
-import interface
+import samgui
 from .utils import *
 
 
@@ -17,7 +17,7 @@ def access(force=False):
 
     if force or not host:
         print('Get host and user info from user.')
-        host, project, prj_id, prj_root, workspace, username, password = interface.get_auth()
+        host, project, prj_id, prj_root, workspace, username, password = samgui.get_auth()
         if host == '*':
             return AUTH_ABORT
         result = login(session, host, username, password) if host else CONNECT_FAILED

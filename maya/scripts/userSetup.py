@@ -2,9 +2,16 @@ from maya import cmds, mel
 
 
 def setup(*_):
+    import pyblish.api
+    import pyblish_qml.settings
 
-    from interface.widget import DockerMain
-    import connection
+    pyblish.api.register_gui('pyblish_qml')
+    pyblish_qml.settings.WindowTitle = 'Submit Assistant'
+    pyblish_qml.settings.WindowPosition = [500, 100]
+    pyblish_qml.settings.WindowSize = [800, 600]
+
+    from samgui.widget import DockerMain
+    import samcon
     print('----------Samkit Start----------')
     DockerMain.setup()
     layout = mel.eval('$tmp = $gAttributeEditorButton').split('|attributeEditorButton')[0]
@@ -21,7 +28,7 @@ def setup(*_):
         command=lambda *_: DockerMain.setup()
     )
     cmds.formLayout(layout, e=True, attachForm=[(btn, 'right', 1), (btn, 'top', 1)])
-    cmds.scriptJob(event=['quitApplication', lambda *_: connection.session.close()])
+    cmds.scriptJob(event=['quitApplication', lambda *_: samcon.session.close()])
     cmds.inViewMessage(message='Samkit Ready', position='midCenter', fade=True)
 
 

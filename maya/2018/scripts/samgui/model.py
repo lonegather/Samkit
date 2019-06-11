@@ -1,10 +1,8 @@
 from PySide2.QtCore import QAbstractListModel, QModelIndex, Qt, Signal
 
-from maya import cmds
-
-from connection import get_data
-from connection.utils import *
-from interface import ImageHub
+import samkit
+from samcon import get_data
+from samgui import ImageHub
 
 
 class GenusModel(QAbstractListModel):
@@ -57,7 +55,7 @@ class TagModel(QAbstractListModel):
         self._genus.genusChanged.connect(self.update)
 
     def update(self, genus_id):
-        self._data = get_data('tag', genus_id=genus_id, project_id=cmds.optionVar(q=OPT_PROJECT_ID))
+        self._data = get_data('tag', genus_id=genus_id, project_id=samkit.getenv(samkit.OPT_PROJECT_ID))
         self.dataChanged.emit(QModelIndex(), QModelIndex())
         self.notify(0)
 
@@ -96,7 +94,7 @@ class AssetModel(QAbstractListModel):
 
     def update(self, tag_id=None):
         tag_id = tag_id if tag_id else self._tag.current_id
-        self._data = get_data('entity', tag_id=tag_id, project_id=cmds.optionVar(q=OPT_PROJECT_ID))
+        self._data = get_data('entity', tag_id=tag_id)
         self.dataChanged.emit(QModelIndex(), QModelIndex())
         for asset in self._data:
             self._hub.get(asset['thumb'])

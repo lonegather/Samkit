@@ -1,13 +1,10 @@
-import os
-from maya import cmds
 from PySide2.QtWidgets import QWidget, QListView, QListWidgetItem, QMenu, QAction
 from PySide2.QtGui import QIcon, QPixmap
 from PySide2.QtCore import Signal, Qt
 
-import action
-import connection
-from connection.utils import *
-from interface import setup_ui, Docker
+import samkit
+import samcon
+from . import setup_ui, Docker
 from .model import GenusModel, TagModel, AssetModel
 from .delegate import AssetDelegate, TaskDelegate
 
@@ -16,7 +13,7 @@ class DockerMain(Docker):
 
     CONTROL_NAME = 'samkit_docker_control'
     DOCK_LABEL_NAME = 'Samkit'
-    UI_PATH = '%s\\ui\\main.ui' % MODULE_PATH
+    UI_PATH = '%s\\ui\\main.ui' % samkit.MODULE_PATH
 
     def __init__(self, parent=None):
         super(DockerMain, self).__init__(parent=parent)
@@ -38,16 +35,16 @@ class DockerMain(Docker):
         self.ui.lv_asset.setWrapping(True)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
-        self.ui.tb_reference.setIcon(QIcon('%s\\icons\\link.png' % MODULE_PATH))
-        self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % MODULE_PATH))
-        self.ui.tb_admin.setIcon(QIcon('%s\\icons\\admin.png' % MODULE_PATH))
-        self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
-        self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % MODULE_PATH))
-        self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % MODULE_PATH))
-        self.ui.tb_open.setIcon(QIcon('%s\\icons\\edit.png' % MODULE_PATH))
-        self.ui.tb_checkin.setIcon(QIcon('%s\\icons\\checkin.png' % MODULE_PATH))
-        self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % MODULE_PATH))
-        self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % MODULE_PATH))
+        self.ui.tb_reference.setIcon(QIcon('%s\\icons\\link.png' % samkit.MODULE_PATH))
+        self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
+        self.ui.tb_admin.setIcon(QIcon('%s\\icons\\admin.png' % samkit.MODULE_PATH))
+        self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
+        self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
+        self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
+        self.ui.tb_open.setIcon(QIcon('%s\\icons\\edit.png' % samkit.MODULE_PATH))
+        self.ui.tb_checkin.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
+        self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))
+        self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
         self.ui.lw_task.setStyleSheet("""
             QListWidget {
                 background: #00000000;
@@ -74,27 +71,27 @@ class DockerMain(Docker):
         self.ui.tb_merge.clicked.connect(self.ws_merge)
         self.ui.tb_checkin.clicked.connect(self.ws_checkin)
 
-        cmds.scriptJob(event=['SceneOpened', self.ws_refresh])
-        cmds.evalDeferred(self.status_update)
+        samkit.scriptJob(event=['SceneOpened', self.ws_refresh])
+        samkit.evalDeferred(self.status_update)
 
     def status_update(self, force=False):
         self.project_id = ''
         self.ui.lbl_project.setStyleSheet('background-color: rgba(0, 0, 0, 0);')
         self.ui.lbl_project.setText('Retrieving...')
 
-        connection.access(force=force)
+        samcon.access(force=force)
 
-        self.connected = cmds.optionVar(exists=OPT_HOST)
-        self.authorized = cmds.optionVar(exists=OPT_COOKIES)
+        self.connected = samkit.hasenv(samkit.OPT_HOST)
+        self.authorized = samkit.hasenv(samkit.OPT_COOKIES)
         self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #CC3333;')
         self.ui.lbl_project.setText('Server Connection Error')
         if self.connected:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #CCCC33;')
-            self.ui.lbl_project.setText(cmds.optionVar(q=OPT_PROJECT))
-            self.project_id = cmds.optionVar(q=OPT_PROJECT_ID)
+            self.ui.lbl_project.setText(samkit.getenv(samkit.OPT_PROJECT))
+            self.project_id = samkit.getenv(samkit.OPT_PROJECT_ID)
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
-        self.ui.tw_main.setTabEnabled(1, cmds.optionVar(exists=OPT_USERNAME))
+        self.ui.tw_main.setTabEnabled(1, samkit.hasenv(samkit.OPT_USERNAME))
 
         self.ui.cb_genus.model().update()
         self.build_menu()
@@ -118,7 +115,7 @@ class DockerMain(Docker):
         data_task = []
         asset_id = current_index.data(AssetModel.IdRole)
         if asset_id:
-            data_task = connection.get_data('task', entity_id=asset_id)
+            data_task = samcon.get_data('task', entity_id=asset_id)
 
         if not data_task:
             self.ui.tb_checkout.setMenu(None)
@@ -139,28 +136,28 @@ class DockerMain(Docker):
             owner = task['owner']
             if owner:
                 checkout_action.setEnabled(False)
-        self.ui.tb_checkout.setEnabled(cmds.optionVar(exists=OPT_USERNAME))
+        self.ui.tb_checkout.setEnabled(samkit.hasenv(samkit.OPT_USERNAME))
         self.ui.tb_reference.setEnabled(True)
-        self.ui.tb_checkout.setMenu(checkout_menu if cmds.optionVar(exists=OPT_USERNAME) else None)
+        self.ui.tb_checkout.setMenu(checkout_menu if samkit.hasenv(samkit.OPT_USERNAME) else None)
         self.ui.tb_reference.setMenu(reference_menu)
 
     def checkout(self, task):
-        connection.set_data('task', id=task['id'], owner=cmds.optionVar(q=OPT_USERNAME))
-        task['owner'] = cmds.optionVar(q=OPT_USERNAME)
-        action.checkout(task)
+        samcon.set_data('task', id=task['id'], owner=samkit.getenv(samkit.OPT_USERNAME))
+        task['owner'] = samkit.getenv(samkit.OPT_USERNAME)
+        samkit.checkout(task)
         self.build_menu()
         self.ws_refresh()
         self.ui.tw_main.setCurrentIndex(1)
 
     def reference(self, task):
-        action.reference(task)
+        samkit.reference(task)
 
     def ws_refresh(self, *_):
-        if not cmds.optionVar(exists=OPT_USERNAME):
+        if not samkit.hasenv(samkit.OPT_USERNAME):
             return
 
-        data = connection.get_data('task', owner=cmds.optionVar(q=OPT_USERNAME))
-        context = action.get_context('id')
+        data = samcon.get_data('task', owner=samkit.getenv(samkit.OPT_USERNAME))
+        context = samkit.get_context('id')
 
         while self.ui.lw_task.count():
             self.ui.lw_task.takeItem(0)
@@ -183,23 +180,23 @@ class DockerMain(Docker):
             self.ui.tb_checkin.setEnabled(False)
             return
 
-        context = action.get_context('id')
-        local_path = os.path.realpath(os.path.join(cmds.optionVar(q=OPT_WORKSPACE), item.data(TaskItem.PATH)))
-        self.ui.tb_open.setEnabled(os.path.exists(local_path) and item.data(TaskItem.ID) != context)
+        context = samkit.get_context('id')
+        local_path_exists = samkit.path_exists(item.data(TaskItem.TASK))
+        self.ui.tb_open.setEnabled(local_path_exists and item.data(TaskItem.ID) != context)
         self.ui.tb_revert.setEnabled(True)
         self.ui.tb_merge.setEnabled(item.data(TaskItem.ID) != context)
-        self.ui.tb_checkin.setEnabled(os.path.exists(local_path))
+        self.ui.tb_checkin.setEnabled(local_path_exists)
 
     def ws_open(self, *_):
         item = self.ui.lw_task.currentItem()
-        action.open_file(item.data(TaskItem.PATH))
+        samkit.open_file(item.data(TaskItem.TASK))
 
     def ws_revert(self, *_):
-        context = action.get_context('id')
+        context = samkit.get_context('id')
         item = self.ui.lw_task.currentItem()
         if item.data(TaskItem.ID) == context:
-            cmds.file(new=True, force=True)
-        connection.set_data('task', id=item.data(TaskItem.ID), owner='')
+            samkit.new_file()
+        samcon.set_data('task', id=item.data(TaskItem.ID), owner='')
         self.build_menu()
         self.ws_refresh()
 
@@ -207,11 +204,11 @@ class DockerMain(Docker):
         pass
 
     def ws_checkin(self, *_):
-        context = action.get_context('id')
+        context = samkit.get_context('id')
         item = self.ui.lw_task.currentItem()
         if item.data(TaskItem.ID) != context:
-            action.open_file(item.data(TaskItem.PATH))
-        cmds.evalDeferred(action.checkin)
+            samkit.open_file(item.data(TaskItem.TASK))
+        samkit.evalDeferred(samkit.show)
 
 
 class TaskCheckoutAction(QAction):
@@ -236,9 +233,10 @@ class TaskReferenceAction(QAction):
 
 class TaskItem(QListWidgetItem):
 
-    UI_PATH = '%s\\ui\\task.ui' % MODULE_PATH
+    UI_PATH = '%s\\ui\\task.ui' % samkit.MODULE_PATH
     ID = Qt.UserRole + 1
     PATH = Qt.UserRole + 2
+    TASK = Qt.UserRole + 3
 
     def __init__(self, task, context, parent=None):
         super(TaskItem, self).__init__(parent)
@@ -256,15 +254,18 @@ class TaskItem(QListWidgetItem):
         self.update_icon(context)
 
     def data(self, role):
-        return self._data[self._map[role]] if role in self._map else None
+        if role in self._map:
+            return self._data[self._map[role]]
+        elif role == self.TASK:
+            return self._data
+        return None
 
     def update_icon(self, context=None):
-        path = os.path.realpath(os.path.join(cmds.optionVar(q=OPT_WORKSPACE), self._data['path']))
-        if os.path.exists(path):
+        if samkit.path_exists(self._data):
             if context == self._data['id']:
-                self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\bookmark.png' % MODULE_PATH))
+                self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\bookmark.png' % samkit.MODULE_PATH))
             else:
-                self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\checked.png' % MODULE_PATH))
+                self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\checked.png' % samkit.MODULE_PATH))
         else:
-            self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\unavailable.png' % MODULE_PATH))
+            self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\unavailable.png' % samkit.MODULE_PATH))
 

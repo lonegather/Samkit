@@ -2,20 +2,19 @@ import sys
 
 
 reload_list = [
-    'action',
-    'action.plugins',
-    'connection',
-    'connection.utils',
-    'interface',
-    'interface.delegate',
-    'interface.model',
-    'interface.widget',
+    'samkit',
+    'samcon',
+    'samcon.utils',
+    'samgui',
+    'samgui.delegate',
+    'samgui.model',
+    'samgui.widget',
 ]
 
 
 def execute():
 
-    from interface.widget import DockerMain
+    from samgui.widget import DockerMain
     DockerMain.instance.close()
 
     for mod in reload_list:

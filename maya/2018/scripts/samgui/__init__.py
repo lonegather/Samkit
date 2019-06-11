@@ -13,7 +13,7 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from maya.OpenMayaUI import MQtUtil
 from maya import cmds
 
-from connection.utils import *
+from samcon.utils import *
 
 
 def get_main_window():

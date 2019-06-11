@@ -319,7 +319,7 @@ class Stage(models.Model):
         for stg in cls.objects.filter(**keywords):
             result.append({'name': stg.name, 'info': stg.info, 'project': stg.project.name,
                            'genus': stg.genus.name, 'genus_info': stg.genus.info,
-                           'path': stg.path})
+                           'source': stg.source, 'data': stg.data})
         return result
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -327,8 +327,9 @@ class Stage(models.Model):
     genus = models.ForeignKey(Genus, default=uuid.uuid4, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     info = models.CharField(max_length=50, blank=True)
-    path = models.CharField(max_length=200, default='/')
-    
+    source = models.CharField(max_length=200, default='/')
+    data = models.CharField(max_length=200, default='/')
+
     def __str__(self):
         return self.name
     
@@ -396,7 +397,7 @@ class Task(models.Model):
         genus = self.stage.genus.name
         entity = self.entity.name
         stage = self.stage.name
-        return self.stage.path.format(**locals())
+        return ';'.join((self.stage.source.format(**locals()), self.stage.data.format(**locals())))
 
     @classmethod
     def set(cls, form):
