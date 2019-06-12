@@ -39,8 +39,15 @@ def path_exists(task):
 
 
 def get_local_path(task):
-    local_path = os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[0]))
-    return local_path
+    return os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[0]))
+
+
+def get_source_path(task):
+    return os.path.realpath(os.path.join(getenv(OPT_PROJECT_ROOT), task['path'].split(';')[0]))
+
+
+def get_data_path(task):
+    return os.path.realpath(os.path.join(getenv(OPT_PROJECT_ROOT), task['path'].split(';')[1]))
 
 
 def get_context(key=None):
