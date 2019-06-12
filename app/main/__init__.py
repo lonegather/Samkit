@@ -35,7 +35,7 @@ def reset():
     
     # Project
     for data in [
-        {'name': u'TEMPLATE', 'info': u'模板项目', 'root': u'P:'},
+        {'name': u'TEMPLATE', 'info': u'模板项目', 'root': u'P:/'},
     ]: models.Project(**data).save()
     
     # Genus
