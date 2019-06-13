@@ -68,7 +68,6 @@ class Project(models.Model):
 
     @classmethod
     def set(cls, form):
-        print(form)
         prj_id = form.get('id', [None])[0]
 
         if prj_id:
@@ -368,7 +367,6 @@ class Task(models.Model):
         }
         for key in kwargs:
             if key in mapper:
-                print(key, kwargs[key])
                 keywords[mapper[key]] = uuid.UUID(kwargs[key]) if key in ['entity_id'] else kwargs[key]
             else:
                 keywords[key] = uuid.UUID(kwargs[key]) if key == 'id' else kwargs[key]

@@ -43,6 +43,9 @@ import types
 import shutil
 import importlib
 
+if False:
+    from PySide2 import QtWidgets, QtCore, QtGui, QtNetwork
+
 
 __version__ = "1.2.0"
 
