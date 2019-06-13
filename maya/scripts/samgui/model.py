@@ -1,4 +1,4 @@
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Qt, Signal
+from Qt.QtCore import QAbstractListModel, QModelIndex, Qt, Signal
 
 import samkit
 from samcon import get_data

@@ -1,6 +1,6 @@
-from PySide2.QtWidgets import QStyledItemDelegate, QStyle
-from PySide2.QtGui import QPen, QColor
-from PySide2.QtCore import QSize, Qt
+from Qt.QtWidgets import QStyledItemDelegate, QStyle
+from Qt.QtGui import QPen, QColor
+from Qt.QtCore import QSize, Qt
 
 from .model import AssetModel
 

@@ -2,12 +2,11 @@ import os
 import json
 import requests
 from requests.exceptions import ConnectionError
-from PySide2.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from PySide2.QtWidgets import QDialog, QWidget, QVBoxLayout, QSizePolicy, QFileDialog
-from PySide2.QtGui import QImage, QIcon
-from PySide2.QtCore import QFile, QObject, Signal, QUrl, Qt
-from PySide2.QtUiTools import QUiLoader
-from shiboken2 import wrapInstance
+from Qt.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from Qt.QtWidgets import QDialog, QWidget, QVBoxLayout, QSizePolicy, QFileDialog
+from Qt.QtGui import QImage, QIcon
+from Qt.QtCore import QObject, Signal, QUrl, Qt
+from Qt.QtCompat import loadUi, wrapInstance
 
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from maya.OpenMayaUI import MQtUtil
@@ -32,12 +31,8 @@ def get_auth():
 def setup_ui(container, ui):
     layout = QVBoxLayout(container)
     layout.setContentsMargins(0, 0, 0, 0)
-    loader = QUiLoader()
-    file = QFile(ui)
-    file.open(QFile.ReadOnly)
-    container.ui = loader.load(file)
+    container.ui = loadUi(ui)
     layout.addWidget(container.ui)
-    file.close()
 
 
 class Docker(MayaQWidgetDockableMixin, QWidget):

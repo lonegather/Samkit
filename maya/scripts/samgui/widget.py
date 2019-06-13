@@ -1,6 +1,6 @@
-from PySide2.QtWidgets import QWidget, QListView, QListWidgetItem, QMenu, QAction
-from PySide2.QtGui import QIcon, QPixmap
-from PySide2.QtCore import Signal, Qt
+from Qt.QtWidgets import QWidget, QListView, QListWidgetItem, QMenu, QAction
+from Qt.QtGui import QIcon, QPixmap
+from Qt.QtCore import Signal, Qt
 
 import samkit
 import samcon
