@@ -3,7 +3,6 @@ from Qt.QtGui import QIcon, QPixmap
 from Qt.QtCore import Signal, Qt
 
 import samkit
-import samcon
 from . import setup_ui, Docker
 from .model import GenusModel, TagModel, AssetModel
 from .delegate import AssetDelegate, TaskDelegate
@@ -79,7 +78,7 @@ class DockerMain(Docker):
         self.ui.lbl_project.setStyleSheet('background-color: rgba(0, 0, 0, 0);')
         self.ui.lbl_project.setText('Retrieving...')
 
-        samcon.access(force=force)
+        samkit.access(force=force)
 
         self.connected = samkit.hasenv(samkit.OPT_HOST)
         self.authorized = samkit.hasenv(samkit.OPT_COOKIES)
@@ -115,7 +114,7 @@ class DockerMain(Docker):
         data_task = []
         asset_id = current_index.data(AssetModel.IdRole)
         if asset_id:
-            data_task = samcon.get_data('task', entity_id=asset_id)
+            data_task = samkit.get_data('task', entity_id=asset_id)
 
         if not data_task:
             self.ui.tb_checkout.setMenu(None)
@@ -142,8 +141,6 @@ class DockerMain(Docker):
         self.ui.tb_reference.setMenu(reference_menu)
 
     def checkout(self, task):
-        samcon.set_data('task', id=task['id'], owner=samkit.getenv(samkit.OPT_USERNAME))
-        task['owner'] = samkit.getenv(samkit.OPT_USERNAME)
         samkit.checkout(task)
         self.build_menu()
         self.ws_refresh()
@@ -156,7 +153,7 @@ class DockerMain(Docker):
         if not samkit.hasenv(samkit.OPT_USERNAME):
             return
 
-        data = samcon.get_data('task', owner=samkit.getenv(samkit.OPT_USERNAME))
+        data = samkit.get_data('task', owner=samkit.getenv(samkit.OPT_USERNAME))
         context = samkit.get_context('id')
 
         while self.ui.lw_task.count():
@@ -194,9 +191,7 @@ class DockerMain(Docker):
     def ws_revert(self, *_):
         context = samkit.get_context('id')
         item = self.ui.lw_task.currentItem()
-        if item.data(TaskItem.ID) == context:
-            samkit.new_file()
-        samcon.set_data('task', id=item.data(TaskItem.ID), owner='')
+        samkit.revert(item.data(TaskItem.ID))
         self.build_menu()
         self.ws_refresh()
 

@@ -4,25 +4,34 @@ import shutil
 from maya import cmds
 from pyblish_qml import show
 
+import samcon
 from samcon.utils import *
 
 
 __all__ = [
     'evalDeferred',
     'scriptJob',
+    'access',
+    'get_data',
     'getenv',
     'hasenv',
     'path_exists',
     'get_local_path',
+    'get_source_path',
+    'get_data_path',
     'get_context',
+    'new_file',
     'open_file',
     'checkout',
+    'checkin',
     'reference',
     'show',
 ]
 
 evalDeferred = cmds.evalDeferred
 scriptJob = cmds.scriptJob
+access = samcon.access
+get_data = samcon.get_data
 
 
 def getenv(key):
@@ -68,7 +77,17 @@ def open_file(task):
         cmds.fileInfo('samkit_context', json.dumps(task))
 
 
+def revert(task_id):
+    context = get_context('id')
+    if task_id == context:
+        new_file()
+    samcon.set_data('task', id=task_id, owner='')
+
+
 def checkout(task):
+    samcon.set_data('task', id=task['id'], owner=getenv(OPT_USERNAME))
+    task['owner'] = getenv(OPT_USERNAME)
+
     remote_path = os.path.realpath(os.path.join(getenv(OPT_PROJECT_ROOT), task['path'].split(';')[0]))
     local_path = os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[0]))
 
@@ -86,6 +105,12 @@ def checkout(task):
         os.makedirs(basedir)
 
     shutil.copyfile(remote_path, local_path)
+
+
+def checkin():
+    task = get_context()
+    samcon.set_data('task', id=task['id'], owner='')
+    new_file()
 
 
 def reference(task):
