@@ -32,20 +32,3 @@ class ModelExtractor(pyblish.api.InstancePlugin):
     def process(self, instance):
         from pprint import pprint
         pprint(instance.data)
-
-
-class ModelIntegrator(pyblish.api.InstancePlugin):
-
-    order = pyblish.api.IntegratorOrder
-    label = 'Submit'
-    families = ['mdl']
-
-    def process(self, instance):
-        import shutil
-        import samkit
-        from maya import cmds
-
-        current_path = cmds.file(q=True, sn=True)
-        shutil.copyfile(current_path, instance.data['pathSrc'])
-
-        samkit.checkin()

@@ -53,27 +53,27 @@ class DockerMain(Docker):
             }
         """)
 
-        genus_model.dataChanged.connect(self.redraw_genus)
-        tag_model.dataChanged.connect(self.redraw_tag)
-        asset_model.dataChanged.connect(self.redraw_asset)
+        genus_model.dataChanged.connect(self.refresh_repository_genus)
+        tag_model.dataChanged.connect(self.refresh_repository_tag)
+        asset_model.dataChanged.connect(self.refresh_repository_asset)
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
-        self.ui.tb_connect.clicked.connect(lambda *_: self.status_update(force=True))
-        self.ui.lv_asset.clicked.connect(lambda *_: self.build_menu())
+        self.ui.tb_connect.clicked.connect(lambda *_: self.refresh_repository(force=True))
+        self.ui.lv_asset.clicked.connect(lambda *_: self.refresh_repository_toolbar())
         self.ui.tb_refresh.clicked.connect(lambda *_: genus_model.update())
 
-        self.ui.lw_task.clicked.connect(self.ws_update_toolbar)
-        self.ui.lw_task.doubleClicked.connect(self.ws_open)
-        self.ui.tb_open.clicked.connect(self.ws_open)
-        self.ui.tb_revert.clicked.connect(self.ws_revert)
-        self.ui.tb_renew.clicked.connect(self.ws_refresh)
-        self.ui.tb_merge.clicked.connect(self.ws_merge)
-        self.ui.tb_checkin.clicked.connect(self.ws_checkin)
+        self.ui.lw_task.clicked.connect(self.refresh_workspace_toolbar)
+        self.ui.lw_task.doubleClicked.connect(self.open_workspace)
+        self.ui.tb_open.clicked.connect(self.open_workspace)
+        self.ui.tb_revert.clicked.connect(self.revert_workspace)
+        self.ui.tb_renew.clicked.connect(self.refresh_workspace)
+        self.ui.tb_merge.clicked.connect(self.merge_workspace)
+        self.ui.tb_checkin.clicked.connect(self.checkin_workspace)
 
-        samkit.scriptJob(event=['SceneOpened', self.ws_refresh])
-        samkit.evalDeferred(self.status_update)
+        samkit.scriptJob(event=['SceneOpened', self.refresh_workspace])
+        samkit.evalDeferred(self.refresh_repository)
 
-    def status_update(self, force=False):
+    def refresh_repository(self, force=False):
         self.project_id = ''
         self.ui.lbl_project.setStyleSheet('background-color: rgba(0, 0, 0, 0);')
         self.ui.lbl_project.setText('Retrieving...')
@@ -93,23 +93,23 @@ class DockerMain(Docker):
         self.ui.tw_main.setTabEnabled(1, samkit.hasenv(samkit.OPT_USERNAME))
 
         self.ui.cb_genus.model().update()
-        self.build_menu()
-        self.ws_refresh()
+        self.refresh_repository_toolbar()
+        self.refresh_workspace()
 
-    def redraw_genus(self, *_):
+    def refresh_repository_genus(self, *_):
         self.ui.cb_genus.setCurrentIndex(0)
 
-    def redraw_tag(self, *_):
+    def refresh_repository_tag(self, *_):
         self.ui.cb_tag.setCurrentIndex(0)
         self.ui.cb_tag.setVisible(False)
         self.ui.cb_tag.setVisible(True)
 
-    def redraw_asset(self, *_):
+    def refresh_repository_asset(self, *_):
         model = self.ui.lv_asset.model()
         self.ui.lv_asset.setModel(None)
         self.ui.lv_asset.setModel(model)
 
-    def build_menu(self, *_):
+    def refresh_repository_toolbar(self, *_):
         current_index = self.ui.lv_asset.currentIndex()
         data_task = []
         asset_id = current_index.data(AssetModel.IdRole)
@@ -128,8 +128,8 @@ class DockerMain(Docker):
         for task in data_task:
             checkout_action = TaskCheckoutAction(task, self)
             reference_action = TaskReferenceAction(task, self)
-            checkout_action.Checked.connect(self.checkout)
-            reference_action.Referred.connect(self.reference)
+            checkout_action.Checked.connect(self.checkout_repository)
+            reference_action.Referred.connect(samkit.reference)
             checkout_menu.addAction(checkout_action)
             reference_menu.addAction(reference_action)
             owner = task['owner']
@@ -140,16 +140,7 @@ class DockerMain(Docker):
         self.ui.tb_checkout.setMenu(checkout_menu if samkit.hasenv(samkit.OPT_USERNAME) else None)
         self.ui.tb_reference.setMenu(reference_menu)
 
-    def checkout(self, task):
-        samkit.checkout(task)
-        self.build_menu()
-        self.ws_refresh()
-        self.ui.tw_main.setCurrentIndex(1)
-
-    def reference(self, task):
-        samkit.reference(task)
-
-    def ws_refresh(self, *_):
+    def refresh_workspace(self, *_):
         if not samkit.hasenv(samkit.OPT_USERNAME):
             return
 
@@ -166,9 +157,9 @@ class DockerMain(Docker):
         '''for i in range(self.view.count()):
             it = self.view.item(i)
             it.setFlags(it.flags() & ~Qt.ItemIsSelectable)'''
-        self.ws_update_toolbar()
+        self.refresh_workspace_toolbar()
 
-    def ws_update_toolbar(self, *_):
+    def refresh_workspace_toolbar(self, *_):
         item = self.ui.lw_task.currentItem()
         if not item:
             self.ui.tb_open.setEnabled(False)
@@ -184,26 +175,31 @@ class DockerMain(Docker):
         self.ui.tb_merge.setEnabled(item.data(TaskItem.ID) != context)
         self.ui.tb_checkin.setEnabled(local_path_exists)
 
-    def ws_open(self, *_):
+    def checkout_repository(self, task):
+        samkit.checkout(task)
+        self.refresh_repository_toolbar()
+        self.refresh_workspace()
+        self.ui.tw_main.setCurrentIndex(1)
+
+    def open_workspace(self, *_):
         item = self.ui.lw_task.currentItem()
         samkit.open_file(item.data(TaskItem.TASK))
 
-    def ws_revert(self, *_):
-        context = samkit.get_context('id')
+    def revert_workspace(self, *_):
         item = self.ui.lw_task.currentItem()
         samkit.revert(item.data(TaskItem.ID))
-        self.build_menu()
-        self.ws_refresh()
+        self.refresh_repository_toolbar()
+        self.refresh_workspace()
 
-    def ws_merge(self, *_):
+    def merge_workspace(self, *_):
         pass
 
-    def ws_checkin(self, *_):
+    def checkin_workspace(self, *_):
         context = samkit.get_context('id')
         item = self.ui.lw_task.currentItem()
         if item.data(TaskItem.ID) != context:
             samkit.open_file(item.data(TaskItem.TASK))
-        samkit.evalDeferred(samkit.show)
+        samkit.evalDeferred(samkit.checkin)
 
 
 class TaskCheckoutAction(QAction):
@@ -212,7 +208,9 @@ class TaskCheckoutAction(QAction):
 
     def __init__(self, task, parent=None):
         self._data = task
-        super(TaskCheckoutAction, self).__init__(task['stage_info'], parent)
+        label = task['stage_info']
+        label += ' [checked out by %s]' % task['owner'] if task['owner'] else ''
+        super(TaskCheckoutAction, self).__init__(label, parent)
         self.triggered.connect(lambda *_: self.Checked.emit(self._data))
 
 

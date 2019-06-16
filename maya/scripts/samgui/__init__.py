@@ -12,7 +12,7 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from maya.OpenMayaUI import MQtUtil
 from maya import cmds
 
-from samcon.utils import *
+import samkit
 
 
 def get_main_window():
@@ -73,7 +73,7 @@ class Docker(MayaQWidgetDockableMixin, QWidget):
 
 class AuthDialog(QDialog):
 
-    UI_PATH = '%s\\ui\\auth.ui' % MODULE_PATH
+    UI_PATH = '%s\\ui\\auth.ui' % samkit.MODULE_PATH
 
     def __init__(self, parent=None):
         super(AuthDialog, self).__init__(parent)
@@ -82,16 +82,16 @@ class AuthDialog(QDialog):
         self.project_root = []
 
         self.setWindowTitle(self.ui.windowTitle())
-        self.ui.tb_browse.setIcon(QIcon('%s\\icons\\folder.png' % MODULE_PATH))
+        self.ui.tb_browse.setIcon(QIcon('%s\\icons\\folder.png' % samkit.MODULE_PATH))
 
-        server = cmds.optionVar(q=OPT_HOST)
+        server = cmds.optionVar(q=samkit.OPT_HOST)
         server = server if server else ':'
         host = server.split(':')[0]
         port = server.split(':')[1]
         self.ui.le_host.setText(host)
         self.ui.le_port.setText(port if port else '8000')
 
-        workspace = cmds.optionVar(q=OPT_WORKSPACE)
+        workspace = cmds.optionVar(q=samkit.OPT_WORKSPACE)
         if not os.path.exists(str(workspace)):
             workspace = cmds.workspace(q=True, directory=True)
             workspace = os.path.normpath(workspace)
@@ -169,7 +169,7 @@ class ImageHub(QObject):
     def get(self, url):
         if not self.icon_set.get(url, None):
             self.icon_set[url] = 'loading'
-            host = cmds.optionVar(q=OPT_HOST)
+            host = cmds.optionVar(q=samkit.OPT_HOST)
             req = QNetworkRequest(QUrl('http://%s%s' % (host, url)))
             self.manager.get(req)
         elif not self.icon_set[url] == 'loading':

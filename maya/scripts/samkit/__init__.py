@@ -13,6 +13,7 @@ __all__ = [
     'scriptJob',
     'access',
     'get_data',
+    'set_data',
     'getenv',
     'hasenv',
     'path_exists',
@@ -25,13 +26,22 @@ __all__ = [
     'checkout',
     'checkin',
     'reference',
-    'show',
+    'MODULE_PATH',
+    'OPT_HOST',
+    'OPT_USERNAME',
+    'OPT_PROJECT',
+    'OPT_PROJECT_ID',
+    'OPT_PROJECT_ROOT',
+    'OPT_WORKSPACE',
+    'OPT_COOKIES',
 ]
 
 evalDeferred = cmds.evalDeferred
 scriptJob = cmds.scriptJob
 access = samcon.access
 get_data = samcon.get_data
+set_data = samcon.set_data
+checkin = show
 
 
 def getenv(key):
@@ -43,8 +53,7 @@ def hasenv(key):
 
 
 def path_exists(task):
-    path = os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[0]))
-    return os.path.exists(path)
+    return os.path.exists(get_local_path(task))
 
 
 def get_local_path(task):
@@ -60,10 +69,13 @@ def get_data_path(task):
 
 
 def get_context(key=None):
+    empty_map = {
+        'reference': []
+    }
     task_info = cmds.fileInfo('samkit_context', q=True)
     task_info = task_info[0].replace(r'\"', '"').replace(r'\\\\', r'\\') if task_info else '{}'
     task = json.loads(task_info)
-    return task.get(key, None) if key else task
+    return task.get(key, empty_map.get(key, None)) if key else task
 
 
 def new_file():
@@ -71,9 +83,10 @@ def new_file():
 
 
 def open_file(task):
-    local_path = os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[0]))
+    local_path = get_local_path(task)
     if os.path.exists(local_path):
         cmds.file(local_path, open=True, force=True)
+        task['reference'] = get_context('reference')
         cmds.fileInfo('samkit_context', json.dumps(task))
 
 
@@ -88,33 +101,34 @@ def checkout(task):
     samcon.set_data('task', id=task['id'], owner=getenv(OPT_USERNAME))
     task['owner'] = getenv(OPT_USERNAME)
 
-    remote_path = os.path.realpath(os.path.join(getenv(OPT_PROJECT_ROOT), task['path'].split(';')[0]))
-    local_path = os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[0]))
+    source_path = get_source_path(task)
+    local_path = get_local_path(task)
 
-    basedir = os.path.dirname(remote_path)
+    basedir = os.path.dirname(source_path)
     if not os.path.exists(basedir):
         os.makedirs(basedir)
-    if not os.path.exists(remote_path):
+    if not os.path.exists(source_path):
         cmds.file(new=True, force=True)
         cmds.fileInfo('samkit_context', json.dumps(task))
-        cmds.file(rename=remote_path)
+        cmds.file(rename=source_path)
         cmds.file(save=True, type='mayaAscii')
 
     basedir = os.path.dirname(local_path)
     if not os.path.exists(basedir):
         os.makedirs(basedir)
 
-    shutil.copyfile(remote_path, local_path)
-
-
-def checkin():
-    task = get_context()
-    samcon.set_data('task', id=task['id'], owner='')
-    new_file()
+    shutil.copyfile(source_path, local_path)
 
 
 def reference(task):
-    pass
+    context = get_context()
+    refs = get_context('reference')
+    refs.append(task['id'])
+    context['reference'] = refs
+    cmds.fileInfo('samkit_context', json.dumps(context))
+
+    source_path = get_source_path(task)
+    cmds.file(source_path, reference=True, namespace=task['stage'])
 
 
 def edit(path):
