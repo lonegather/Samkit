@@ -29,7 +29,7 @@ def setup(*_):
     )
     cmds.formLayout(layout, e=True, attachForm=[(btn, 'right', 1), (btn, 'top', 1)])
     cmds.scriptJob(event=['quitApplication', lambda *_: samcon.session.close()])
-    cmds.inViewMessage(message='Samkit Ready', position='midCenter', fade=True)
+    cmds.evalDeferred(lambda:cmds.inViewMessage(message='Samkit Ready', position='midCenter', fade=True))
 
 
 cmds.evalDeferred(setup)
