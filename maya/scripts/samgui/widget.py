@@ -34,8 +34,7 @@ class DockerMain(Docker):
         self.ui.lv_asset.setWrapping(True)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
-        self.ui.tb_reference.setIcon(QIcon('%s\\icons\\link.png' % samkit.MODULE_PATH))
-        self.ui.tb_checkout.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
+        self.ui.lv_asset.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tb_admin.setIcon(QIcon('%s\\icons\\admin.png' % samkit.MODULE_PATH))
         self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
@@ -59,8 +58,8 @@ class DockerMain(Docker):
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
         self.ui.tb_connect.clicked.connect(lambda *_: self.refresh_repository(force=True))
-        self.ui.lv_asset.clicked.connect(lambda *_: self.refresh_repository_toolbar())
-        self.ui.tb_refresh.clicked.connect(lambda *_: genus_model.update())
+        self.ui.lv_asset.customContextMenuRequested.connect(self.refresh_repository_context_menu)
+        self.ui.tb_refresh.clicked.connect(genus_model.update)
 
         self.ui.lw_task.clicked.connect(self.refresh_workspace_toolbar)
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
@@ -72,6 +71,7 @@ class DockerMain(Docker):
 
         samkit.scriptJob(event=['SceneOpened', self.refresh_workspace])
         samkit.evalDeferred(self.refresh_repository)
+        samkit.evalDeferred(self.refresh_workspace)
 
     def refresh_repository(self, force=False):
         self.project_id = ''
@@ -93,8 +93,6 @@ class DockerMain(Docker):
         self.ui.tw_main.setTabEnabled(1, samkit.hasenv(samkit.OPT_USERNAME))
 
         self.ui.cb_genus.model().update()
-        self.refresh_repository_toolbar()
-        self.refresh_workspace()
 
     def refresh_repository_genus(self, *_):
         self.ui.cb_genus.setCurrentIndex(0)
@@ -109,36 +107,22 @@ class DockerMain(Docker):
         self.ui.lv_asset.setModel(None)
         self.ui.lv_asset.setModel(model)
 
-    def refresh_repository_toolbar(self, *_):
+    def refresh_repository_context_menu(self, position):
         current_index = self.ui.lv_asset.currentIndex()
         data_task = []
         asset_id = current_index.data(AssetModel.IdRole)
         if asset_id:
             data_task = samkit.get_data('task', entity_id=asset_id)
-
         if not data_task:
-            self.ui.tb_checkout.setMenu(None)
-            self.ui.tb_reference.setMenu(None)
-            self.ui.tb_checkout.setEnabled(False)
-            self.ui.tb_reference.setEnabled(False)
             return
 
-        checkout_menu = QMenu(self)
-        reference_menu = QMenu(self)
+        menu = QMenu()
         for task in data_task:
-            checkout_action = TaskCheckoutAction(task, self)
-            reference_action = TaskReferenceAction(task, self)
-            checkout_action.Checked.connect(self.checkout_repository)
-            reference_action.Referred.connect(samkit.reference)
-            checkout_menu.addAction(checkout_action)
-            reference_menu.addAction(reference_action)
-            owner = task['owner']
-            if owner:
-                checkout_action.setEnabled(False)
-        self.ui.tb_checkout.setEnabled(samkit.hasenv(samkit.OPT_USERNAME))
-        self.ui.tb_reference.setEnabled(True)
-        self.ui.tb_checkout.setMenu(checkout_menu if samkit.hasenv(samkit.OPT_USERNAME) else None)
-        self.ui.tb_reference.setMenu(reference_menu)
+            stage_menu = TaskMenu(task)
+            stage_menu.Checked.connect(self.checkout_repository)
+            stage_menu.Referred.connect(samkit.reference)
+            menu.addMenu(stage_menu)
+        menu.exec_(self.ui.lv_asset.mapToGlobal(position))
 
     def refresh_workspace(self, *_):
         if not samkit.hasenv(samkit.OPT_USERNAME):
@@ -169,7 +153,7 @@ class DockerMain(Docker):
             return
 
         context = samkit.get_context('id')
-        local_path_exists = samkit.path_exists(item.data(TaskItem.TASK))
+        local_path_exists = samkit.local_path_exists(item.data(TaskItem.TASK))
         self.ui.tb_open.setEnabled(local_path_exists and item.data(TaskItem.ID) != context)
         self.ui.tb_revert.setEnabled(True)
         self.ui.tb_merge.setEnabled(item.data(TaskItem.ID) != context)
@@ -177,7 +161,6 @@ class DockerMain(Docker):
 
     def checkout_repository(self, task):
         samkit.checkout(task)
-        self.refresh_repository_toolbar()
         self.refresh_workspace()
         self.ui.tw_main.setCurrentIndex(1)
 
@@ -187,12 +170,13 @@ class DockerMain(Docker):
 
     def revert_workspace(self, *_):
         item = self.ui.lw_task.currentItem()
-        samkit.revert(item.data(TaskItem.ID))
-        self.refresh_repository_toolbar()
+        samkit.revert(item.data(TaskItem.TASK))
         self.refresh_workspace()
 
     def merge_workspace(self, *_):
-        pass
+        item = self.ui.lw_task.currentItem()
+        samkit.merge(item.data(TaskItem.TASK))
+        self.refresh_workspace()
 
     def checkin_workspace(self, *_):
         context = samkit.get_context('id')
@@ -202,15 +186,31 @@ class DockerMain(Docker):
         samkit.evalDeferred(samkit.checkin)
 
 
+class TaskMenu(QMenu):
+
+    Checked = Signal(object)
+    Referred = Signal(object)
+
+    def __init__(self, task, parent=None):
+        super(TaskMenu, self).__init__(parent)
+        self.setTitle(task['stage_info'])
+        checkout_action = TaskCheckoutAction(task, self)
+        reference_action = TaskReferenceAction(task, self)
+        checkout_action.Checked.connect(lambda data: self.Checked.emit(data))
+        reference_action.Referred.connect(lambda data: self.Referred.emit(data))
+        self.addAction(checkout_action)
+        self.addAction(reference_action)
+
+
 class TaskCheckoutAction(QAction):
 
     Checked = Signal(object)
 
     def __init__(self, task, parent=None):
         self._data = task
-        label = task['stage_info']
-        label += ' [checked out by %s]' % task['owner'] if task['owner'] else ''
+        label = 'Checked Out by %s' % task['owner'] if task['owner'] else 'Check Out'
         super(TaskCheckoutAction, self).__init__(label, parent)
+        self.setEnabled(not bool(task['owner']))
         self.triggered.connect(lambda *_: self.Checked.emit(self._data))
 
 
@@ -220,7 +220,8 @@ class TaskReferenceAction(QAction):
 
     def __init__(self, task, parent=None):
         self._data = task
-        super(TaskReferenceAction, self).__init__(task['stage_info'], parent)
+        super(TaskReferenceAction, self).__init__('Create Reference', parent)
+        self.setEnabled(samkit.source_path_exists(task))
         self.triggered.connect(lambda *_: self.Referred.emit(self._data))
 
 
@@ -235,6 +236,7 @@ class TaskItem(QListWidgetItem):
         super(TaskItem, self).__init__(parent)
         self.widget = QWidget()
         self._data = task
+        self._history = samkit.get_history(task)
         self._map = {
             self.ID: 'id',
             self.PATH: 'path',
@@ -242,9 +244,19 @@ class TaskItem(QListWidgetItem):
 
         setup_ui(self.widget, self.UI_PATH)
         self.widget.setFocusPolicy(Qt.NoFocus)
+        self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
+        self.widget.ui.cb_version.addItem('latest')
+        self.widget.ui.cb_version.addItems(['v%03d - %s' % (h['version'], h['time']) for h in self._history])
+
+        self.widget.ui.tb_sync.clicked.connect(self.sync)
         self.update_icon(context)
+
+    def sync(self, *_):
+        version_txt = self.widget.ui.cb_version.currentText()
+        version = version_txt.split(' - ')[0]
+        samkit.sync(self._data, version)
 
     def data(self, role):
         if role in self._map:
@@ -254,7 +266,7 @@ class TaskItem(QListWidgetItem):
         return None
 
     def update_icon(self, context=None):
-        if samkit.path_exists(self._data):
+        if samkit.local_path_exists(self._data):
             if context == self._data['id']:
                 self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\bookmark.png' % samkit.MODULE_PATH))
             else:

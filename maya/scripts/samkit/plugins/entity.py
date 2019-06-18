@@ -38,15 +38,10 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
         history_dir = os.path.join(source_dir, '.history')
         history_path = os.path.join(history_dir, '%s.json' % source_base)
 
-        if not os.path.exists(history_path):
-            if not os.path.exists(history_dir):
-                os.makedirs(history_dir)
-            history = {'id': task['id'], 'history': []}
-        else:
-            with open(history_path, 'r') as fp:
-                history = json.load(fp)
+        with open(history_path, 'r') as fp:
+            history = json.load(fp)
 
-        version = 1
+        version = 0
         history_base = '%s.v%03d' % (os.path.join(history_dir, source_base), version)
         while os.path.exists(history_base):
             version += 1
@@ -55,9 +50,10 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
         shutil.copyfile(source_path, history_base)
 
         history['history'].append({
-            'time': instance.data['time'],
+            'time': history['time'],
             'version': version
         })
+        history['time'] = instance.data['time']
 
         with open(history_path, 'w') as fp:
             json.dump(history, fp, indent=2)
