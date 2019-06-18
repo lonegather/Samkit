@@ -187,12 +187,15 @@ class DockerMain(Docker):
 
     def revert_workspace(self, *_):
         item = self.ui.lw_task.currentItem()
-        samkit.revert(item.data(TaskItem.ID))
+        samkit.revert(item.data(TaskItem.TASK))
         self.refresh_repository_toolbar()
         self.refresh_workspace()
 
     def merge_workspace(self, *_):
-        pass
+        item = self.ui.lw_task.currentItem()
+        samkit.merge(item.data(TaskItem.TASK))
+        self.refresh_repository_toolbar()
+        self.refresh_workspace()
 
     def checkin_workspace(self, *_):
         context = samkit.get_context('id')
@@ -200,6 +203,7 @@ class DockerMain(Docker):
         if item.data(TaskItem.ID) != context:
             samkit.open_file(item.data(TaskItem.TASK))
         samkit.evalDeferred(samkit.checkin)
+        samkit.evalDeferred(self.refresh_repository_toolbar)
 
 
 class TaskCheckoutAction(QAction):
@@ -235,6 +239,7 @@ class TaskItem(QListWidgetItem):
         super(TaskItem, self).__init__(parent)
         self.widget = QWidget()
         self._data = task
+        self._history = samkit.get_history(task)
         self._map = {
             self.ID: 'id',
             self.PATH: 'path',
@@ -242,8 +247,12 @@ class TaskItem(QListWidgetItem):
 
         setup_ui(self.widget, self.UI_PATH)
         self.widget.setFocusPolicy(Qt.NoFocus)
+        self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
+        self.widget.ui.cb_version.addItem('latest')
+        self.widget.ui.cb_version.addItems(['v%03d - %s' % (h['version'], h['time']) for h in self._history])
+
         self.update_icon(context)
 
     def data(self, role):

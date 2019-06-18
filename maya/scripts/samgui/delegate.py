@@ -36,14 +36,14 @@ class AssetDelegate(QStyledItemDelegate):
 class TaskDelegate(QStyledItemDelegate):
 
     ITEM_WIDTH = 100
-    ITEM_HEIGHT = 50
+    ITEM_HEIGHT = 51
 
     def __init__(self, parent=None):
         super(TaskDelegate, self).__init__(parent)
 
     def paint(self, painter, option, index):
         # option.state = QStyle.State_None
-        option.rect = option.rect.adjusted(0, 8, 0, 0)
+        option.rect = option.rect.adjusted(0, 8, -210, 0)
         super(TaskDelegate, self).paint(painter, option, index)
 
     def sizeHint(self, option, index):
