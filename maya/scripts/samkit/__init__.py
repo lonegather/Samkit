@@ -97,7 +97,9 @@ def get_history(task):
     try:
         with open(history_path, 'r') as fp:
             history = json.load(fp)
-        return history['history'] if task['id'] == history['id'] else []
+        result = ['v%03d - %s' % (h['version'], h['time']) for h in history['history']]
+        result.insert(0, 'latest - %s' % history['time'])
+        return result if task['id'] == history['id'] else []
     except IOError:
         return []
 

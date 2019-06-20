@@ -247,8 +247,7 @@ class TaskItem(QListWidgetItem):
         self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
-        self.widget.ui.cb_version.addItem('latest')
-        self.widget.ui.cb_version.addItems(['v%03d - %s' % (h['version'], h['time']) for h in self._history])
+        self.widget.ui.cb_version.addItems(self._history)
 
         self.widget.ui.tb_sync.clicked.connect(self.sync)
         self.update_icon(context)
