@@ -1,9 +1,31 @@
 import pyblish.api
 
 
+class SkinSkeletonValidator(pyblish.api.InstancePlugin):
+
+    order = pyblish.api.ValidatorOrder + 0.01
+    label = 'Detect influences'
+    families = ['skn']
+
+    def process(self, instance):
+        from maya import cmds
+
+        joints = []
+        for shape in cmds.ls(type='mesh'):
+            skin = cmds.listConnections(shape, d=False, t='skinCluster')
+            if not skin:
+                continue
+            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
+                if joint not in joints:
+                    joints.append(joint)
+
+        instance.data['joints'] = joints
+        assert len(joints), 'No skin found.'
+
+
 class SkinRootValidator(pyblish.api.InstancePlugin):
 
-    order = pyblish.api.ValidatorOrder
+    order = pyblish.api.ValidatorOrder + 0.02
     label = 'Valid Skeleton Root'
     families = ['skn']
 

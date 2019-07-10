@@ -69,7 +69,7 @@ class ModelHistoryValidator(pyblish.api.InstancePlugin):
     Geometry should have no history.
     """
 
-    order = pyblish.api.ValidatorOrder + 0.03
+    order = pyblish.api.ValidatorOrder + 0.04
     label = 'Validate Model History'
     families = ['mdl']
 
