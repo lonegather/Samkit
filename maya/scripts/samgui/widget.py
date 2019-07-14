@@ -44,7 +44,7 @@ class DockerMain(Docker):
         self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))
         self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
         self.ui.lw_task.setStyleSheet("""
-            QListWidget {
+            QListWidget#lw_task {
                 background: #00000000;
             }
             QListWidget:focus {
@@ -247,15 +247,23 @@ class TaskItem(QListWidgetItem):
         self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
-        self.widget.ui.cb_version.addItems(self._history)
-
+        self.widget.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self._history))
+        self.widget.ui.lw_version.setCurrentRow(0)
         self.widget.ui.tb_sync.clicked.connect(self.sync)
+        self.widget.ui.lw_version.clicked.connect(self.select)
+        self.select()
         self.update_icon(context)
 
     def sync(self, *_):
-        version_txt = self.widget.ui.cb_version.currentText()
+        item = self.widget.ui.lw_version.currentItem()
+        version_txt = item.text()
         version = version_txt.split(' - ')[0]
+        version = version if self.widget.ui.lw_version.currentRow() else 'latest'
         samkit.sync(self._data, version)
+
+    def select(self, *_):
+        index = self.widget.ui.lw_version.currentRow()
+        self.widget.ui.lbl_comment.setText(self._history[index]['comment'])
 
     def data(self, role):
         if role in self._map:
@@ -272,4 +280,3 @@ class TaskItem(QListWidgetItem):
                 self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\checked.png' % samkit.MODULE_PATH))
         else:
             self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\unavailable.png' % samkit.MODULE_PATH))
-

@@ -30,7 +30,7 @@ class ModelTypeValidator(pyblish.api.InstancePlugin):
 
 class ModelTransformValidator(pyblish.api.InstancePlugin):
     """
-    Geometry should have the scale value of 1.0 and rotation value of 0.0.
+    Geometry should have the scale value of 1.0.
     """
 
     order = pyblish.api.ValidatorOrder + 0.02
@@ -44,8 +44,6 @@ class ModelTransformValidator(pyblish.api.InstancePlugin):
             for transform in cmds.listRelatives(shape, allParents=True):
                 for sv in cmds.xform(transform, q=True, scale=True, ws=True):
                     assert sv == 1.0, 'Global scale of "%s" is NOT 1.0' % transform
-                for rv in cmds.xform(transform, q=True, rotation=True, ws=True):
-                    assert rv == 0.0, 'Global rotation of "%s" is NOT 0.0' % transform
 
 
 class ModelUVSetValidator(pyblish.api.InstancePlugin):

@@ -47,7 +47,6 @@ scriptJob = cmds.scriptJob
 access = samcon.access
 get_data = samcon.get_data
 set_data = samcon.set_data
-checkin = show
 
 
 def getenv(key):
@@ -97,8 +96,18 @@ def get_history(task):
     try:
         with open(history_path, 'r') as fp:
             history = json.load(fp)
-        result = ['v%03d - %s' % (h['version'], h['time']) for h in history['history']]
-        result.insert(0, 'latest - %s' % history['time'])
+        history['history'].sort(key=lambda e: e['version'], reverse=True)
+        result = [{
+            'time': history['time'],
+            'version': 'v%03d' % len(history['history']),
+            'comment': history['comment']
+        }]
+        for h in history['history']:
+            result.append({
+                'time': h['time'],
+                'version': 'v%03d' % h['version'],
+                'comment': h['comment']
+            })
         return result if task['id'] == history['id'] else []
     except IOError:
         return []
@@ -170,6 +179,7 @@ def checkout(task):
         history = {
             'id': task['id'],
             'time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            'comment': 'Initialization',
             'history': []
         }
     else:
@@ -184,6 +194,11 @@ def checkout(task):
         os.makedirs(basedir)
 
     shutil.copyfile(source_path, local_path)
+
+
+def checkin():
+    cmds.file(save=True)
+    show()
 
 
 def reference(task):

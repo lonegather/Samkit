@@ -41,6 +41,8 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
         with open(history_path, 'r') as fp:
             history = json.load(fp)
 
+        assert history['id'] == task['id'], 'Invalid submit, file mismatched.'
+
         version = 0
         history_base = '%s.v%03d' % (os.path.join(history_dir, source_base), version)
         while os.path.exists(history_base):
@@ -51,9 +53,11 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
 
         history['history'].append({
             'time': history['time'],
-            'version': version
+            'version': version,
+            'comment': history['comment']
         })
         history['time'] = instance.data['time']
+        history['comment'] = instance.context.data['comment']
 
         with open(history_path, 'w') as fp:
             json.dump(history, fp, indent=2)
@@ -62,4 +66,3 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
 
         samkit.set_data('task', id=task['id'], owner='')
         samkit.new_file()
-

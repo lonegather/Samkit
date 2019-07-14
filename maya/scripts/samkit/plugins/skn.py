@@ -30,8 +30,10 @@ class SkinRootValidator(pyblish.api.InstancePlugin):
     families = ['skn']
 
     def process(self, instance):
-        from pprint import pprint
-        pprint(instance.data)
+        from maya import cmds
+
+        joints = instance.data['joints']
+        assert cmds.ls('Root', type='joint'), 'Root joint not found.'
 
 
 class SkinExtractor(pyblish.api.InstancePlugin):
