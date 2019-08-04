@@ -118,6 +118,10 @@ def new_file():
 
 
 def open_file(task):
+    current_id = get_context('id')
+    if task['id'] == current_id:
+        return
+
     local_path = get_local_path(task)
     if os.path.exists(local_path):
         cmds.file(local_path, open=True, force=True)
@@ -158,15 +162,22 @@ def checkout(task):
 
     source_path = get_source_path(task)
     local_path = get_local_path(task)
+    current_path = cmds.file(q=True, sn=True)
 
     basedir = os.path.dirname(source_path)
     if not os.path.exists(basedir):
         os.makedirs(basedir)
     if not os.path.exists(source_path):
+        if current_path:
+            cmds.file(save=True)
         cmds.file(new=True, force=True)
         cmds.fileInfo('samkit_context', json.dumps(task))
         cmds.file(rename=source_path)
         cmds.file(save=True, type='mayaAscii')
+        if current_path:
+            cmds.file(current_path, open=True, force=True)
+        else:
+            cmds.file(new=True, force=True)
 
     source_base = os.path.basename(source_path)
     source_dir = os.path.dirname(source_path)
@@ -196,8 +207,9 @@ def checkout(task):
     shutil.copyfile(source_path, local_path)
 
 
-def checkin():
-    cmds.file(save=True)
+def checkin(submit_list):
+    submit_str = json.dumps(submit_list)
+    cmds.optionVar(sv=('samkit_submit', submit_str))
     show()
 
 
@@ -209,4 +221,4 @@ def reference(task):
     cmds.fileInfo('samkit_context', json.dumps(context))
 
     source_path = get_source_path(task)
-    cmds.file(source_path, reference=True, namespace=task['stage'])
+    cmds.file(source_path, reference=True, namespace=task['entity'] + '_' + task['stage'])

@@ -15,17 +15,67 @@ class ModelTypeValidator(pyblish.api.InstancePlugin):
     Geometry should only be poly mesh.
     """
 
-    order = pyblish.api.ValidatorOrder + 0.01
+    order = pyblish.api.ValidatorOrder - 0.49
     label = 'Validate Model Type'
-    families = ['mdl']
+    families = ['mdl', 'skn', 'rig']
 
     def process(self, instance):
         from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
 
         assert cmds.ls(geometry=True), 'No geometry found.'
 
         for shape in cmds.ls(geometry=True):
-            assert cmds.objectType(shape) == 'mesh', '"%s" is NOT a mesh' % shape
+            assert cmds.objectType(shape) == 'mesh', \
+                '%s is NOT a mesh' % shape
+
+
+class ModelInstanceValidator(pyblish.api.InstancePlugin):
+    """
+    Geometry shape should have only one transform node.
+    """
+
+    order = pyblish.api.ValidatorOrder - 0.48
+    label = 'Validate Model Instance'
+    families = ['mdl', 'skn', 'rig']
+
+    def process(self, instance):
+        from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
+
+        for shape in cmds.ls(type='mesh'):
+            transform = cmds.listRelatives(shape, allParents=True)
+            assert len(transform) == 1, \
+                '%s has multiple transform nodes.'
+
+
+class ModelNameValidator(pyblish.api.InstancePlugin):
+    """
+    Geometry shape name should follow transform node.
+    """
+
+    order = pyblish.api.ValidatorOrder - 0.47
+    label = 'Validate Model Naming'
+    families = ['mdl']
+
+    def process(self, instance):
+        from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
+
+        for shape in cmds.ls(type='mesh'):
+            transform = cmds.listRelatives(shape, allParents=True)[0]
+            shape_standard = transform + 'Shape'
+            assert shape == shape_standard, \
+                '%s\'s shape name should be %s.' % (transform, shape_standard)
 
 
 class ModelTransformValidator(pyblish.api.InstancePlugin):
@@ -33,17 +83,22 @@ class ModelTransformValidator(pyblish.api.InstancePlugin):
     Geometry should have the scale value of 1.0.
     """
 
-    order = pyblish.api.ValidatorOrder + 0.02
+    order = pyblish.api.ValidatorOrder - 0.46
     label = 'Validate Model Scale'
-    families = ['mdl']
+    families = ['mdl', 'skn', 'rig']
 
     def process(self, instance):
         from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
 
         for shape in cmds.ls(type='mesh'):
-            for transform in cmds.listRelatives(shape, allParents=True):
-                for sv in cmds.xform(transform, q=True, scale=True, ws=True):
-                    assert sv == 1.0, 'Global scale of "%s" is NOT 1.0' % transform
+            transform = cmds.listRelatives(shape, allParents=True)[0]
+            for sv in cmds.xform(transform, q=True, scale=True, ws=True):
+                assert sv == 1.0, \
+                    'Global scale of %s is NOT 1.0' % transform
 
 
 class ModelUVSetValidator(pyblish.api.InstancePlugin):
@@ -51,15 +106,20 @@ class ModelUVSetValidator(pyblish.api.InstancePlugin):
     Geometry should have only one UVSet.
     """
 
-    order = pyblish.api.ValidatorOrder + 0.03
+    order = pyblish.api.ValidatorOrder - 0.45
     label = 'Validate Model UVSet'
-    families = ['mdl']
+    families = ['mdl', 'skn', 'rig']
 
     def process(self, instance):
         from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
 
         for shape in cmds.ls(type='mesh'):
-            assert len(cmds.polyUVSet(shape, q=True, auv=True)) <= 1, '"%s" has multiply UVSets.' % shape
+            assert len(cmds.polyUVSet(shape, q=True, auv=True)) <= 1, \
+                '%s has multiply UVSets.' % shape
 
 
 class ModelHistoryValidator(pyblish.api.InstancePlugin):
@@ -67,15 +127,20 @@ class ModelHistoryValidator(pyblish.api.InstancePlugin):
     Geometry should have no history.
     """
 
-    order = pyblish.api.ValidatorOrder + 0.04
+    order = pyblish.api.ValidatorOrder - 0.44
     label = 'Validate Model History'
     families = ['mdl']
 
     def process(self, instance):
         from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
 
         for shape in cmds.ls(type='mesh'):
-            assert not cmds.listConnections(shape, d=False), '"%s" has construction history.' % shape
+            assert not cmds.listConnections(shape, d=False), \
+                '%s has construction history.' % shape
 
 
 class ModelExtractor(pyblish.api.InstancePlugin):
@@ -87,6 +152,10 @@ class ModelExtractor(pyblish.api.InstancePlugin):
     def process(self, instance):
         import os
         from maya import cmds, mel
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
 
         name = instance.data['name']
         path = instance.data['pathDat'].replace('\\', '/')
@@ -96,6 +165,7 @@ class ModelExtractor(pyblish.api.InstancePlugin):
         selection_list = []
         for shape in cmds.ls(type='mesh'):
             for transform in cmds.listRelatives(shape, allParents=True):
+                # cmds.parent(transform, world=True)
                 selection_list.append(transform)
 
         cmds.select(selection_list, r=True)
@@ -109,7 +179,7 @@ class ModelExtractor(pyblish.api.InstancePlugin):
         mel.eval('FBXExportLights -v false;')
         mel.eval('FBXExportQuaternion -v quaternion;')
         mel.eval('FBXExportReferencedAssetsContent -v true;')
-        mel.eval('FBXExportScaleFactor 10.0;')
+        mel.eval('FBXExportScaleFactor 1.0;')
         mel.eval('FBXExportShapes -v true;')
         mel.eval('FBXExportSkeletonDefinitions -v false;')
         mel.eval('FBXExportSkins -v false;')

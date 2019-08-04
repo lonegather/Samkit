@@ -43,7 +43,7 @@ class TaskDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         # option.state = QStyle.State_None
-        option.rect = option.rect.adjusted(45, 8, -228, -55)
+        option.rect = option.rect.adjusted(1, 8, -228, -68)
         super(TaskDelegate, self).paint(painter, option, index)
 
     def sizeHint(self, option, index):

@@ -7,16 +7,33 @@ class EntityCollector(pyblish.api.ContextPlugin):
     label = "Collect Submit Content"
 
     def process(self, context):
-        import samkit
+        import json
         import time
+        import samkit
+        from maya import cmds
 
-        task = samkit.get_context()
-        context.set_data('label', task['path'].split(';')[0])
-        instance = context.create_instance(task['entity'])
-        instance.data['time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        instance.data['family'] = task['stage']
-        instance.data['pathSrc'] = samkit.get_source_path(task)
-        instance.data['pathDat'] = samkit.get_data_path(task)
+        context.set_data('label', cmds.optionVar(q='samkit_project'))
+        submit_str = cmds.optionVar(q='samkit_submit')
+        submit_list = json.loads(submit_str)
+        for task in submit_list:
+            instance = context.create_instance(u'%s - %s' % (
+                task['entity'],
+                task['stage_info']
+            ))
+            instance.data['task'] = task
+            instance.data['time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            instance.data['family'] = task['stage']
+            instance.data['pathSrc'] = samkit.get_source_path(task)
+            instance.data['pathDat'] = samkit.get_data_path(task)
+
+
+class EntityCommentValidator(pyblish.api.ContextPlugin):
+
+    order = pyblish.api.ValidatorOrder - 0.5
+    label = "Validate Comment"
+
+    def process(self, context):
+        assert context.data['comment'], 'Submit comment must NOT be empty.'
 
 
 class EntityIntegrator(pyblish.api.InstancePlugin):
@@ -30,7 +47,9 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
         import shutil
         import samkit
 
-        task = samkit.get_context()
+        task = instance.data['task']
+        samkit.open_file(task)
+
         current_path = samkit.get_local_path(task)
         source_path = instance.data['pathSrc']
         source_base = os.path.basename(source_path)
@@ -41,7 +60,7 @@ class EntityIntegrator(pyblish.api.InstancePlugin):
         with open(history_path, 'r') as fp:
             history = json.load(fp)
 
-        assert history['id'] == task['id'], 'Invalid submit, file mismatched.'
+        history['id'] = task['id']
 
         version = 0
         history_base = '%s.v%03d' % (os.path.join(history_dir, source_base), version)

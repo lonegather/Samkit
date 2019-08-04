@@ -7,8 +7,8 @@ def setup(*_):
 
     pyblish.api.register_gui('pyblish_qml')
     pyblish_qml.settings.WindowTitle = 'Submit Assistant'
-    pyblish_qml.settings.WindowPosition = [500, 100]
-    pyblish_qml.settings.WindowSize = [800, 600]
+    # pyblish_qml.settings.WindowPosition = [500, 100]
+    # pyblish_qml.settings.WindowSize = [800, 600]
 
     from samgui.widget import DockerMain
     import samcon

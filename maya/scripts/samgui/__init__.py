@@ -5,7 +5,7 @@ from requests.exceptions import ConnectionError
 from Qt.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from Qt.QtWidgets import QDialog, QWidget, QVBoxLayout, QSizePolicy, QFileDialog
 from Qt.QtGui import QImage, QIcon
-from Qt.QtCore import QObject, Signal, QUrl, Qt
+from Qt.QtCore import QObject, Signal, QUrl, Qt, QThread
 from Qt.QtCompat import loadUi, wrapInstance
 
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
@@ -175,6 +175,9 @@ class ImageHub(QObject):
         elif not self.icon_set[url] == 'loading':
             self.ImageRequested.emit(self.icon_set)
 
+    def request(self):
+        pass
+
     def on_finished(self, reply):
         if reply.error() == QNetworkReply.NoError:
             url = reply.url().path()
@@ -183,3 +186,15 @@ class ImageHub(QObject):
             image.loadFromData(data)
             self.icon_set[url] = image
             self.ImageRequested.emit(self.icon_set)
+
+
+class RequestThread(QThread):
+
+    acquired = Signal(list)
+
+    def __init__(self, url):
+        super(RequestThread, self).__init__()
+        self._url = url
+
+    def run(self):
+        pass

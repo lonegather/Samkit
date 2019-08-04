@@ -20,6 +20,7 @@ class DockerMain(Docker):
         self.connected = False
         self.authorized = False
         self.project_id = ''
+        self.filter = ''
 
         genus_model = GenusModel()
         tag_model = TagModel(genus_model)
@@ -39,10 +40,7 @@ class DockerMain(Docker):
         self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
         self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
-        self.ui.tb_open.setIcon(QIcon('%s\\icons\\edit.png' % samkit.MODULE_PATH))
         self.ui.tb_checkin.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
-        self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))
-        self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
         self.ui.lw_task.setStyleSheet("""
             QListWidget#lw_task {
                 background: #00000000;
@@ -55,18 +53,17 @@ class DockerMain(Docker):
         genus_model.dataChanged.connect(self.refresh_repository_genus)
         tag_model.dataChanged.connect(self.refresh_repository_tag)
         asset_model.dataChanged.connect(self.refresh_repository_asset)
+        asset_model.filtered.connect(self.refresh_repository_asset)
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
         self.ui.tb_connect.clicked.connect(lambda *_: self.refresh_repository(force=True))
         self.ui.lv_asset.customContextMenuRequested.connect(self.refresh_repository_context_menu)
+        self.ui.lv_asset.doubleClicked.connect(self.refresh_filter)
         self.ui.tb_refresh.clicked.connect(genus_model.update)
+        self.ui.le_filter.textChanged.connect(lambda txt: asset_model.filter(txt))
 
-        self.ui.lw_task.clicked.connect(self.refresh_workspace_toolbar)
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
-        self.ui.tb_open.clicked.connect(self.open_workspace)
-        self.ui.tb_revert.clicked.connect(self.revert_workspace)
         self.ui.tb_renew.clicked.connect(self.refresh_workspace)
-        self.ui.tb_merge.clicked.connect(self.merge_workspace)
         self.ui.tb_checkin.clicked.connect(self.checkin_workspace)
 
         samkit.scriptJob(event=['SceneOpened', self.refresh_workspace])
@@ -124,40 +121,26 @@ class DockerMain(Docker):
             menu.addMenu(stage_menu)
         menu.exec_(self.ui.lv_asset.mapToGlobal(position))
 
+    def refresh_filter(self, *_):
+        pass
+
     def refresh_workspace(self, *_):
+        while self.ui.lw_task.count():
+            self.ui.lw_task.takeItem(0)
         if not samkit.hasenv(samkit.OPT_USERNAME):
             return
 
         data = samkit.get_data('task', owner=samkit.getenv(samkit.OPT_USERNAME))
         context = samkit.get_context('id')
 
-        while self.ui.lw_task.count():
-            self.ui.lw_task.takeItem(0)
         for task in data:
-            item = TaskItem(task, context)
+            item = TaskItem(task, self)
             item.setSizeHint(item.widget.sizeHint())
             self.ui.lw_task.addItem(item)
             self.ui.lw_task.setItemWidget(item, item.widget)
         '''for i in range(self.view.count()):
             it = self.view.item(i)
             it.setFlags(it.flags() & ~Qt.ItemIsSelectable)'''
-        self.refresh_workspace_toolbar()
-
-    def refresh_workspace_toolbar(self, *_):
-        item = self.ui.lw_task.currentItem()
-        if not item:
-            self.ui.tb_open.setEnabled(False)
-            self.ui.tb_revert.setEnabled(False)
-            self.ui.tb_merge.setEnabled(False)
-            self.ui.tb_checkin.setEnabled(False)
-            return
-
-        context = samkit.get_context('id')
-        local_path_exists = samkit.local_path_exists(item.data(TaskItem.TASK))
-        self.ui.tb_open.setEnabled(local_path_exists and item.data(TaskItem.ID) != context)
-        self.ui.tb_revert.setEnabled(True)
-        self.ui.tb_merge.setEnabled(item.data(TaskItem.ID) != context)
-        self.ui.tb_checkin.setEnabled(local_path_exists)
 
     def checkout_repository(self, task):
         samkit.checkout(task)
@@ -168,22 +151,22 @@ class DockerMain(Docker):
         item = self.ui.lw_task.currentItem()
         samkit.open_file(item.data(TaskItem.TASK))
 
-    def revert_workspace(self, *_):
-        item = self.ui.lw_task.currentItem()
-        samkit.revert(item.data(TaskItem.TASK))
-        self.refresh_workspace()
-
-    def merge_workspace(self, *_):
-        item = self.ui.lw_task.currentItem()
-        samkit.merge(item.data(TaskItem.TASK))
-        self.refresh_workspace()
-
     def checkin_workspace(self, *_):
+        submit_list = []
+
+        for i in range(self.ui.lw_task.count()):
+            item = self.ui.lw_task.item(i)
+            submit_list.append(item.data(TaskItem.TASK))
+
+        samkit.checkin(submit_list)
+
+        '''
         context = samkit.get_context('id')
         item = self.ui.lw_task.currentItem()
         if item.data(TaskItem.ID) != context:
             samkit.open_file(item.data(TaskItem.TASK))
         samkit.evalDeferred(samkit.checkin)
+        '''
 
 
 class TaskMenu(QMenu):
@@ -232,9 +215,10 @@ class TaskItem(QListWidgetItem):
     PATH = Qt.UserRole + 2
     TASK = Qt.UserRole + 3
 
-    def __init__(self, task, context, parent=None):
-        super(TaskItem, self).__init__(parent)
+    def __init__(self, task, widget):
+        super(TaskItem, self).__init__()
         self.widget = QWidget()
+        self._widget = widget
         self._data = task
         self._history = samkit.get_history(task)
         self._map = {
@@ -244,15 +228,23 @@ class TaskItem(QListWidgetItem):
 
         setup_ui(self.widget, self.UI_PATH)
         self.widget.setFocusPolicy(Qt.NoFocus)
-        self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\checkout.png' % samkit.MODULE_PATH))
+        self.widget.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))
+        self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
+        self.widget.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
         self.widget.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self._history))
         self.widget.ui.lw_version.setCurrentRow(0)
+        self.widget.ui.tb_merge.clicked.connect(self.merge)
         self.widget.ui.tb_sync.clicked.connect(self.sync)
+        self.widget.ui.tb_revert.clicked.connect(self.revert)
         self.widget.ui.lw_version.clicked.connect(self.select)
         self.select()
-        self.update_icon(context)
+        self.update_icon(samkit.get_context('id'))
+
+    def merge(self, *_):
+        samkit.merge(self._data)
+        self._widget.refresh_workspace()
 
     def sync(self, *_):
         item = self.widget.ui.lw_version.currentItem()
@@ -260,6 +252,10 @@ class TaskItem(QListWidgetItem):
         version = version_txt.split(' - ')[0]
         version = version if self.widget.ui.lw_version.currentRow() else 'latest'
         samkit.sync(self._data, version)
+
+    def revert(self, *_):
+        samkit.revert(self._data)
+        self._widget.refresh_workspace()
 
     def select(self, *_):
         index = self.widget.ui.lw_version.currentRow()

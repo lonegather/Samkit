@@ -75,6 +75,8 @@ class AssetModel(QAbstractListModel):
     GenusRole = Qt.UserRole + 1
     IconRole = Qt.UserRole + 2
     IdRole = Qt.UserRole + 3
+
+    filtered = Signal()
     
     def __init__(self, tag, parent=None):
         super(AssetModel, self).__init__(parent)
@@ -84,8 +86,10 @@ class AssetModel(QAbstractListModel):
             self.IconRole: 'image',
             self.IdRole: 'id',
         }
+        self._filter = ''
         # DATA FORMAT: [id, name, info, genus_id, genus_name, genus_info, tag_id, tag_name, tag_info, link, thumb]
         self._data = []
+        self._data_filter = []
         self._tag = tag
         self._hub = ImageHub()
         self._tag.tagChanged.connect(self.update)
@@ -94,16 +98,33 @@ class AssetModel(QAbstractListModel):
     def update(self, tag_id=None):
         tag_id = tag_id if tag_id else self._tag.current_id
         self._data = samkit.get_data('entity', tag_id=tag_id)
-        self.dataChanged.emit(QModelIndex(), QModelIndex())
+        self.filter(self._filter)
         for asset in self._data:
             self._hub.get(asset['thumb'])
+
+    def filter(self, txt):
+        self._filter = txt
+        keys = [k.lower() for k in txt.split(' ') if k]
+        self._data_filter = []
+
+        for d in self._data:
+            match = True
+            for k in keys:
+                if not (k in d['name'].lower() or k in d['info'].lower()):
+                    match = False
+                    break
+            if match:
+                self._data_filter.append(d)
+
+        self.filtered.emit()
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def rowCount(self, *_):
         return len(self._data)
 
     def data(self, index, role=Qt.DisplayRole):
-        if self._data:
-            return self._data[index.row()].get(self._map.get(role, None), None)
+        if len(self._data_filter) > index.row():
+            return self._data_filter[index.row()].get(self._map.get(role, None), None)
 
     def image_received(self, icon_set):
         for url in icon_set:

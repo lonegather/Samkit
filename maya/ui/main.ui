@@ -172,39 +172,9 @@
           <number>3</number>
          </property>
          <item>
-          <widget class="QToolButton" name="tb_open">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="autoRaise">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="tb_revert">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="autoRaise">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="Line" name="line">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="tb_merge">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="autoRaise">
-            <bool>true</bool>
            </property>
           </widget>
          </item>

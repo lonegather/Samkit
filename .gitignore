@@ -4,6 +4,7 @@
 # Django migrations / statics
 migrations/
 app/static/
+app/backups/
 
 # Portable Python distribution
 maya/pydist
