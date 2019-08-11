@@ -5,6 +5,7 @@
 migrations/
 app/static/
 app/backups/
+app/setup.csv
 
 # Portable Python distribution
 maya/pydist

@@ -28,13 +28,6 @@ class ProjectAdmin(admin.ModelAdmin):
     ordering = ('name', )
     
     
-@admin.register(models.Edition)
-class EditionAdmin(admin.ModelAdmin):
-    
-    list_display = ('name', )
-    ordering = ('name', )
-    
-    
 @admin.register(models.Genus)
 class GenusAdmin(admin.ModelAdmin):
     
@@ -67,17 +60,10 @@ class StageAdmin(admin.ModelAdmin):
     ordering = ('name', )
 
 
-@admin.register(models.Status)
-class StatusAdmin(admin.ModelAdmin):
-    
-    list_display = ('name', 'info')
-    ordering = ('name', )
-
-
 @admin.register(models.Task)
 class TaskAdmin(admin.ModelAdmin):
     
-    list_display = ('entity', 'stage', 'path', 'status')
+    list_display = ('entity', 'stage', 'path')
     list_filter = ('entity', 'stage')
     ordering = ('entity', )
     search_fields = ('entity', )

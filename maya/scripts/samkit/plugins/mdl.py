@@ -77,6 +77,17 @@ class ModelNameValidator(pyblish.api.InstancePlugin):
             assert shape == shape_standard, \
                 '%s\'s shape name should be %s.' % (transform, shape_standard)
 
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        for shape in cmds.ls(type='mesh'):
+            transform = cmds.listRelatives(shape, allParents=True)[0]
+            shape_standard = transform + 'Shape'
+            cmds.rename(shape, shape_standard)
+
+        return True
+
 
 class ModelTransformValidator(pyblish.api.InstancePlugin):
     """
@@ -99,6 +110,17 @@ class ModelTransformValidator(pyblish.api.InstancePlugin):
             for sv in cmds.xform(transform, q=True, scale=True, ws=True):
                 assert sv == 1.0, \
                     'Global scale of %s is NOT 1.0' % transform
+
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        for shape in cmds.ls(type='mesh'):
+            transform = cmds.listRelatives(shape, allParents=True)[0]
+            for sv in cmds.xform(transform, q=True, scale=True, ws=True):
+                if sv != 1.0:
+                    cmds.select(shape, r=True)
+                    return False
 
 
 class ModelUVSetValidator(pyblish.api.InstancePlugin):

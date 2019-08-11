@@ -4,8 +4,8 @@ from Qt.QtCore import Signal, Qt
 
 import samkit
 from . import setup_ui, Docker
-from .model import GenusModel, TagModel, AssetModel
-from .delegate import AssetDelegate, TaskDelegate
+from .model import GenusModel, TagModel, AssetModel, PluginModel, PluginItem, ResultItem
+from .delegate import AssetDelegate, TaskDelegate, PluginDelegate
 
 
 class DockerMain(Docker):
@@ -25,12 +25,15 @@ class DockerMain(Docker):
         genus_model = GenusModel()
         tag_model = TagModel(genus_model)
         asset_model = AssetModel(tag_model)
+        plugin_model = PluginModel()
 
         self.ui.cb_genus.setModel(genus_model)
         self.ui.cb_tag.setModel(tag_model)
         self.ui.lv_asset.setModel(asset_model)
+        self.ui.tv_plugin.setModel(plugin_model)
         self.ui.lv_asset.setItemDelegate(AssetDelegate())
         self.ui.lw_task.setItemDelegate(TaskDelegate())
+        self.ui.tv_plugin.setItemDelegate(PluginDelegate())
 
         self.ui.lv_asset.setWrapping(True)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
@@ -65,6 +68,15 @@ class DockerMain(Docker):
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
         self.ui.tb_renew.clicked.connect(self.refresh_workspace)
         self.ui.tb_checkin.clicked.connect(self.checkin_workspace)
+
+        self.ui.tv_plugin.clicked.connect(self.refresh_check_doc)
+        self.ui.tv_plugin.doubleClicked.connect(self.validate)
+        self.ui.btn_check.clicked.connect(lambda: self.ui.tv_plugin.model().validate())
+        self.ui.btn_export.clicked.connect(lambda: self.ui.tv_plugin.model().extract())
+        self.ui.btn_submit.clicked.connect(self.integrate)
+        plugin_model.resultGenerated.connect(self.set_result_widget)
+        plugin_model.dataChanged.connect(self.refresh_check_state)
+        self.ui.te_comment.textChanged.connect(self.refresh_check_state)
 
         samkit.scriptJob(event=['SceneOpened', self.refresh_workspace])
         samkit.evalDeferred(self.refresh_repository)
@@ -125,22 +137,20 @@ class DockerMain(Docker):
         pass
 
     def refresh_workspace(self, *_):
+        self.ui.tv_plugin.model().clear()
+        self.ui.tab_check.setEnabled(False)
         while self.ui.lw_task.count():
             self.ui.lw_task.takeItem(0)
         if not samkit.hasenv(samkit.OPT_USERNAME):
             return
 
         data = samkit.get_data('task', owner=samkit.getenv(samkit.OPT_USERNAME))
-        context = samkit.get_context('id')
-
         for task in data:
             item = TaskItem(task, self)
             item.setSizeHint(item.widget.sizeHint())
+            item.setFlags(item.flags() & ~Qt.ItemIsSelectable)
             self.ui.lw_task.addItem(item)
             self.ui.lw_task.setItemWidget(item, item.widget)
-        '''for i in range(self.view.count()):
-            it = self.view.item(i)
-            it.setFlags(it.flags() & ~Qt.ItemIsSelectable)'''
 
     def checkout_repository(self, task):
         samkit.checkout(task)
@@ -160,13 +170,37 @@ class DockerMain(Docker):
 
         samkit.checkin(submit_list)
 
-        '''
-        context = samkit.get_context('id')
-        item = self.ui.lw_task.currentItem()
-        if item.data(TaskItem.ID) != context:
-            samkit.open_file(item.data(TaskItem.TASK))
-        samkit.evalDeferred(samkit.checkin)
-        '''
+    def submit(self, task):
+        samkit.open_file(task)
+        samkit.checkin([task], False)
+        self.ui.tv_plugin.model().update(task)
+        self.ui.tw_main.setCurrentIndex(2)
+        self.ui.btn_export.setEnabled(False)
+        self.ui.btn_submit.setEnabled(False)
+        self.ui.tab_check.setEnabled(True)
+
+    def refresh_check_doc(self, index):
+        doc = index.data(PluginItem.PluginRole).__doc__
+        doc = doc if doc else 'No description'
+        self.ui.lbl_doc.setText(doc.replace('    ', ''))
+
+    def validate(self, index):
+        self.ui.tv_plugin.setExpanded(index, False)
+        self.ui.tv_plugin.model().validate(index)
+
+    def integrate(self):
+        self.ui.tv_plugin.model().integrate(self.ui.te_comment.toPlainText())
+        self.ui.tw_main.setCurrentIndex(1)
+        self.refresh_workspace()
+
+    def refresh_check_state(self, *_):
+        model = self.ui.tv_plugin.model()
+        comment = self.ui.te_comment.toPlainText()
+        self.ui.btn_export.setEnabled(model.all_validated())
+        self.ui.btn_submit.setEnabled(bool(comment) and model.all_validated())
+
+    def set_result_widget(self, index):
+        self.ui.tv_plugin.setIndexWidget(index, index.data(ResultItem.WidgetRole))
 
 
 class TaskMenu(QMenu):
@@ -177,12 +211,14 @@ class TaskMenu(QMenu):
     def __init__(self, task, parent=None):
         super(TaskMenu, self).__init__(parent)
         self.setTitle(task['stage_info'])
-        checkout_action = TaskCheckoutAction(task, self)
+
         reference_action = TaskReferenceAction(task, self)
-        checkout_action.Checked.connect(lambda data: self.Checked.emit(data))
         reference_action.Referred.connect(lambda data: self.Referred.emit(data))
-        self.addAction(checkout_action)
         self.addAction(reference_action)
+        if samkit.hasenv(samkit.OPT_USERNAME):
+            checkout_action = TaskCheckoutAction(task, self)
+            checkout_action.Checked.connect(lambda data: self.Checked.emit(data))
+            self.addAction(checkout_action)
 
 
 class TaskCheckoutAction(QAction):
@@ -228,19 +264,22 @@ class TaskItem(QListWidgetItem):
 
         setup_ui(self.widget, self.UI_PATH)
         self.widget.setFocusPolicy(Qt.NoFocus)
-        self.widget.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))
+        self.widget.ui.tb_submit.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
         self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
         self.widget.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
         self.widget.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self._history))
         self.widget.ui.lw_version.setCurrentRow(0)
-        self.widget.ui.tb_merge.clicked.connect(self.merge)
+        self.widget.ui.tb_submit.clicked.connect(self.submit)
         self.widget.ui.tb_sync.clicked.connect(self.sync)
         self.widget.ui.tb_revert.clicked.connect(self.revert)
         self.widget.ui.lw_version.clicked.connect(self.select)
         self.select()
         self.update_icon(samkit.get_context('id'))
+
+    def submit(self, *_):
+        self._widget.submit(self._data)
 
     def merge(self, *_):
         samkit.merge(self._data)

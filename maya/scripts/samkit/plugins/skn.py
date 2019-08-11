@@ -1,6 +1,26 @@
 import pyblish.api
 
 
+class SkinJointsCollector(pyblish.api.ContextPlugin):
+
+    order = pyblish.api.CollectorOrder + 0.11
+    label = 'Collect Influences'
+    families = ['skn', 'rig']
+
+    def process(self, context):
+        from maya import cmds
+
+        joints = []
+        for shape in cmds.ls(type='mesh'):
+            skin = cmds.listConnections(shape, d=False, t='skinCluster')
+            if not skin:
+                continue
+            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
+                if joint not in joints:
+                    joints.append(joint)
+        context.data['joints'] = joints
+
+
 class SkinSkeletonValidator(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.39
@@ -14,17 +34,7 @@ class SkinSkeletonValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        joints = []
-        for shape in cmds.ls(type='mesh'):
-            skin = cmds.listConnections(shape, d=False, t='skinCluster')
-            if not skin:
-                continue
-            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
-                if joint not in joints:
-                    joints.append(joint)
-
-        instance.data['joints'] = joints
-        assert len(joints), 'No skin found.'
+        assert len(instance.context.data['joints']), 'No skin found.'
 
 
 class SkinRootValidator(pyblish.api.InstancePlugin):
@@ -40,7 +50,7 @@ class SkinRootValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        joints_influence = [joint for joint in instance.data['joints'] if 'Root' not in joint]
+        joints_influence = [joint for joint in instance.context.data['joints'] if 'Root' not in joint]
         joints_all = cmds.ls(type='joint')
         root = ''
         for joint in joints_all:
@@ -62,6 +72,19 @@ class SkinRootValidator(pyblish.api.InstancePlugin):
         assert all(joint in joints_children for joint in joints_influence), \
             'Not all influences are under Root.'
 
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        for joint in cmds.ls(type='joint'):
+            if 'Root' in joint:
+                cmds.select(joint, r=True)
+                return False
+
+        cmds.select(cl=True)
+        cmds.joint(name='Root')
+        return True
+
 
 class SkinScaleValidator(pyblish.api.InstancePlugin):
 
@@ -76,7 +99,7 @@ class SkinScaleValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for joint in instance.data['joints']:
+        for joint in instance.context.data['joints']:
             for sv in cmds.xform(joint, q=True, scale=True, ws=True):
                 assert sv == 1.0, \
                     'Global scale of %s is NOT 1.0' % joint
@@ -85,7 +108,7 @@ class SkinScaleValidator(pyblish.api.InstancePlugin):
 class SkinHistoryValidator(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.37
-    label = 'Validate Skeleton Scale'
+    label = 'Validate Skeleton History'
     families = ['skn', 'rig']
 
     def process(self, instance):

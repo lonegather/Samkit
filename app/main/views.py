@@ -28,7 +28,6 @@ def auth(request):
             response['name'] = user.username
             response['info'] = user.profile.name
             response['role'] = user.profile.role.name
-            response['department'] = user.profile.department.name
 
         return HttpResponse(json.dumps(response))
 

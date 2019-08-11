@@ -48,3 +48,15 @@ class TaskDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QSize(self.ITEM_WIDTH, self.ITEM_HEIGHT)
+
+
+class PluginDelegate(QStyledItemDelegate):
+
+    def __init__(self, parent=None):
+        super(PluginDelegate, self).__init__(parent)
+
+    def paint(self, painter, option, index):
+        super(PluginDelegate, self).paint(painter, option, index)
+
+    def sizeHint(self, option, index):
+        return QSize(300, 30)

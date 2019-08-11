@@ -10,15 +10,16 @@ from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 
 
-@python_2_unicode_compatible
-class Department(models.Model):
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=50, default='company')
-    info = models.CharField(max_length=50, default='company')
-
-    def __str__(self):
-        return self.info
+__all__ = [
+    'Role',
+    'Profile',
+    'Project',
+    'Genus',
+    'Tag',
+    'Entity',
+    'Stage',
+    'Task',
+]
 
 
 @python_2_unicode_compatible
@@ -38,7 +39,6 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50, default='artist')
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'User Information'
@@ -84,18 +84,6 @@ class Project(models.Model):
                 camera=form.get('camera', ['MainCam'])[0],
             )
         prj.save()
-    
-    def __str__(self):
-        return self.name
-    
-
-@python_2_unicode_compatible
-class Edition(models.Model):
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=50)
-    url_head = models.CharField(max_length=200, blank=True)
-    url_history = models.CharField(max_length=200, blank=True)
     
     def __str__(self):
         return self.name
@@ -269,8 +257,8 @@ class Entity(models.Model):
         return self.tag.genus
     
     def save(self, *args, **kwargs):
+        project = self.tag.project
         if self.genus().name == 'batch':
-            project = self.tag.project
             tags = Tag.objects.filter(name=self.name, project=project)
             if not len(tags):
                 genus = Genus.objects.get(name='shot')
@@ -285,7 +273,15 @@ class Entity(models.Model):
                 tag = tags[0]
                 tag.info = self.info
                 tag.save()
+
         super(Entity, self).save(*args, **kwargs)
+
+        for stage in Stage.objects.filter(genus=self.genus(), project=project):
+            data = {
+                'entity': self,
+                'stage': stage,
+            }
+            Task(**data).save()
         
     def delete(self, using=None, keep_parents=False):
         if self.genus().name == 'batch':
@@ -334,23 +330,11 @@ class Stage(models.Model):
     
 
 @python_2_unicode_compatible
-class Status(models.Model):
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=50)
-    info = models.CharField(max_length=50, blank=True)
-    
-    def __str__(self):
-        return self.name
-    
-
-@python_2_unicode_compatible
 class Task(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     entity = models.ForeignKey(Entity, default=uuid.uuid4, on_delete=models.CASCADE)
     stage = models.ForeignKey(Stage, default=uuid.uuid4, on_delete=models.CASCADE)
-    status = models.ForeignKey(Status, default=uuid.uuid4, on_delete=models.CASCADE)
     owner = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
 
     @classmethod

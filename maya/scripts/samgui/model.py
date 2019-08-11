@@ -1,7 +1,11 @@
 from Qt.QtCore import QAbstractListModel, QModelIndex, Qt, Signal
+from Qt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor, QIcon
+from Qt.QtWidgets import QWidget
 
+import pyblish.api
+import pyblish.util
 import samkit
-from . import ImageHub
+from . import setup_ui, ImageHub
 
 
 class GenusModel(QAbstractListModel):
@@ -145,3 +149,132 @@ class AssetModel(QAbstractListModel):
                 'image': asset.get('image', None),
             })
         return result
+
+
+class PluginModel(QStandardItemModel):
+
+    resultGenerated = Signal(object)
+
+    def __init__(self, parent=None):
+        super(PluginModel, self).__init__(parent)
+
+        pyblish.api.deregister_all_callbacks()
+        pyblish.api.register_callback('validated', self.on_validated)
+
+    def update(self, task):
+        self.clear()
+        root = self.invisibleRootItem()
+        pyblish.api.deregister_all_plugins()
+        for plugin in pyblish.api.discover():
+            if plugin.order < 0.5 or plugin.order >= 1.5:
+                pyblish.api.register_plugin(plugin)
+                continue
+            if plugin.families == ['*'] or task['stage'] in plugin.families:
+                root.appendRow(PluginItem(plugin))
+
+    def validate(self, index=None):
+        plugins = []
+        if not index:
+            root = self.invisibleRootItem()
+            for i in range(root.rowCount()):
+                plugins.append(root.child(i).data(PluginItem.PluginRole))
+        else:
+            if not index.data(PluginItem.PluginRole):
+                return
+            plugins = [index.data(PluginItem.PluginRole)]
+        return pyblish.util.validate(pyblish.util.collect(), plugins)
+
+    def extract(self):
+        return pyblish.util.extract(self.validate())
+
+    def integrate(self, comment):
+        context = self.extract()
+        context.data['comment'] = comment
+        return pyblish.util.integrate(context)
+
+    def on_validated(self, context):
+        root = self.invisibleRootItem()
+        for result in context.data['results']:
+            for i in range(root.rowCount()):
+                root.child(i).sync(result)
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
+
+    def all_validated(self):
+        root = self.invisibleRootItem()
+        for i in range(root.rowCount()):
+            if not root.child(i).data(PluginItem.StateRole):
+                return False
+        return True
+
+    def columnCount(self, *_):
+        return 1
+
+
+class PluginItem(QStandardItem):
+
+    PluginRole = Qt.UserRole + 1
+    StateRole = Qt.UserRole + 2
+
+    def __init__(self, plugin):
+        super(PluginItem, self).__init__(plugin.label)
+        self._plugin = plugin
+        self._color = '#ccc'
+        self.setEditable(False)
+        self.setFlags(self.flags() & ~Qt.ItemIsSelectable)
+
+    def sync(self, result):
+        if self._plugin is result['plugin']:
+            for k, v in result.items():
+                if k == 'success':
+                    self._color = '#3f3' if v else '#f33'
+                    while self.rowCount():
+                        self.takeRow(0)
+                    if not v:
+                        item = ResultItem(result)
+                        self.appendRow(item)
+                        item.setup()
+
+    def data(self, role=None):
+        if role == Qt.ForegroundRole:
+            return QBrush(QColor(self._color))
+        elif role == self.PluginRole:
+            return self._plugin
+        elif role == self.StateRole:
+            return self._color == '#3f3'
+
+        return super(PluginItem, self).data(role)
+
+
+class ResultItem(QStandardItem):
+
+    UI_PATH = '%s\\ui\\result.ui' % samkit.MODULE_PATH
+    WidgetRole = Qt.UserRole + 1
+
+    def __init__(self, result):
+        super(ResultItem, self).__init__(str(result['error']))
+        self.setFlags(self.flags() & ~Qt.ItemIsSelectable)
+        self._result = result
+        self.widget = QWidget()
+        setup_ui(self.widget, self.UI_PATH)
+        self.widget.ui.tb_fix.setIcon(QIcon('%s\\icons\\fix.png' % samkit.MODULE_PATH))
+        self.widget.ui.le_error.setText(str(result['error']))
+
+        self.widget.ui.tb_fix.clicked.connect(self.fix)
+        if not hasattr(result['plugin'], 'fix'):
+            self.widget.ui.tb_fix.setEnabled(False)
+            self.widget.ui.tb_fix.setIcon(QIcon('%s\\icons\\fix_disabled.png' % samkit.MODULE_PATH))
+
+    def setup(self):
+        self.model().resultGenerated.emit(self.index())
+
+    def fix(self, *_):
+        if self._result['plugin'].fix():
+            self.model().validate(self.parent().index())
+
+    def data(self, role=None):
+        if role == Qt.ForegroundRole:
+            return QBrush(QColor('#f33'))
+        elif role == self.WidgetRole:
+            return self.widget
+
+        return super(ResultItem, self).data(role)

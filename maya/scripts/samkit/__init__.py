@@ -207,9 +207,10 @@ def checkout(task):
     shutil.copyfile(source_path, local_path)
 
 
-def checkin(submit_list):
+def checkin(submit_list, gui=True):
     submit_str = json.dumps(submit_list)
     cmds.optionVar(sv=('samkit_submit', submit_str))
+    if not gui: return
     show()
 
 

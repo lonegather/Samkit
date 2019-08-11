@@ -16,24 +16,12 @@ class EntityCollector(pyblish.api.ContextPlugin):
         submit_str = cmds.optionVar(q='samkit_submit')
         submit_list = json.loads(submit_str)
         for task in submit_list:
-            instance = context.create_instance(u'%s - %s' % (
-                task['entity'],
-                task['stage_info']
-            ))
+            instance = context.create_instance(task['entity'])
             instance.data['task'] = task
             instance.data['time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             instance.data['family'] = task['stage']
             instance.data['pathSrc'] = samkit.get_source_path(task)
             instance.data['pathDat'] = samkit.get_data_path(task)
-
-
-class EntityCommentValidator(pyblish.api.ContextPlugin):
-
-    order = pyblish.api.ValidatorOrder - 0.5
-    label = "Validate Comment"
-
-    def process(self, context):
-        assert context.data['comment'], 'Submit comment must NOT be empty.'
 
 
 class EntityIntegrator(pyblish.api.InstancePlugin):
