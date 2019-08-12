@@ -13,9 +13,11 @@ session = requests.Session()
 
 def access(force=False):
     host = cmds.optionVar(q=OPT_HOST)
+    project_local = cmds.optionVar(q=OPT_PROJECT_ID)
+    project_server = [prj['id'] for prj in get_data('project')]
     cookies = pickle.loads(cmds.optionVar(q=OPT_COOKIES)) if cmds.optionVar(exists=OPT_COOKIES) else None
 
-    if force or not host:
+    if force or not host or (project_local not in project_server):
         print('Get host and user info from user.')
         host, project, prj_id, prj_root, workspace, username, password = samgui.get_auth()
         if host == '*':
@@ -52,8 +54,8 @@ def access(force=False):
 def get_data(table, **filters):
     host = cmds.optionVar(q=OPT_HOST)
     url = 'http://%s/api/%s?' % (host, table)
-    for field in filters:
-        url += '%s=%s&' % (field, filters[field])
+    for field, value in filters.items():
+        url += '{field}={value}&'.format(**locals())
     try:
         return json.loads(requests.get(url).text)
     except ValueError:

@@ -61,7 +61,8 @@ def instantiate(data, table=None):
                         continue
                     print('.... Getting', target, name)
                     target_class = getattr(models, target)
-                    row[k] = target_class.objects.get(name=name)
+                    kwarg = 'username' if target == 'User' else 'name'
+                    row[k] = target_class.objects.get(**{kwarg: name})
                 row_edit[k] = row[k]
             print('.. Row:', row_edit)
             table_class = getattr(models, table)

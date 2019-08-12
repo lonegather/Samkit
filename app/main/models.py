@@ -11,6 +11,7 @@ from django.utils.encoding import python_2_unicode_compatible
 
 
 __all__ = [
+    'User',
     'Role',
     'Profile',
     'Project',
@@ -38,7 +39,7 @@ class Profile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50, default='artist')
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'User Information'

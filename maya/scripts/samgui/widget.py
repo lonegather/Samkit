@@ -62,7 +62,7 @@ class DockerMain(Docker):
         self.ui.tb_connect.clicked.connect(lambda *_: self.refresh_repository(force=True))
         self.ui.lv_asset.customContextMenuRequested.connect(self.refresh_repository_context_menu)
         self.ui.lv_asset.doubleClicked.connect(self.refresh_filter)
-        self.ui.tb_refresh.clicked.connect(genus_model.update)
+        self.ui.tb_refresh.clicked.connect(self.refresh_repository)
         self.ui.le_filter.textChanged.connect(lambda txt: asset_model.filter(txt))
 
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)

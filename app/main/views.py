@@ -6,6 +6,7 @@ import json
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from main import models
 
 
@@ -26,8 +27,11 @@ def auth(request):
             login(request, user)
             response['session'] = request.session.session_key
             response['name'] = user.username
-            response['info'] = user.profile.name
-            response['role'] = user.profile.role.name
+            try:
+                response['info'] = user.profile.name
+                response['role'] = user.profile.role.name
+            except:
+                pass
 
         return HttpResponse(json.dumps(response))
 
