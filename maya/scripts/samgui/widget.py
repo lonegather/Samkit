@@ -308,9 +308,13 @@ class TaskItem(QListWidgetItem):
         return None
 
     def update_icon(self, context=None):
+        self.widget.ui.tb_submit.setEnabled(False)
+        self.widget.ui.tb_sync.setEnabled(False)
         if samkit.local_path_exists(self._data):
             if context == self._data['id']:
                 self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\bookmark.png' % samkit.MODULE_PATH))
+                self.widget.ui.tb_submit.setEnabled(True)
+                self.widget.ui.tb_sync.setEnabled(True)
             else:
                 self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\checked.png' % samkit.MODULE_PATH))
         else:

@@ -18,7 +18,7 @@ def reset():
 
     data = {}
     csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'setup.csv')
-    with open(csv_path) as csv_file:
+    with open(csv_path, encoding='gb2312') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         rows = [row for row in csv_reader]
         cols = [col for col in zip(*rows)]
@@ -50,7 +50,6 @@ def instantiate(data, table=None):
     for i in range(len(data[table])):
         row = data[table][i]
         if type(row) is dict:
-            print('Transferring', table)
             for ref in foreign_key(data, table):
                 if ref == 'User':
                     continue
@@ -61,16 +60,13 @@ def instantiate(data, table=None):
                     target, name = v.split('|')
                     if not name:
                         continue
-                    print('.... Getting', target, name)
                     target_class = getattr(models, target)
                     kwarg = 'username' if target == 'User' else 'name'
                     row[k] = target_class.objects.get(**{kwarg: name})
                 row_edit[k] = row[k]
-            print('.. Row:', row_edit)
             table_class = getattr(models, table)
             data[table][i] = table_class(**row_edit)
             data[table][i].save()
-            print('..', table, row_edit, 'saved')
 
 
 def foreign_key(data, table):
