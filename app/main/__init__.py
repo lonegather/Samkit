@@ -52,6 +52,8 @@ def instantiate(data, table=None):
         if type(row) is dict:
             print('Transferring', table)
             for ref in foreign_key(data, table):
+                if ref == 'User':
+                    continue
                 instantiate(data, ref)
             row_edit = {}
             for k, v in row.items():
