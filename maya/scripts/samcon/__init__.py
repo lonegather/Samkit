@@ -14,7 +14,8 @@ session = requests.Session()
 def access(force=False):
     host = cmds.optionVar(q=OPT_HOST)
     project_local = cmds.optionVar(q=OPT_PROJECT_ID)
-    project_server = [prj['id'] for prj in get_data('project')]
+    project_data = get_data('project')
+    project_server = [prj['id'] for prj in project_data]
     cookies = pickle.loads(cmds.optionVar(q=OPT_COOKIES)) if cmds.optionVar(exists=OPT_COOKIES) else None
 
     if force or not host or (project_local not in project_server):
@@ -36,6 +37,10 @@ def access(force=False):
         return result
     else:
         print('Retrieve host and cookies from optionVar.')
+        for prj in project_data:
+            if prj['id'] == project_local:
+                cmds.optionVar(sv=(OPT_PROJECT, prj['info']))
+                cmds.optionVar(sv=(OPT_PROJECT_ROOT, prj['root']))
         if not cookies:
             return AUTH_FAILED
         session.cookies.update(cookies)

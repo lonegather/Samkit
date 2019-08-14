@@ -12,8 +12,8 @@ def setup(*_):
 
     from samgui.widget import DockerMain
     import samcon
-    print('----------Samkit Start----------')
-    DockerMain.setup()
+    print('----------Samkit Init----------')
+    # DockerMain.setup()
     layout = mel.eval('$tmp = $gAttributeEditorButton').split('|attributeEditorButton')[0]
     button = cmds.formLayout(layout, q=True, ca=True)[0]
     length = cmds.iconTextCheckBox(button, q=True, height=True)
@@ -29,7 +29,7 @@ def setup(*_):
     )
     cmds.formLayout(layout, e=True, attachForm=[(btn, 'right', 1), (btn, 'top', 1)])
     cmds.scriptJob(event=['quitApplication', lambda *_: samcon.session.close()])
-    cmds.evalDeferred(lambda:cmds.inViewMessage(message='Samkit Ready', position='midCenter', fade=True))
+    cmds.evalDeferred(lambda: cmds.inViewMessage(message='Samkit Ready', position='midCenter', fade=True))
 
 
 cmds.evalDeferred(setup)

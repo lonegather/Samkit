@@ -153,9 +153,9 @@ class DockerMain(Docker):
             self.ui.lw_task.setItemWidget(item, item.widget)
 
     def checkout_repository(self, task):
-        samkit.checkout(task)
-        self.refresh_workspace()
-        self.ui.tw_main.setCurrentIndex(1)
+        if samkit.checkout(task):
+            self.refresh_workspace()
+            self.ui.tw_main.setCurrentIndex(1)
 
     def open_workspace(self, *_):
         item = self.ui.lw_task.currentItem()

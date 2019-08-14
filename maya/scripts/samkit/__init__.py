@@ -117,9 +117,9 @@ def new_file():
     cmds.file(new=True, force=True)
 
 
-def open_file(task):
+def open_file(task, force=False):
     current_id = get_context('id')
-    if task['id'] == current_id:
+    if task['id'] == current_id and not force:
         return
 
     local_path = get_local_path(task)
@@ -153,20 +153,29 @@ def sync(task, version):
     version_path = source_path if version == 'latest' else os.path.join(history_dir, '%s.%s' % (source_base, version))
 
     shutil.copyfile(version_path, local_path)
-    open_file(task)
+    open_file(task, True)
 
 
 def checkout(task):
-    samcon.set_data('task', id=task['id'], owner=getenv(OPT_USERNAME))
-    task['owner'] = getenv(OPT_USERNAME)
-
     source_path = get_source_path(task)
     local_path = get_local_path(task)
     current_path = cmds.file(q=True, sn=True)
 
     basedir = os.path.dirname(source_path)
     if not os.path.exists(basedir):
-        os.makedirs(basedir)
+        try:
+            os.makedirs(basedir)
+        except WindowsError:
+            cmds.inViewMessage(
+                message='Can\'t create path: <font color="yellow">%s</font>.' % basedir,
+                position='midCenter',
+                dragKill=True
+            )
+            return False
+
+    samcon.set_data('task', id=task['id'], owner=getenv(OPT_USERNAME))
+    task['owner'] = getenv(OPT_USERNAME)
+
     if not os.path.exists(source_path):
         if current_path:
             cmds.file(save=True)
@@ -205,6 +214,7 @@ def checkout(task):
         os.makedirs(basedir)
 
     shutil.copyfile(source_path, local_path)
+    return True
 
 
 def checkin(submit_list, gui=True):

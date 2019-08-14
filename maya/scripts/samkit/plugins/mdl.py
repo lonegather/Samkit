@@ -164,6 +164,13 @@ class ModelHistoryValidator(pyblish.api.InstancePlugin):
             assert not cmds.listConnections(shape, d=False), \
                 '%s has construction history.' % shape
 
+    @staticmethod
+    def fix():
+        from maya import cmds
+        for shape in cmds.ls(type='mesh'):
+            cmds.delete(shape, constructionHistory=True)
+        return True
+
 
 class ModelExtractor(pyblish.api.InstancePlugin):
 
