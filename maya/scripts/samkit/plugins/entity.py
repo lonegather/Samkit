@@ -23,6 +23,8 @@ class EntityCollector(pyblish.api.ContextPlugin):
             instance.data['pathSrc'] = samkit.get_source_path(task)
             instance.data['pathDat'] = samkit.get_data_path(task)
 
+        cmds.file(save=True)
+
 
 class EntityIntegrator(pyblish.api.InstancePlugin):
 

@@ -108,7 +108,7 @@ def get_history(task):
                 'version': 'v%03d' % h['version'],
                 'comment': h['comment']
             })
-        return result if task['id'] == history['id'] else []
+        return result
     except IOError:
         return []
 
@@ -176,17 +176,22 @@ def checkout(task):
     samcon.set_data('task', id=task['id'], owner=getenv(OPT_USERNAME))
     task['owner'] = getenv(OPT_USERNAME)
 
+    if current_path:
+        cmds.file(save=True)
     if not os.path.exists(source_path):
-        if current_path:
-            cmds.file(save=True)
         cmds.file(new=True, force=True)
         cmds.fileInfo('samkit_context', json.dumps(task))
         cmds.file(rename=source_path)
-        cmds.file(save=True, type='mayaAscii')
-        if current_path:
-            cmds.file(current_path, open=True, force=True)
-        else:
-            cmds.file(new=True, force=True)
+    else:
+        cmds.file(source_path, open=True, force=True)
+        cmds.fileInfo('samkit_context', json.dumps(task))
+
+    cmds.file(save=True, type='mayaAscii')
+
+    if current_path:
+        cmds.file(current_path, open=True, force=True)
+    else:
+        cmds.file(new=True, force=True)
 
     source_base = os.path.basename(source_path)
     source_dir = os.path.dirname(source_path)
@@ -197,7 +202,6 @@ def checkout(task):
         if not os.path.exists(history_dir):
             os.makedirs(history_dir)
         history = {
-            'id': task['id'],
             'time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
             'comment': 'Initialization',
             'history': []
