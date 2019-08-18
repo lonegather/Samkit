@@ -224,7 +224,8 @@ def checkout(task):
 def checkin(submit_list, gui=True):
     submit_str = json.dumps(submit_list)
     cmds.optionVar(sv=('samkit_submit', submit_str))
-    if not gui: return
+    if not gui:
+        return
     show()
 
 

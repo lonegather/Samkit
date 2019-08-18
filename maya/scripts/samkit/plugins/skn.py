@@ -28,7 +28,6 @@ class SkinSkeletonValidator(pyblish.api.InstancePlugin):
     families = ['skn', 'rig']
 
     def process(self, instance):
-        from maya import cmds
         import samkit
 
         task = instance.data['task']
@@ -181,7 +180,7 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         mel.eval('FBXExportAnimationOnly -v false;')
         mel.eval('FBXExportAxisConversionMethod convertAnimation;')
         mel.eval('FBXExportCameras -v false;')
-        mel.eval('FBXExportEmbeddedTextures -v false;')
+        mel.eval('FBXExportEmbeddedTextures -v true;')
         mel.eval('FBXExportFileVersion -v FBX201400;')
         mel.eval('FBXExportGenerateLog -v false;')
         mel.eval('FBXExportLights -v false;')

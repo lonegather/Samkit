@@ -17,7 +17,7 @@ class ModelTypeValidator(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.49
     label = 'Validate Model Type'
-    families = ['mdl', 'skn', 'rig']
+    families = ['mdl', 'skn']
 
     def process(self, instance):
         from maya import cmds

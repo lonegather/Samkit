@@ -120,7 +120,17 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="tb_admin">
+          <widget class="QToolButton" name="tb_add">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="tb_delete">
            <property name="text">
             <string/>
            </property>
