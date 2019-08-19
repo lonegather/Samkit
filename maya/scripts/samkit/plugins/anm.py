@@ -34,41 +34,37 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         samkit.open_file(task)
 
         name = instance.data['name']
-        path_dir = instance.data['pathDat'].replace('\\', '/')
-        if not os.path.exists(path_dir):
-            os.makedirs(path_dir)
+        path = instance.data['pathDat'].replace('\\', '/')
+
+        if not os.path.exists(path):
+            os.makedirs(path)
 
         for ref in instance.context.data['references']:
             namespace = ref['namespace']
-            path = ref['filename']
-            node = ref['node']
-            root = cmds.ls(':'.join([namespace, 'Root']))
-            selection_list = [root]
-            for shape in cmds.ls(type='mesh'):
-                if namespace not in shape:
-                    continue
-                for transform in cmds.listRelatives(shape, allParents=True):
-                    # cmds.parent(transform, world=True)
-                    selection_list.append(transform)
-
-            cmds.select(selection_list, r=True)
+            if namespace[-4:] != ':skn':
+                continue
+            
+            char = namespace.split(':')[1]
+            cmds.select(':'.join([namespace, 'Root']), r=True)
 
             mel.eval('FBXExportAnimationOnly -v true;')
             mel.eval('FBXExportAxisConversionMethod convertAnimation;')
+            mel.eval('FBXExportBakeComplexAnimation -v true;')
             mel.eval('FBXExportCameras -v false;')
+            mel.eval('FBXExportConstraints -v false;')
             mel.eval('FBXExportEmbeddedTextures -v false;')
             mel.eval('FBXExportFileVersion -v FBX201400;')
             mel.eval('FBXExportGenerateLog -v false;')
             mel.eval('FBXExportLights -v false;')
             mel.eval('FBXExportQuaternion -v quaternion;')
-            mel.eval('FBXExportReferencedAssetsContent -v true;')
+            mel.eval('FBXExportReferencedAssetsContent -v false;')
             mel.eval('FBXExportScaleFactor 1.0;')
             mel.eval('FBXExportShapes -v false;')
-            mel.eval('FBXExportSkeletonDefinitions -v true;')
+            mel.eval('FBXExportSkeletonDefinitions -v false;')
             mel.eval('FBXExportSkins -v false;')
             mel.eval('FBXExportSmoothingGroups -v false;')
             mel.eval('FBXExportSmoothMesh -v false;')
             mel.eval('FBXExportTangents -v true;')
             mel.eval('FBXExportUpAxis z;')
             mel.eval('FBXExportUseSceneName -v true;')
-            mel.eval('FBXExport -f "{path_dir}/{name}_skn.fbx" -s'.format(**locals()))
+            mel.eval('FBXExport -f "{path}/{name}_{char}_anm.fbx" -s'.format(**locals()))

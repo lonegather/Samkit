@@ -237,4 +237,5 @@ def reference(task):
     cmds.fileInfo('samkit_context', json.dumps(context))
 
     source_path = get_source_path(task)
-    cmds.file(source_path, reference=True, namespace=task['entity'] + '_' + task['stage'])
+    namespace = task['stage'] if context.get('entity', None) == task['entity'] else task['entity']
+    cmds.file(source_path, reference=True, namespace=namespace)
