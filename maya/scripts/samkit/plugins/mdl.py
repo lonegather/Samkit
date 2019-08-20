@@ -26,9 +26,9 @@ class ModelTypeValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        assert cmds.ls(geometry=True), 'No geometry found.'
+        assert cmds.ls(geometry=True, noIntermediate=True), 'No geometry found.'
 
-        for shape in cmds.ls(geometry=True):
+        for shape in cmds.ls(geometry=True, noIntermediate=True):
             assert cmds.objectType(shape) == 'mesh', \
                 '%s is NOT a mesh' % shape
 
@@ -49,7 +49,7 @@ class ModelInstanceValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)
             assert len(transform) == 1, \
                 '%s has multiple transform nodes.'
@@ -71,7 +71,7 @@ class ModelNameValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)[0]
             shape_standard = transform + 'Shape'
             assert shape == shape_standard, \
@@ -81,7 +81,7 @@ class ModelNameValidator(pyblish.api.InstancePlugin):
     def fix():
         from maya import cmds
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)[0]
             shape_standard = transform + 'Shape'
             cmds.rename(shape, shape_standard)
@@ -105,21 +105,23 @@ class ModelTransformValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)[0]
             for sv in cmds.xform(transform, q=True, scale=True, ws=True):
-                assert sv == 1.0, \
+                sv_str = '%.2f' % sv
+                assert sv_str == '1.00', \
                     'Global scale of %s is NOT 1.0' % transform
 
     @staticmethod
     def fix():
         from maya import cmds
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)[0]
             for sv in cmds.xform(transform, q=True, scale=True, ws=True):
-                if sv != 1.0:
-                    cmds.select(shape, r=True)
+                sv_str = '%.2f' % sv
+                if sv_str != '1.00':
+                    cmds.select(transform, r=True)
                     return False
 
 
@@ -139,9 +141,18 @@ class ModelUVSetValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             assert len(cmds.polyUVSet(shape, q=True, auv=True)) <= 1, \
                 '%s has multiply UVSets.' % shape
+
+    @staticmethod
+    def fix():
+        from maya import cmds, mel
+
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
+            if len(cmds.polyUVSet(shape, q=True, auv=True)) > 1:
+                cmds.select(shape, r=True)
+                mel.eval('UVSetEditor;')
 
 
 class ModelHistoryValidator(pyblish.api.InstancePlugin):
@@ -160,14 +171,14 @@ class ModelHistoryValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             assert not cmds.listConnections(shape, d=False), \
                 '%s has construction history.' % shape
 
     @staticmethod
     def fix():
         from maya import cmds
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             cmds.delete(shape, constructionHistory=True)
         return True
 
@@ -192,7 +203,7 @@ class ModelExtractor(pyblish.api.InstancePlugin):
             os.makedirs(path)
 
         selection_list = []
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             for transform in cmds.listRelatives(shape, allParents=True):
                 # cmds.parent(transform, world=True)
                 selection_list.append(transform)

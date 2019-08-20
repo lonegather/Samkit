@@ -11,7 +11,7 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
         from maya import cmds
 
         joints = []
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             skin = cmds.listConnections(shape, d=False, t='skinCluster')
             if not skin:
                 continue
@@ -100,13 +100,34 @@ class SkinScaleValidator(pyblish.api.InstancePlugin):
 
         for joint in instance.context.data['joints']:
             for sv in cmds.xform(joint, q=True, scale=True, ws=True):
-                assert sv == 1.0, \
+                sv_str = '%.2f' % sv
+                assert sv_str == '1.00', \
                     'Global scale of %s is NOT 1.0' % joint
+
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        joints = []
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
+            skin = cmds.listConnections(shape, d=False, t='skinCluster')
+            if not skin:
+                continue
+            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
+                if joint not in joints:
+                    joints.append(joint)
+
+        for joint in joints:
+            for sv in cmds.xform(joint, q=True, scale=True, ws=True):
+                sv_str = '%.2f' % sv
+                if sv_str != '1.00':
+                    cmds.select(joint, r=True)
+                    return False
 
 
 class SkinHistoryValidator(pyblish.api.InstancePlugin):
 
-    order = pyblish.api.ValidatorOrder - 0.37
+    order = pyblish.api.ValidatorOrder - 0.36
     label = 'Validate Skeleton History'
     families = ['skn', 'rig']
 
@@ -117,7 +138,7 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             for node in cmds.listConnections(shape, d=False) or list():
                 assert cmds.objectType(node) in [
                     'skinCluster',
@@ -125,6 +146,21 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
                     'tweak',
                     'groupId',
                 ], '%s has history other than SkinCluster or BlendShape.' % shape
+
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
+            for node in cmds.listConnections(shape, d=False) or list():
+                if cmds.objectType(node) not in [
+                    'skinCluster',
+                    'objectSet',
+                    'tweak',
+                    'groupId',
+                ]:
+                    cmds.select(shape, r=True)
+                    return False
 
 
 class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
@@ -140,11 +176,22 @@ class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
 
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             for obj in cmds.listConnections(shape, type='objectSet', d=False) or list():
                 for bs in cmds.listConnections(obj, type='blendShape', d=False) or list():
                     assert not cmds.listConnections(bs, d=False), \
                         '%s\'s BlendShape must have NO history.' % shape
+
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
+            for obj in cmds.listConnections(shape, type='objectSet', d=False) or list():
+                for bs in cmds.listConnections(obj, type='blendShape', d=False) or list():
+                    if cmds.listConnections(bs, d=False):
+                        cmds.select(shape, r=True)
+                        return False
 
 
 class SkinExtractor(pyblish.api.InstancePlugin):
@@ -170,7 +217,7 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         # cmds.parent(root, world=True)
 
         selection_list = [root]
-        for shape in cmds.ls(type='mesh'):
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
             for transform in cmds.listRelatives(shape, allParents=True):
                 # cmds.parent(transform, world=True)
                 selection_list.append(transform)

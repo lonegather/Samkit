@@ -5,7 +5,7 @@ class AnimationCharacterCollector(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder + 0.11
     label = 'Collect Influences'
-    families = ['anm']
+    families = ['blk', 'anm']
 
     def process(self, context):
         from maya import cmds
@@ -17,6 +17,42 @@ class AnimationCharacterCollector(pyblish.api.ContextPlugin):
                 'namespace': cmds.referenceQuery(ref, namespace=True),
                 'filename': cmds.referenceQuery(ref, filename=True),
             })
+
+
+class AnimationFPSValidator(pyblish.api.InstancePlugin):
+
+    order = pyblish.api.ValidatorOrder - 0.29
+    label = 'Validate Animation FPS'
+    families = ['blk', 'anm']
+
+    def process(self, instance):
+        from maya import cmds
+
+        assert cmds.currentUnit(q=True, time=True) == 'pal', \
+            'Current FPS is NOT 25.'
+
+    @staticmethod
+    def fix():
+        from maya import cmds
+
+        cmds.currentUnit(time='pal', updateAnimation=False)
+        return True
+
+
+class AnimationCameraValidator(pyblish.api.InstancePlugin):
+
+    order = pyblish.api.ValidatorOrder - 0.28
+    label = 'Validate Animation Camera'
+    families = ['blk', 'anm']
+
+    def process(self, instance):
+        from maya import cmds
+
+        for shape in cmds.ls(type='camera'):
+            cam = cmds.listRelatives(shape, allParents=True)[0]
+            if cam == 'MainCam':
+                return
+        assert False, 'MainCam NOT found.'
 
 
 class AnimationExtractor(pyblish.api.InstancePlugin):
@@ -39,13 +75,12 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        for ref in instance.context.data['references']:
-            namespace = ref['namespace']
-            if namespace[-4:] != ':skn':
+        for joint in cmds.ls(type='joint'):
+            if 'Root' not in joint:
                 continue
-            
-            char = namespace.split(':')[1]
-            cmds.select(':'.join([namespace, 'Root']), r=True)
+
+            char = joint.split(':')[0]
+            cmds.select(joint, r=True)
 
             mel.eval('FBXExportAnimationOnly -v true;')
             mel.eval('FBXExportAxisConversionMethod convertAnimation;')
@@ -68,3 +103,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             mel.eval('FBXExportUpAxis z;')
             mel.eval('FBXExportUseSceneName -v true;')
             mel.eval('FBXExport -f "{path}/{name}_{char}_anm.fbx" -s'.format(**locals()))
+
+        cmds.select('MainCam', r=True)
+        mel.eval('FBXExportCameras -v true;')
+        mel.eval('FBXExport -f "{path}/{name}_MainCam_anm.fbx" -s'.format(**locals()))
