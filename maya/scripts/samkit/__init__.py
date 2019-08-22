@@ -238,4 +238,7 @@ def reference(task):
 
     source_path = get_source_path(task)
     namespace = task['stage'] if context.get('entity', None) == task['entity'] else task['entity']
+
     cmds.file(source_path, reference=True, namespace=namespace)
+    node = cmds.file(source_path, q=True, referenceNode=True)
+    cmds.file(loadReference=node)

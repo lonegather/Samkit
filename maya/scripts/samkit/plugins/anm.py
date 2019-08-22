@@ -79,8 +79,10 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             if 'Root' not in joint:
                 continue
 
+            namespace = ':' + joint.split(':Root')[0]
             char = joint.split(':')[0]
             cmds.select(joint, r=True)
+            cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
 
             mel.eval('FBXExportAnimationOnly -v true;')
             mel.eval('FBXExportAxisConversionMethod convertAnimation;')
@@ -107,3 +109,4 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         cmds.select('MainCam', r=True)
         mel.eval('FBXExportCameras -v true;')
         mel.eval('FBXExport -f "{path}/{name}_MainCam_anm.fbx" -s'.format(**locals()))
+        samkit.open_file(task, True)
