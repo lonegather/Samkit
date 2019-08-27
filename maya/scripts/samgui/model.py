@@ -185,7 +185,13 @@ class PluginModel(QStandardItemModel):
         return pyblish.util.validate(pyblish.util.collect(), plugins)
 
     def extract(self):
-        return pyblish.util.extract(self.validate())
+        context = self.validate()
+        for result in context.data['results']:
+            if not result['success']:
+                if samkit.get_confirm('Validation failed, export anyway?', 'warning'):
+                    return pyblish.util.extract(pyblish.util.collect())
+                return
+        return pyblish.util.extract(context)
 
     def integrate(self, comment):
         context = self.extract()

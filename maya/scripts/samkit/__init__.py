@@ -242,3 +242,16 @@ def reference(task):
     cmds.file(source_path, reference=True, namespace=namespace)
     node = cmds.file(source_path, q=True, referenceNode=True)
     cmds.file(loadReference=node)
+
+
+def get_confirm(message, icon='question'):
+    result = cmds.confirmDialog(
+        title='Confirm',
+        icon=icon,
+        message=message,
+        button=['Yes', 'No'],
+        defaultButton='Yes',
+        cancelButton='No',
+        dismissString='No'
+    )
+    return True if result == 'Yes' else False

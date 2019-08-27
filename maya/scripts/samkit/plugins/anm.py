@@ -1,10 +1,11 @@
 import pyblish.api
 
 
+'''
 class AnimationCharacterCollector(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder + 0.11
-    label = 'Collect Influences'
+    label = 'Collect Character'
     families = ['blk', 'anm']
 
     def process(self, context):
@@ -17,6 +18,7 @@ class AnimationCharacterCollector(pyblish.api.ContextPlugin):
                 'namespace': cmds.referenceQuery(ref, namespace=True),
                 'filename': cmds.referenceQuery(ref, filename=True),
             })
+'''
 
 
 class AnimationFPSValidator(pyblish.api.InstancePlugin):
@@ -106,7 +108,11 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             mel.eval('FBXExportUseSceneName -v true;')
             mel.eval('FBXExport -f "{path}/{name}_{char}_anm.fbx" -s'.format(**locals()))
 
-        cmds.select('MainCam', r=True)
-        mel.eval('FBXExportCameras -v true;')
-        mel.eval('FBXExport -f "{path}/{name}_MainCam_anm.fbx" -s'.format(**locals()))
-        samkit.open_file(task, True)
+            samkit.open_file(task, True)
+
+        try:
+            cmds.select('MainCam', r=True)
+            mel.eval('FBXExportCameras -v true;')
+            mel.eval('FBXExport -f "{path}/{name}_MainCam_anm.fbx" -s'.format(**locals()))
+        except ValueError:
+            pass

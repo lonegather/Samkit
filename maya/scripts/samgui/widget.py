@@ -176,7 +176,7 @@ class DockerMain(Docker):
         samkit.checkin([task], False)
         self.ui.tv_plugin.model().update(task)
         self.ui.tw_main.setCurrentIndex(2)
-        self.ui.btn_export.setEnabled(False)
+        # self.ui.btn_export.setEnabled(False)
         self.ui.btn_submit.setEnabled(False)
         self.ui.tab_check.setEnabled(True)
 
@@ -197,7 +197,7 @@ class DockerMain(Docker):
     def refresh_check_state(self, *_):
         model = self.ui.tv_plugin.model()
         comment = self.ui.te_comment.toPlainText()
-        self.ui.btn_export.setEnabled(model.all_validated())
+        # self.ui.btn_export.setEnabled(model.all_validated())
         self.ui.btn_submit.setEnabled(bool(comment) and model.all_validated())
 
     def set_result_widget(self, index):
