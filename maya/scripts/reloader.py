@@ -14,8 +14,9 @@ reload_list = [
 
 def execute():
 
-    from samgui.widget import DockerMain
-    DockerMain.instance.close()
+    import samgui.widget
+    if samgui.widget.DockerMain.instance:
+        samgui.widget.DockerMain.instance.close()
 
     for mod in reload_list:
         try:

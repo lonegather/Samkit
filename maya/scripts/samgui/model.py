@@ -271,6 +271,11 @@ class ResultItem(QStandardItem):
             self.widget.ui.tb_fix.setIcon(QIcon('%s\\icons\\fix_disabled.png' % samkit.MODULE_PATH))
 
     def setup(self):
+        for lr in self._result['records']:
+            item = QStandardItem(lr.msg)
+            item.setForeground(QBrush(QColor('#ff3')))
+            item.setEditable(False)
+            self.appendRow(item)
         self.model().resultGenerated.emit(self.index())
 
     def fix(self, *_):

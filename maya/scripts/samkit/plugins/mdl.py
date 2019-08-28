@@ -28,9 +28,14 @@ class ModelTypeValidator(pyblish.api.InstancePlugin):
 
         assert cmds.ls(geometry=True, noIntermediate=True), 'No geometry found.'
 
+        success = True
         for shape in cmds.ls(geometry=True, noIntermediate=True):
-            assert cmds.objectType(shape) == 'mesh', \
-                '%s is NOT a mesh' % shape
+            if cmds.objectType(shape) != 'mesh':
+                success = False
+                self.log.info(shape)
+
+        if not success:
+            raise Exception('Not all geometries are poly mesh.')
 
 
 class ModelInstanceValidator(pyblish.api.InstancePlugin):

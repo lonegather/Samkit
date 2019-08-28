@@ -1,4 +1,4 @@
-from Qt.QtWidgets import QWidget, QListView, QListWidgetItem, QMenu, QAction
+from Qt.QtWidgets import QWidget, QListView, QListWidgetItem, QMenu, QAction, QAbstractItemView
 from Qt.QtGui import QIcon, QPixmap
 from Qt.QtCore import Signal, Qt
 
@@ -70,6 +70,7 @@ class DockerMain(Docker):
         self.ui.tb_renew.clicked.connect(self.refresh_workspace)
         self.ui.tb_checkin.clicked.connect(self.checkin_workspace)
 
+        self.ui.tv_plugin.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.tv_plugin.clicked.connect(self.refresh_check_doc)
         self.ui.tv_plugin.doubleClicked.connect(self.validate)
         self.ui.btn_check.clicked.connect(lambda: self.ui.tv_plugin.model().validate())
