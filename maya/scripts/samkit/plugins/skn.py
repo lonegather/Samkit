@@ -198,7 +198,7 @@ class SkinExtractor(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ExtractorOrder
     label = 'Export FBX Data'
-    families = ['skn']
+    families = ['skn', 'rig']
 
     def process(self, instance):
         import os
