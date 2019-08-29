@@ -97,32 +97,17 @@ class SkinScaleValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
+        success = True
 
         for joint in instance.context.data['joints']:
             for sv in cmds.xform(joint, q=True, scale=True, ws=True):
                 sv_str = '%.2f' % sv
-                assert sv_str == '1.00', \
-                    'Global scale of %s is NOT 1.0' % joint
-
-    @staticmethod
-    def fix():
-        from maya import cmds
-
-        joints = []
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            skin = cmds.listConnections(shape, d=False, t='skinCluster')
-            if not skin:
-                continue
-            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
-                if joint not in joints:
-                    joints.append(joint)
-
-        for joint in joints:
-            for sv in cmds.xform(joint, q=True, scale=True, ws=True):
-                sv_str = '%.2f' % sv
                 if sv_str != '1.00':
-                    cmds.select(joint, r=True)
-                    return False
+                    success = False
+                    self.log.info(joint)
+                    break
+
+        assert success, 'Global scale of some joints are NOT 1.0'
 
 
 class SkinHistoryValidator(pyblish.api.InstancePlugin):
@@ -137,19 +122,7 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
-
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            for node in cmds.listConnections(shape, d=False) or list():
-                assert cmds.objectType(node) in [
-                    'skinCluster',
-                    'objectSet',
-                    'tweak',
-                    'groupId',
-                ], '%s has history other than SkinCluster or BlendShape.' % shape
-
-    @staticmethod
-    def fix():
-        from maya import cmds
+        success = True
 
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             for node in cmds.listConnections(shape, d=False) or list():
@@ -159,8 +132,11 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
                     'tweak',
                     'groupId',
                 ]:
-                    cmds.select(shape, r=True)
-                    return False
+                    success = False
+                    self.log.info(shape)
+                    break
+
+        assert success, 'Some mesh have history other than SkinCluster or BlendShape.'
 
 
 class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
@@ -175,12 +151,20 @@ class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
+        success = True
 
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             for obj in cmds.listConnections(shape, type='objectSet', d=False) or list():
                 for bs in cmds.listConnections(obj, type='blendShape', d=False) or list():
-                    assert not cmds.listConnections(bs, d=False), \
-                        '%s\'s BlendShape must have NO history.' % shape
+                    if cmds.listConnections(bs, d=False):
+                        success = False
+                        self.log.info(shape)
+                        break
+                else:
+                    continue
+                break
+
+        assert success, 'Mesh BlendShape must have NO history.'
 
     @staticmethod
     def fix():

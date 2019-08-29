@@ -25,17 +25,16 @@ class ModelTypeValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
+        success = True
 
         assert cmds.ls(geometry=True, noIntermediate=True), 'No geometry found.'
 
-        success = True
         for shape in cmds.ls(geometry=True, noIntermediate=True):
             if cmds.objectType(shape) != 'mesh':
                 success = False
                 self.log.info(shape)
 
-        if not success:
-            raise Exception('Not all geometries are poly mesh.')
+        assert success, 'Not all geometries are poly mesh.'
 
 
 class ModelInstanceValidator(pyblish.api.InstancePlugin):
@@ -53,11 +52,15 @@ class ModelInstanceValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
+        success = True
 
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)
-            assert len(transform) == 1, \
-                '%s has multiple transform nodes.'
+            if len(transform) > 1:
+                success = False
+                self.log.info(shape)
+
+        assert success, 'Some geometries have multiple transform nodes.'
 
 
 class ModelNameValidator(pyblish.api.InstancePlugin):
@@ -109,25 +112,18 @@ class ModelTransformValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
-
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            transform = cmds.listRelatives(shape, allParents=True)[0]
-            for sv in cmds.xform(transform, q=True, scale=True, ws=True):
-                sv_str = '%.2f' % sv
-                assert sv_str == '1.00', \
-                    'Global scale of %s is NOT 1.0' % transform
-
-    @staticmethod
-    def fix():
-        from maya import cmds
+        success = True
 
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             transform = cmds.listRelatives(shape, allParents=True)[0]
             for sv in cmds.xform(transform, q=True, scale=True, ws=True):
                 sv_str = '%.2f' % sv
                 if sv_str != '1.00':
-                    cmds.select(transform, r=True)
-                    return False
+                    success = False
+                    self.log.info(transform)
+                    break
+
+        assert success, 'Global scale of some mesh are NOT 1.0'
 
 
 class ModelUVSetValidator(pyblish.api.InstancePlugin):
@@ -145,19 +141,14 @@ class ModelUVSetValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
-
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            assert len(cmds.polyUVSet(shape, q=True, auv=True)) <= 1, \
-                '%s has multiply UVSets.' % shape
-
-    @staticmethod
-    def fix():
-        from maya import cmds, mel
+        success = True
 
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             if len(cmds.polyUVSet(shape, q=True, auv=True)) > 1:
-                cmds.select(shape, r=True)
-                mel.eval('UVSetEditor;')
+                success = False
+                self.log.info(shape)
+
+        assert success, 'Some mesh have multiply UVSets.'
 
 
 class ModelHistoryValidator(pyblish.api.InstancePlugin):

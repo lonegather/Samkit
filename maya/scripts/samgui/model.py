@@ -180,6 +180,9 @@ class PluginModel(QStandardItemModel):
                 plugins.append(root.child(i).data(PluginItem.PluginRole))
         else:
             if not index.data(PluginItem.PluginRole):
+                command = index.data(ObjectItem.CommandRole)
+                if command:
+                    command()
                 return
             plugins = [index.data(PluginItem.PluginRole)]
         return pyblish.util.validate(pyblish.util.collect(), plugins)
@@ -254,7 +257,7 @@ class PluginItem(QStandardItem):
 class ResultItem(QStandardItem):
 
     UI_PATH = '%s\\ui\\result.ui' % samkit.MODULE_PATH
-    WidgetRole = Qt.UserRole + 1
+    WidgetRole = Qt.UserRole + 3
 
     def __init__(self, result):
         super(ResultItem, self).__init__(str(result['error']))
@@ -272,10 +275,7 @@ class ResultItem(QStandardItem):
 
     def setup(self):
         for lr in self._result['records']:
-            item = QStandardItem(lr.msg)
-            item.setForeground(QBrush(QColor('#ff3')))
-            item.setEditable(False)
-            self.appendRow(item)
+            self.appendRow(ObjectItem(lr.msg))
         self.model().resultGenerated.emit(self.index())
 
     def fix(self, *_):
@@ -289,3 +289,21 @@ class ResultItem(QStandardItem):
             return self.widget
 
         return super(ResultItem, self).data(role)
+
+
+class ObjectItem(QStandardItem):
+
+    CommandRole = Qt.UserRole + 4
+
+    def __init__(self, obj):
+        super(ObjectItem, self).__init__(obj)
+        self._cmd = lambda: samkit.cmds.select(obj, r=True)
+        self.setEditable(False)
+
+    def data(self, role=None):
+        if role == Qt.ForegroundRole:
+            return QBrush(QColor('#ff3'))
+        elif role == self.CommandRole:
+            return self._cmd
+
+        return super(ObjectItem, self).data(role)
