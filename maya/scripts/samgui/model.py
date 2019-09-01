@@ -103,8 +103,7 @@ class AssetModel(QAbstractListModel):
         tag_id = tag_id if tag_id else self._tag.current_id
         self._data = samkit.get_data('entity', tag_id=tag_id)
         self.filter(self._filter)
-        for asset in self._data:
-            self._hub.get(asset['thumb'])
+        self._hub.get([asset['thumb'] for asset in self._data])
 
     def filter(self, txt):
         self._filter = txt
@@ -279,7 +278,7 @@ class ResultItem(QStandardItem):
         self.model().resultGenerated.emit(self.index())
 
     def fix(self, *_):
-        if self._result['plugin'].fix():
+        if self._result['plugin'].fix([lr.msg for lr in self._result['records']]):
             self.model().validate(self.parent().index())
 
     def data(self, role=None):

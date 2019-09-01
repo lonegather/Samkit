@@ -34,7 +34,7 @@ class AnimationFPSValidator(pyblish.api.InstancePlugin):
             'Current FPS is NOT 25.'
 
     @staticmethod
-    def fix():
+    def fix(objects):
         from maya import cmds
 
         cmds.currentUnit(time='pal', updateAnimation=False)

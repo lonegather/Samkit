@@ -166,17 +166,19 @@ class ImageHub(QObject):
         super(ImageHub, self).__init__(parent)
         self.manager.finished.connect(self.on_finished)
 
-    def get(self, url):
-        if not self.icon_set.get(url, None):
-            self.icon_set[url] = 'loading'
-            host = cmds.optionVar(q=samkit.OPT_HOST)
-            req = QNetworkRequest(QUrl('http://%s%s' % (host, url)))
-            self.manager.get(req)
-        elif not self.icon_set[url] == 'loading':
-            self.ImageRequested.emit(self.icon_set)
+    def get(self, urls):
+        self.icon_set = {}
+        for url in urls:
+            self.icon_set[url] = None
+        self.request()
 
     def request(self):
-        pass
+        for url, image in self.icon_set.items():
+            if not image:
+                host = cmds.optionVar(q=samkit.OPT_HOST)
+                req = QNetworkRequest(QUrl('http://%s%s' % (host, url)))
+                self.manager.get(req)
+                break
 
     def on_finished(self, reply):
         if reply.error() == QNetworkReply.NoError:
@@ -186,6 +188,7 @@ class ImageHub(QObject):
             image.loadFromData(data)
             self.icon_set[url] = image
             self.ImageRequested.emit(self.icon_set)
+            self.request()
 
 
 class RequestThread(QThread):

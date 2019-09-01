@@ -18,7 +18,20 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
             for joint in cmds.listConnections(skin, d=False, t='joint') or list():
                 if joint not in joints:
                     joints.append(joint)
+
         context.data['joints'] = joints
+        context.data['root'] = ''
+        if not len(joints):
+            return
+
+        for root in cmds.ls(type='joint'):
+            root_children = cmds.ls(root, type='joint', dag=True, allPaths=True)
+            for joint in joints:
+                if joint not in root_children:
+                    break
+            else:
+                context.data['root'] = root
+                break
 
 
 class SkinSkeletonValidator(pyblish.api.InstancePlugin):
@@ -48,41 +61,22 @@ class SkinRootValidator(pyblish.api.InstancePlugin):
 
         task = instance.data['task']
         samkit.open_file(task)
+        root = instance.context.data['root']
 
-        joints_influence = [joint for joint in instance.context.data['joints'] if 'Root' not in joint]
-        joints_all = cmds.ls(type='joint')
-        root = ''
-        for joint in joints_all:
-            if 'Root' in joint:
-                root = joint
-                break
         assert root, \
-            'Root joint not found.'
+            'Cannot locate Root. A Root should be parent joint of all influence joints.'
 
         for rv in cmds.xform(root, q=True, rotation=True, ws=True):
-            assert rv == 0.0, \
-                'Global rotation of Root is NOT 0.0'
+            rv_str = '%.2f' % rv
+            if rv_str != '0.00':
+                self.log.info(root)
+                assert False, 'Global rotation (including joint orient) of Root is NOT 0.0'
 
         for tv in cmds.xform(root, q=True, translation=True, ws=True):
-            assert tv == 0.0, \
-                'Global translation of Root is NOT 0.0'
-
-        joints_children = cmds.listRelatives(root, allDescendents=True) or list()
-        assert all(joint in joints_children for joint in joints_influence), \
-            'Not all influences are under Root.'
-
-    @staticmethod
-    def fix():
-        from maya import cmds
-
-        for joint in cmds.ls(type='joint'):
-            if 'Root' in joint:
-                cmds.select(joint, r=True)
-                return False
-
-        cmds.select(cl=True)
-        cmds.joint(name='Root')
-        return True
+            tv_str = '%.2f' % tv
+            if tv_str != '0.00':
+                self.log.info(root)
+                assert False, 'Global translation of Root is NOT 0.0'
 
 
 class SkinScaleValidator(pyblish.api.InstancePlugin):
@@ -113,7 +107,7 @@ class SkinScaleValidator(pyblish.api.InstancePlugin):
 class SkinHistoryValidator(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.36
-    label = 'Validate Skeleton History'
+    label = 'Validate Skin History'
     families = ['skn', 'rig']
 
     def process(self, instance):
@@ -131,6 +125,8 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
                     'objectSet',
                     'tweak',
                     'groupId',
+                    'transform',
+                    'shadingEngine',
                 ]:
                     success = False
                     self.log.info(shape)
@@ -166,17 +162,6 @@ class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
 
         assert success, 'Mesh BlendShape must have NO history.'
 
-    @staticmethod
-    def fix():
-        from maya import cmds
-
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            for obj in cmds.listConnections(shape, type='objectSet', d=False) or list():
-                for bs in cmds.listConnections(obj, type='blendShape', d=False) or list():
-                    if cmds.listConnections(bs, d=False):
-                        cmds.select(shape, r=True)
-                        return False
-
 
 class SkinExtractor(pyblish.api.InstancePlugin):
 
@@ -197,13 +182,29 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        root = cmds.ls('Root', type='joint')[0]
-        # cmds.parent(root, world=True)
+        root = 'Root'
+        if not cmds.ls(root, type='joint'):
+            joints = instance.context.data['joints']
+            for joint in joints:
+                if root in joint:
+                    namespace = ':' + joint.split(':Root')[0]
+                    cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
+                    break
+            else:
+                return
+
+        try:
+            cmds.parent(root, world=True)
+        except RuntimeError:
+            pass
 
         selection_list = [root]
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             for transform in cmds.listRelatives(shape, allParents=True):
-                # cmds.parent(transform, world=True)
+                try:
+                    cmds.parent(transform, world=True)
+                except RuntimeError:
+                    pass
                 selection_list.append(transform)
 
         cmds.select(selection_list, r=True)
@@ -227,5 +228,7 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         mel.eval('FBXExportUpAxis z;')
         mel.eval('FBXExportUseSceneName -v true;')
         mel.eval('FBXExport -f "{path}/{name}_skn.fbx" -s'.format(**locals()))
+
+        samkit.open_file(task, True)
 
 

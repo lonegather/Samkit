@@ -86,7 +86,7 @@ class ModelNameValidator(pyblish.api.InstancePlugin):
                 '%s\'s shape name should be %s.' % (transform, shape_standard)
 
     @staticmethod
-    def fix():
+    def fix(objects):
         from maya import cmds
 
         for shape in cmds.ls(type='mesh', noIntermediate=True):
@@ -151,12 +151,46 @@ class ModelUVSetValidator(pyblish.api.InstancePlugin):
         assert success, 'Some mesh have multiply UVSets.'
 
 
+class ModelColorSetValidator(pyblish.api.InstancePlugin):
+    """
+    Geometry should have no color set.
+    """
+
+    order = pyblish.api.ValidatorOrder - 0.44
+    label = 'Validate Model Color Set'
+    families = ['mdl', 'skn', 'rig']
+
+    def process(self, instance):
+        from maya import cmds
+        import samkit
+
+        task = instance.data['task']
+        samkit.open_file(task)
+        success = True
+
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
+            if cmds.polyColorSet(shape, query=True, allColorSets=True):
+                success = False
+                self.log.info(shape)
+
+        assert success, 'Some mesh have color sets.'
+
+    @staticmethod
+    def fix(objects):
+        from maya import cmds
+
+        for shape in cmds.ls(type='mesh', noIntermediate=True):
+            for cs in cmds.polyColorSet(shape, query=True, allColorSets=True) or list():
+                cmds.polyColorSet(shape, delete=True, colorSet=cs)
+        return True
+
+
 class ModelHistoryValidator(pyblish.api.InstancePlugin):
     """
     Geometry should have no history.
     """
 
-    order = pyblish.api.ValidatorOrder - 0.44
+    order = pyblish.api.ValidatorOrder - 0.43
     label = 'Validate Model History'
     families = ['mdl']
 
@@ -172,7 +206,7 @@ class ModelHistoryValidator(pyblish.api.InstancePlugin):
                 '%s has construction history.' % shape
 
     @staticmethod
-    def fix():
+    def fix(objects):
         from maya import cmds
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             cmds.delete(shape, constructionHistory=True)
@@ -201,7 +235,7 @@ class ModelExtractor(pyblish.api.InstancePlugin):
         selection_list = []
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             for transform in cmds.listRelatives(shape, allParents=True):
-                # cmds.parent(transform, world=True)
+                cmds.parent(transform, world=True)
                 selection_list.append(transform)
 
         cmds.select(selection_list, r=True)
@@ -225,3 +259,5 @@ class ModelExtractor(pyblish.api.InstancePlugin):
         mel.eval('FBXExportUpAxis z;')
         mel.eval('FBXExportUseSceneName -v true;')
         mel.eval('FBXExport -f "{path}/{name}_mdl.fbx" -s'.format(**locals()))
+
+        samkit.open_file(task, True)
