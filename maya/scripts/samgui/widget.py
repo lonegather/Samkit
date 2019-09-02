@@ -65,6 +65,7 @@ class DockerMain(Docker):
         self.ui.lv_asset.doubleClicked.connect(self.refresh_filter)
         self.ui.tb_refresh.clicked.connect(self.refresh_repository)
         self.ui.le_filter.textChanged.connect(lambda txt: asset_model.filter(txt))
+        self.ui.detail.setVisible(False)
 
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
         self.ui.tb_renew.clicked.connect(self.refresh_workspace)
