@@ -25,6 +25,8 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
             return
 
         for root in cmds.ls(type='joint'):
+            if root in joints:
+                continue
             root_children = cmds.ls(root, type='joint', dag=True, allPaths=True)
             for joint in joints:
                 if joint not in root_children:
