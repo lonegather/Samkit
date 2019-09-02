@@ -277,6 +277,9 @@ class Entity(models.Model):
 
         super(Entity, self).save(*args, **kwargs)
 
+        if Task.objects.filter(entity=self):
+            return
+
         for stage in Stage.objects.filter(genus=self.genus(), project=project):
             data = {
                 'entity': self,
