@@ -124,9 +124,6 @@
            <property name="text">
             <string/>
            </property>
-           <property name="popupMode">
-            <enum>QToolButton::InstantPopup</enum>
-           </property>
            <property name="autoRaise">
             <bool>true</bool>
            </property>
@@ -189,6 +186,12 @@
               <height>0</height>
              </size>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>128</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="frameShape">
              <enum>QFrame::StyledPanel</enum>
             </property>
@@ -197,6 +200,9 @@
             </property>
             <property name="text">
              <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -208,21 +214,11 @@
             <property name="verticalSpacing">
              <number>7</number>
             </property>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="comboBox"/>
-            </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Type:</string>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit"/>
+             <widget class="QLineEdit" name="le_name"/>
             </item>
             <item row="2" column="1">
-             <widget class="QLineEdit" name="lineEdit_2"/>
+             <widget class="QLineEdit" name="le_info"/>
             </item>
             <item row="3" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -240,23 +236,14 @@
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_3">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
+               <widget class="QCheckBox" name="cb_thumb">
                 <property name="text">
                  <string>Thumb</string>
                 </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton">
+               <widget class="QPushButton" name="btn_apply">
                 <property name="minimumSize">
                  <size>
                   <width>80</width>
@@ -264,12 +251,12 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>Apply</string>
+                 <string/>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_2">
+               <widget class="QPushButton" name="btn_cancel">
                 <property name="minimumSize">
                  <size>
                   <width>80</width>
@@ -294,6 +281,22 @@
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>Info:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="2">
+             <widget class="QLabel" name="lbl_add">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>21</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>

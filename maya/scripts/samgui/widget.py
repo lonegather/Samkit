@@ -1,4 +1,4 @@
-from Qt.QtWidgets import QWidget, QListView, QListWidgetItem, QMenu, QAction, QAbstractItemView
+from Qt.QtWidgets import QApplication, QWidget, QListView, QListWidgetItem, QMenu, QAction, QToolButton
 from Qt.QtGui import QIcon, QPixmap
 from Qt.QtCore import Signal, Qt
 
@@ -21,6 +21,9 @@ class DockerMain(Docker):
         self.authorized = False
         self.project_id = ''
         self.filter = ''
+        self.detail_id = ''
+        self.detail_thumb = ''
+        self.clipboard = QApplication.clipboard()
 
         genus_model = GenusModel()
         tag_model = TagModel(genus_model)
@@ -35,6 +38,7 @@ class DockerMain(Docker):
         self.ui.lw_task.setItemDelegate(TaskDelegate())
         self.ui.tv_plugin.setItemDelegate(PluginDelegate())
 
+        self.ui.detail.setVisible(False)
         self.ui.lv_asset.setWrapping(True)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
@@ -60,12 +64,18 @@ class DockerMain(Docker):
         asset_model.filtered.connect(self.refresh_repository_asset)
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
+        self.ui.tb_add.clicked.connect(lambda *_: self.open_detail())
         self.ui.tb_connect.clicked.connect(lambda *_: self.refresh_repository(force=True))
         self.ui.lv_asset.customContextMenuRequested.connect(self.refresh_repository_context_menu)
         self.ui.lv_asset.doubleClicked.connect(self.refresh_filter)
         self.ui.tb_refresh.clicked.connect(self.refresh_repository)
         self.ui.le_filter.textChanged.connect(lambda txt: asset_model.filter(txt))
-        self.ui.detail.setVisible(False)
+
+        self.ui.le_name.textChanged.connect(lambda txt: self.ui.btn_apply.setEnabled(bool(self.ui.le_name.text())))
+        self.ui.btn_apply.clicked.connect(self.commit_detail)
+        self.ui.btn_cancel.clicked.connect(self.close_detail)
+        self.ui.cb_thumb.clicked.connect(self.thumb_detail)
+        self.clipboard.dataChanged.connect(self.thumb_detail)
 
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
         self.ui.tb_renew.clicked.connect(self.refresh_workspace)
@@ -123,18 +133,87 @@ class DockerMain(Docker):
         current_index = self.ui.lv_asset.currentIndex()
         data_task = []
         asset_id = current_index.data(AssetModel.IdRole)
+
         if asset_id:
             data_task = samkit.get_data('task', entity_id=asset_id)
         if not data_task:
             return
 
         menu = QMenu()
+        edit_action = QAction('Edit...', menu)
+        edit_action.triggered.connect(lambda *_: self.open_detail(asset_id))
+        menu.addAction(edit_action)
         for task in data_task:
             stage_menu = TaskMenu(task)
             stage_menu.Checked.connect(self.checkout_repository)
             stage_menu.Referred.connect(samkit.reference)
             menu.addMenu(stage_menu)
         menu.exec_(self.ui.lv_asset.mapToGlobal(position))
+
+    def open_detail(self, entity_id=None):
+        self.detail_id = entity_id
+        genus = self.ui.cb_genus.currentText()
+        tag = self.ui.cb_tag.currentText()
+        prefix = 'Update' if entity_id else 'Add'
+        self.ui.cb_genus.setEnabled(False)
+        self.ui.cb_tag.setEnabled(False)
+        self.ui.le_filter.setEnabled(False)
+        self.ui.tb_refresh.setEnabled(False)
+        self.ui.tb_add.setEnabled(False)
+        self.ui.tb_delete.setEnabled(False)
+        self.ui.tb_connect.setEnabled(False)
+        self.ui.lv_asset.setEnabled(False)
+        self.ui.detail.setVisible(True)
+        self.ui.le_name.setText('')
+        self.ui.le_info.setText('')
+        self.ui.lbl_add.setText(u'{prefix}  {genus} - {tag}'.format(**locals()))
+        self.ui.btn_apply.setText(prefix)
+        self.ui.btn_apply.setEnabled(bool(self.ui.le_name.text()))
+
+        if not entity_id:
+            return
+
+        entity = samkit.get_data('entity', id=entity_id)[0]
+        self.ui.le_name.setText(entity['name'])
+        self.ui.le_info.setText(entity['info'])
+
+    def thumb_detail(self):
+        if not self.ui.cb_thumb.checked():
+            pass
+        data = self.clipboard.mimeData()
+        if data.hasImage():
+            self.ui.lbl_thumb.setPixmap(QPixmap.fromImage(data.imageData()))
+
+    def close_detail(self, *_):
+        self.ui.cb_genus.setEnabled(True)
+        self.ui.cb_tag.setEnabled(True)
+        self.ui.le_filter.setEnabled(True)
+        self.ui.tb_refresh.setEnabled(True)
+        self.ui.tb_add.setEnabled(True)
+        self.ui.tb_delete.setEnabled(True)
+        self.ui.tb_connect.setEnabled(True)
+        self.ui.lv_asset.setEnabled(True)
+        self.ui.detail.setVisible(False)
+
+    def commit_detail(self, *_):
+        name = self.ui.le_name.text()
+        info = self.ui.le_info.text()
+        kwargs = {
+            'name': name,
+            'info': info,
+            'tag_id': self.ui.cb_tag.model().current_id
+        }
+        if self.detail_id:
+            kwargs['id'] = self.detail_id
+
+        entities = samkit.get_data('entity', name=name)
+        if entities and self.detail_id != entities[0]['id']:
+            samkit.get_confirm('Duplicated Name: %s' % name, icon='critical', choose=False)
+            return
+
+        samkit.set_data('entity', **kwargs)
+        self.refresh_repository()
+        self.close_detail()
 
     def refresh_filter(self, *_):
         pass

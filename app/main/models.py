@@ -230,7 +230,7 @@ class Entity(models.Model):
     @classmethod
     def set(cls, form):
         ent_id = form.get('id', [None])[0]
-        tag = Tag.objects.get(name=form['tag'][0])
+        tag = Tag.objects.get(id=form['tag_id'][0])
 
         if ent_id:
             ent = Entity.objects.get(id=ent_id)
@@ -239,10 +239,11 @@ class Entity(models.Model):
             ent.tag = tag
             ent.link.clear()
         else:
-            prj = Project.objects.get(id=form['project'][0])
-            ent = Entity(project=prj, tag=tag,
-                         name=form['name'][0],
-                         info=form['info'][0])
+            ent = Entity(
+                tag=tag,
+                name=form['name'][0],
+                info=form['info'][0]
+            )
             ent.save()
 
         for link_id in form.get('link', []):

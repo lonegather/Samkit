@@ -35,7 +35,9 @@ class GenusModel(QAbstractListModel):
     def rowCount(self, *_):
         return len(self._data)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index=None, role=Qt.DisplayRole):
+        if not index:
+            return self._data
         if self._data:
             return self._data[index.row()].get(self._map.get(role, None), None)
 
@@ -69,7 +71,9 @@ class TagModel(QAbstractListModel):
     def rowCount(self, *_):
         return len(self._data)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index=None, role=Qt.DisplayRole):
+        if not index:
+            return self._data
         if self._data:
             return self._data[index.row()].get(self._map.get(role, None), None)
 
