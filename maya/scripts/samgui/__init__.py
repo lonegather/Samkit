@@ -160,17 +160,26 @@ class ImageHub(QObject):
 
     ImageRequested = Signal(dict)
     manager = QNetworkAccessManager()
+    manager_default = QNetworkAccessManager()
     icon_set = {}
 
     def __init__(self, parent=None):
         super(ImageHub, self).__init__(parent)
+        self.ready = False
+        self.default_image = QImage()
         self.manager.finished.connect(self.on_finished)
+        self.manager_default.finished.connect(self.on_default_finished)
+
+        req = QNetworkRequest(QUrl('http://%s/media/thumbs/default.png' % cmds.optionVar(q=samkit.OPT_HOST)))
+        self.manager_default.get(req)
 
     def get(self, urls):
         self.icon_set = {}
         for url in urls:
             self.icon_set[url] = None
-        self.request()
+
+        if self.ready:
+            self.request()
 
     def request(self):
         for url, image in self.icon_set.items():
@@ -181,13 +190,24 @@ class ImageHub(QObject):
                 break
 
     def on_finished(self, reply):
+        url = reply.url().path()
+        image = QImage()
+
         if reply.error() == QNetworkReply.NoError:
-            url = reply.url().path()
             data = reply.readAll()
-            image = QImage()
             image.loadFromData(data)
-            self.icon_set[url] = image
-            self.ImageRequested.emit(self.icon_set)
+        else:
+            image = self.default_image
+
+        self.icon_set[url] = image
+        self.ImageRequested.emit(self.icon_set)
+        self.request()
+
+    def on_default_finished(self, reply):
+        if reply.error() == QNetworkReply.NoError:
+            data = reply.readAll()
+            self.default_image.loadFromData(data)
+            self.ready = True
             self.request()
 
 
