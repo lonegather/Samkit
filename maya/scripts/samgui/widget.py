@@ -151,6 +151,7 @@ class DockerMain(Docker):
         menu.exec_(self.ui.lv_asset.mapToGlobal(position))
 
     def open_detail(self, entity_id=None):
+        self.clipboard.clear()
         self.detail_id = entity_id
         genus = self.ui.cb_genus.currentText()
         tag = self.ui.cb_tag.currentText()
@@ -164,6 +165,7 @@ class DockerMain(Docker):
         self.ui.tb_connect.setEnabled(False)
         self.ui.lv_asset.setEnabled(False)
         self.ui.detail.setVisible(True)
+        self.ui.cb_thumb.setChecked(False)
         self.ui.le_name.setText('')
         self.ui.le_info.setText('')
         self.ui.lbl_add.setText(u'{prefix}  {genus} - {tag}'.format(**locals()))
@@ -171,18 +173,24 @@ class DockerMain(Docker):
         self.ui.btn_apply.setEnabled(bool(self.ui.le_name.text()))
 
         if not entity_id:
+            self.detail_thumb = '/media/thumbs/default.png'
             return
 
         entity = samkit.get_data('entity', id=entity_id)[0]
         self.ui.le_name.setText(entity['name'])
         self.ui.le_info.setText(entity['info'])
+        self.detail_thumb = entity['thumb']
+        self.thumb_detail()
 
     def thumb_detail(self):
-        if not self.ui.cb_thumb.checked():
-            pass
         data = self.clipboard.mimeData()
-        if data.hasImage():
-            self.ui.lbl_thumb.setPixmap(QPixmap.fromImage(data.imageData()))
+        if self.ui.cb_thumb.isChecked() and data.hasImage():
+            image = data.imageData()
+        else:
+            model = self.ui.lv_asset.model()
+            image = model.get_image(self.detail_thumb)
+
+        self.ui.lbl_thumb.setPixmap(QPixmap.fromImage(image))
 
     def close_detail(self, *_):
         self.ui.cb_genus.setEnabled(True)
@@ -205,6 +213,11 @@ class DockerMain(Docker):
         }
         if self.detail_id:
             kwargs['id'] = self.detail_id
+
+        if self.ui.cb_thumb.isChecked():
+            file_path = '%s\\%s.png' % (samkit.TMP_PATH, name)
+            self.ui.lbl_thumb.pixmap().scaled(128, 128).save(file_path)
+            kwargs['file'] = {'thumb': open(file_path, 'rb')}
 
         entities = samkit.get_data('entity', name=name)
         if entities and self.detail_id != entities[0]['id']:

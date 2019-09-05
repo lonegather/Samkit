@@ -3,9 +3,11 @@
 
 # Django migrations / statics
 migrations/
+app/media/
 app/static/
 app/backups/
 app/setup.csv
+!app/media/default.png
 
 # Portable Python distribution
 maya/pydist

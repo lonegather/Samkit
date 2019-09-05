@@ -32,6 +32,7 @@ __all__ = [
     'checkout',
     'checkin',
     'reference',
+    'TMP_PATH',
     'MODULE_PATH',
     'OPT_HOST',
     'OPT_USERNAME',

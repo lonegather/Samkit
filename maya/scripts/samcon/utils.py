@@ -1,3 +1,4 @@
+import os
 import json
 import pickle
 from maya import cmds
@@ -5,6 +6,7 @@ from requests.exceptions import ConnectionError
 
 
 __all__ = [
+    'TMP_PATH',
     'MODULE_PATH',
     'OPT_HOST',
     'OPT_USERNAME',
@@ -22,6 +24,7 @@ __all__ = [
     'update',
 ]
 
+TMP_PATH = os.getenv('TMP')
 MODULE_PATH = cmds.moduleInfo(path=True, moduleName='Samkit').replace('/', '\\')
 OPT_HOST = 'samkit_host'
 OPT_USERNAME = 'samkit_username'

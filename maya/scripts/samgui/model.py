@@ -133,6 +133,9 @@ class AssetModel(QAbstractListModel):
         if len(self._data_filter) > index.row():
             return self._data_filter[index.row()].get(self._map.get(role, None), None)
 
+    def get_image(self, url):
+        return self._hub.icon_set.get(url, self._hub.default_image)
+
     def image_received(self, icon_set):
         for url in icon_set:
             image = icon_set[url]
