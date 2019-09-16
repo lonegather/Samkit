@@ -32,6 +32,11 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
                 if joint not in root_children:
                     break
             else:
+                try:
+                    cmds.addAttr(root, longName='UE_Skeleton', dataType='string', keyable=False)
+                except RuntimeError:
+                    pass
+                cmds.setAttr('%s.UE_Skeleton' % root, context[0].data['name'], type='string')
                 context.data['root'] = root
                 break
 
@@ -184,16 +189,11 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        root = 'Root'
-        if not cmds.ls(root, type='joint'):
-            joints = instance.context.data['joints']
-            for joint in joints:
-                if root in joint:
-                    namespace = ':' + joint.split(':Root')[0]
-                    cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
-                    break
-            else:
-                return
+        root = instance.context.data['root']
+        namespace = ':'+':'.join(root.split(':')[:-1])
+
+        if namespace != ':':
+            cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
 
         try:
             cmds.parent(root, world=True)

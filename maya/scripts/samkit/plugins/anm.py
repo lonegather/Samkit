@@ -78,13 +78,16 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             os.makedirs(path)
 
         for joint in cmds.ls(type='joint'):
-            if 'Root' not in joint:
+            try:
+                cmds.getAttr('%s.UE_Skeleton' % joint)
+            except ValueError:
                 continue
 
-            namespace = ':' + joint.split(':Root')[0]
+            namespace = ':'+':'.join(joint.split(':')[:-1])
             char = joint.split(':')[0]
             cmds.select(joint, r=True)
-            cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
+            if namespace != ':':
+                cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
 
             mel.eval('FBXExportAnimationOnly -v true;')
             mel.eval('FBXExportAxisConversionMethod convertAnimation;')
