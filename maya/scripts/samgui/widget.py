@@ -232,7 +232,10 @@ class DockerMain(Docker):
         pass
 
     def refresh_workspace(self, *_):
-        self.ui.tv_plugin.model().clear()
+        try:
+            self.ui.tv_plugin.model().clear()
+        except RuntimeError:
+            pass
         self.ui.tab_check.setEnabled(False)
         while self.ui.lw_task.count():
             self.ui.lw_task.takeItem(0)
@@ -393,7 +396,7 @@ class TaskItem(QListWidgetItem):
 
     def select(self, *_):
         index = self.widget.ui.lw_version.currentRow()
-        self.widget.ui.lbl_comment.setText(self._history[index]['comment'])
+        self.widget.ui.lbl_comment.setText(self._history[index]['comment'] if self._history else '')
 
     def data(self, role):
         if role in self._map:

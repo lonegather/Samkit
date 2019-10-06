@@ -1,5 +1,7 @@
 import json
 import pickle
+import socket
+from socket import error
 import requests
 from requests.exceptions import ConnectionError
 from maya import cmds
@@ -9,6 +11,7 @@ from .utils import *
 
 
 session = requests.Session()
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
 def access(force=False):
@@ -72,3 +75,12 @@ def get_data(table, **filters):
 def set_data(table, **filters):
     host = cmds.optionVar(q=OPT_HOST)
     return update(session, host, table, **filters)
+
+
+def ue_setup():
+    try:
+        client.connect(('127.0.0.1', 8888))
+    except error:
+        return False
+    client.send('Hello'.encode())
+    client.close()

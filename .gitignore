@@ -10,7 +10,8 @@ app/setup.csv
 !app/media/default.png
 
 # Portable Python distribution
-maya/pydist
+/maya/pydist
+/unreal/Plugins/UnrealEnginePython
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -116,3 +117,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/unreal/Plugins/UnrealEnginePython/

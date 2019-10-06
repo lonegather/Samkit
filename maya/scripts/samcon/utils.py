@@ -19,6 +19,12 @@ __all__ = [
     'AUTH_FAILED',
     'AUTH_ABORT',
     'CONNECT_FAILED',
+    'UE_ADD_CHARACTER',
+    'UE_EDIT_CHARACTER',
+    'UE_ADD_ANIMATION',
+    'UE_EDIT_ANIMATION',
+    'UE_ADD_SEQUENCE',
+    'UE_EDIT_SEQUENCE',
     'clear_ov',
     'login',
     'update',
@@ -37,6 +43,13 @@ AUTH_SUCCESS = 0
 AUTH_FAILED = 1
 AUTH_ABORT = 2
 CONNECT_FAILED = 3
+UE_CONNECT = 0
+UE_ADD_CHARACTER = 1
+UE_EDIT_CHARACTER = 2
+UE_ADD_ANIMATION = 3
+UE_EDIT_ANIMATION = 4
+UE_ADD_SEQUENCE = 5
+UE_EDIT_SEQUENCE = 6
 
 
 def clear_ov():
@@ -49,7 +62,6 @@ def clear_ov():
     cmds.optionVar(remove=OPT_COOKIES)
 
 
-# DO NOT USE ADMIN ACCOUNT FOR TESTING
 def login(session, host, username, password):
     server = "http://%s/auth/" % host
     kwargs = {
