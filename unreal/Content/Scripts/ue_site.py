@@ -1,6 +1,6 @@
+import json
 import asyncio
 import unreal_engine as ue
-from unreal_engine.classes import Character
 
 
 def ticker_loop(delta_time):
@@ -21,10 +21,8 @@ async def new_client_connected(reader, writer):
         data = await reader.readline()
         if not data:
             break
-        ue.log('client {0} issued: {1}'.format(name, data.decode()))
-        # spawn a new Character and set its label
-        new_actor = ue.get_editor_world().actor_spawn(Character)
-        new_actor.set_actor_label(data.decode())
+        ue.log(json.loads(data.decode()))
+
     ue.log('client {0} disconnected'.format(name))
 
 

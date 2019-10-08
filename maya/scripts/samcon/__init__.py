@@ -11,7 +11,6 @@ from .utils import *
 
 
 session = requests.Session()
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
 def access(force=False):
@@ -77,10 +76,13 @@ def set_data(table, **filters):
     return update(session, host, table, **filters)
 
 
-def ue_setup():
+def ue_command(data):
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client.connect(('127.0.0.1', 8888))
     except error:
         return False
-    client.send('Hello'.encode())
+    message = json.dumps(data)
+    client.send('{message}\n'.format(**locals()).encode())
     client.close()
+    return True
