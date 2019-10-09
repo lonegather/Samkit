@@ -15,6 +15,7 @@ __all__ = [
     'access',
     'get_data',
     'set_data',
+    'ue_command',
     'getenv',
     'hasenv',
     'local_path_exists',
@@ -48,6 +49,7 @@ scriptJob = cmds.scriptJob
 access = samcon.access
 get_data = samcon.get_data
 set_data = samcon.set_data
+ue_command = samcon.ue_command
 
 
 def getenv(key):
