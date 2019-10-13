@@ -77,7 +77,7 @@ def get_source_path(task):
 
 
 def get_data_path(task):
-    return os.path.realpath(os.path.join(getenv(OPT_PROJECT_ROOT), task['path'].split(';')[1]))
+    return os.path.realpath(os.path.join(getenv(OPT_WORKSPACE), task['path'].split(';')[1]))
 
 
 def get_context(key=None):

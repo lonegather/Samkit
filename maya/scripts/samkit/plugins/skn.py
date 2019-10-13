@@ -189,6 +189,13 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        instance.data['message'] = {
+            'stage': task['stage'],
+            'source': '{path}/{name}_skn.fbx'.format(**locals()),
+            'target': '/Game/%s' % task['path'].split(';')[1],
+            'skeleton': instance.data['name']
+        }
+
         root = instance.context.data['root']
         namespace = ':'+':'.join(root.split(':')[:-1])
 
@@ -229,7 +236,9 @@ class SkinExtractor(pyblish.api.InstancePlugin):
         mel.eval('FBXExportTangents -v true;')
         mel.eval('FBXExportUpAxis z;')
         mel.eval('FBXExportUseSceneName -v true;')
-        mel.eval('FBXExport -f "{path}/{name}_skn.fbx" -s'.format(**locals()))
+        mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+
+        samkit.ue_command(instance.data['message'])
 
         samkit.open_file(task, True)
 

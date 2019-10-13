@@ -232,10 +232,20 @@ class ModelExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        instance.data['message'] = {
+            'stage': task['stage'],
+            'source': '{path}/{name}_mdl.fbx'.format(**locals()),
+            'target': '/Game/%s' % task['path'].split(';')[1],
+            'skeleton': None
+        }
+
         selection_list = []
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             for transform in cmds.listRelatives(shape, allParents=True):
-                cmds.parent(transform, world=True)
+                try:
+                    cmds.parent(transform, world=True)
+                except RuntimeError:
+                    pass
                 selection_list.append(transform)
 
         cmds.select(selection_list, r=True)
@@ -258,6 +268,8 @@ class ModelExtractor(pyblish.api.InstancePlugin):
         mel.eval('FBXExportTangents -v true;')
         mel.eval('FBXExportUpAxis z;')
         mel.eval('FBXExportUseSceneName -v true;')
-        mel.eval('FBXExport -f "{path}/{name}_mdl.fbx" -s'.format(**locals()))
+        mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+
+        samkit.ue_command(instance.data['message'])
 
         samkit.open_file(task, True)

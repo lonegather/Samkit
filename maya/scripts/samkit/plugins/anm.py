@@ -85,11 +85,19 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
             namespace = ':'+':'.join(joint.split(':')[:-1])
             char = joint.split(':')[0]
+
+            instance.data['message'] = {
+                'stage': task['stage'],
+                'source': '{path}/{name}_{char}_anm.fbx'.format(**locals()),
+                'target': '/Game/%s' % task['path'].split(';')[1],
+                'skeleton': char
+            }
+
             cmds.select(joint, r=True)
             if namespace != ':':
                 cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
 
-            mel.eval('FBXExportAnimationOnly -v true;')
+            mel.eval('FBXExportAnimationOnly -v false;')
             mel.eval('FBXExportAxisConversionMethod convertAnimation;')
             mel.eval('FBXExportBakeComplexAnimation -v true;')
             mel.eval('FBXExportCameras -v false;')
@@ -109,7 +117,9 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             mel.eval('FBXExportTangents -v true;')
             mel.eval('FBXExportUpAxis z;')
             mel.eval('FBXExportUseSceneName -v true;')
-            mel.eval('FBXExport -f "{path}/{name}_{char}_anm.fbx" -s'.format(**locals()))
+            mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+
+            samkit.ue_command(instance.data['message'])
 
             samkit.open_file(task, True)
 
