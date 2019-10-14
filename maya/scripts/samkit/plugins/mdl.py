@@ -126,6 +126,7 @@ class ModelTransformValidator(pyblish.api.InstancePlugin):
         assert success, 'Global scale of some mesh are NOT 1.0'
 
 
+'''
 class ModelUVSetValidator(pyblish.api.InstancePlugin):
     """
     Geometry should have only one UVSet.
@@ -183,6 +184,7 @@ class ModelColorSetValidator(pyblish.api.InstancePlugin):
             for cs in cmds.polyColorSet(shape, query=True, allColorSets=True) or list():
                 cmds.polyColorSet(shape, delete=True, colorSet=cs)
         return True
+'''
 
 
 class ModelHistoryValidator(pyblish.api.InstancePlugin):

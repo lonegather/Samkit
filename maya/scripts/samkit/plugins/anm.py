@@ -77,6 +77,10 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        for ref in cmds.ls(type='reference'):
+            if ref != 'sharedReferenceNode':
+                cmds.file(importReference=True, referenceNode=ref)
+
         for joint in cmds.ls(type='joint'):
             try:
                 cmds.getAttr('%s.UE_Skeleton' % joint)
@@ -94,6 +98,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             }
 
             cmds.select(joint, r=True)
+
             if namespace != ':':
                 cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
 
@@ -121,7 +126,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
             samkit.ue_command(instance.data['message'])
 
-            samkit.open_file(task, True)
+        samkit.open_file(task, True)
 
         try:
             cmds.select('MainCam', r=True)

@@ -12,6 +12,7 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
 
         joints = []
         for shape in cmds.ls(type='mesh', noIntermediate=True):
+            print(shape)
             skin = cmds.listConnections(shape, d=False, t='skinCluster')
             if not skin:
                 continue
@@ -23,7 +24,7 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
         context.data['root'] = ''
         if not len(joints):
             return
-
+        print(joints)
         for root in cmds.ls(type='joint'):
             if root in joints:
                 continue
