@@ -73,34 +73,33 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
         name = instance.data['name']
         path = instance.data['pathDat'].replace('\\', '/')
+        project = task['project']
+        tag = task['tag']
 
         mint = int(cmds.playbackOptions(q=1, min=1))
         maxt = int(cmds.playbackOptions(q=1, max=1))
+        mins = '%04d' % mint
+        maxs = '%04d' % maxt
 
         if not os.path.exists(path):
             os.makedirs(path)
-
-        cmds.file(save=True)
 
         for ref in cmds.ls(type='reference'):
             if ref != 'sharedReferenceNode':
                 cmds.file(importReference=True, referenceNode=ref)
 
-        roots = []
         for joint in cmds.ls(type='joint'):
             try:
                 cmds.getAttr('%s.UE_Skeleton' % joint)
             except ValueError:
                 continue
-            roots.append(joint)
 
-        for joint in roots:
             namespace = ':'+':'.join(joint.split(':')[:-1])
             char = joint.split(':')[0]
 
             instance.data['message'] = {
                 'stage': task['stage'],
-                'source': '{path}/{name}_{char}_anm.fbx'.format(**locals()),
+                'source': '{path}/{project}_{tag}_{name}_{char}_anm.fbx'.format(**locals()),
                 'target': '/Game/%s' % task['path'].split(';')[1],
                 'skeleton': char
             }
@@ -112,7 +111,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
             mel.eval('FBXExportAnimationOnly -v false;')
             mel.eval('FBXExportApplyConstantKeyReducer -v true;')
-            mel.eval('FBXExportBakeComplexStart -v %s;' % mint)
+            mel.eval('FBXExportBakeComplexStart -v %s;' % (mint - 5))
             mel.eval('FBXExportBakeComplexEnd -v %s;' % maxt)
             mel.eval('FBXExportBakeComplexStep -v 1;')
             mel.eval('FBXExportBakeResampleAnimation -v true;')
@@ -142,8 +141,18 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         samkit.open_file(task, True)
 
         try:
+            instance.data['message'] = {
+                'stage': 'cam',
+                'source': '{path}/{project}_{tag}_{name}_MainCam_S{mins}_E{maxs}.fbx'.format(**locals()),
+                'target': '/Game/%s' % task['path'].split(';')[1],
+                'skeleton': None
+            }
+
             cmds.select('MainCam', r=True)
             mel.eval('FBXExportCameras -v true;')
-            mel.eval('FBXExport -f "{path}/{name}_MainCam_anm.fbx" -s'.format(**locals()))
+            mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+
+            samkit.ue_command(instance.data['message'])
+
         except ValueError:
             pass

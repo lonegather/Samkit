@@ -16,9 +16,13 @@ def import_asset(stage, source, target, skeleton=None):
     factory = PyFbxFactory()
     factory.ImportUI.bCreatePhysicsAsset = False
     factory.ImportUI.bImportMaterials = True if stage in ['mdl'] else False
-    factory.ImportUI.bImportAnimations = True if stage in ['blk', 'anm'] else False
+    factory.ImportUI.bImportAnimations = True if stage in ['cam', 'lyt', 'anm'] else False
 
-    if stage in ['blk', 'anm']:
+    if stage == 'cam':
+        setup_sequencer(source, target)
+        return
+
+    if stage in ['lyt', 'anm']:
         factory.ImportUI.MeshTypeToImport = EFBXImportType.FBXIT_Animation
 
         if not skeleton:
@@ -36,3 +40,13 @@ def import_asset(stage, source, target, skeleton=None):
             return
 
     factory.factory_import_object(source, target)
+
+
+def setup_sequencer(source, target):
+    import os
+    from unreal_engine.classes import LevelSequenceFactoryNew
+
+    name = os.path.basename(source).lower().split('.fbx')[0]
+
+    factory = LevelSequenceFactoryNew()
+    factory.factory_create_new(target + ('/%s' % name))
