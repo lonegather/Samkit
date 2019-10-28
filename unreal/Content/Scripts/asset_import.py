@@ -48,5 +48,11 @@ def setup_sequencer(source, target):
 
     name = os.path.basename(source).lower().split('.fbx')[0]
 
-    factory = LevelSequenceFactoryNew()
-    factory.factory_create_new(target + ('/%s' % name))
+    for seq in ue.get_assets_by_class('LevelSequence'):
+        if seq.get_display_name() == name:
+            break
+    else:
+        factory = LevelSequenceFactoryNew()
+        seq = factory.factory_create_new(target + ('/%s' % name))
+
+    print(seq.get_display_name())
