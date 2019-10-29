@@ -24,6 +24,8 @@ def import_asset(stage, source, target, skeleton=None):
 
     if stage in ['lyt', 'anm']:
         factory.ImportUI.MeshTypeToImport = EFBXImportType.FBXIT_Animation
+        data = factory.ImportUI.AnimSequenceImportData
+        data.CustomSampleRate = 25
 
         if not skeleton:
             ue.log_error("<<<--- No skeleton information found --->>>")
