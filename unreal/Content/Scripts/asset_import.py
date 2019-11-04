@@ -57,29 +57,50 @@ def setup_sequencer(source, target, shot_info):
             seq.conditional_begin_destroy()
             break
 
-    factory = LevelSequenceFactoryNew()
-    seq = factory.factory_create_new(target + ('/%s' % name))
-    seq.MovieScene.FixedFrameInterval = 1.0 / 25.0
+    # Create Utility objects
     world = ue.get_editor_world()
+    factory = LevelSequenceFactoryNew()
 
+    # Create LevelSequencer object and setup
+    seq = factory.factory_create_new(target + ('/%s' % name))
+    seq.MovieScene.DisplayRate.Numerator = 25.0
+    seq.MovieScene.FixedFrameInterval = 1.0 / 25.0
+    seq.sequencer_set_view_range(0.0, 12.0 / 25.0)
+    seq.sequencer_set_working_range(0.0, 12.0 / 25.0)
+    seq.sequencer_set_playback_range(0.0, 12.0 / 25.0)
+    seq.sequencer_changed(True)
+
+    # Create a camera actor in the level
     cine_camera = world.actor_spawn(CineCameraActor)
     cine_camera.set_actor_label('MainCam')
 
+    # Create a camera cut track (only one allowed)
     camera_cut_track = seq.sequencer_add_camera_cut_track()
+    seq.sequencer_changed(True)
+
+    # Create camera section upon the track and setup
     camera = camera_cut_track.sequencer_track_add_section()
+    camera.sequencer_set_section_range(0.0, 12.0 / 25.0)
+
+    # Add the camera actor to the LevelSequencer
     camera_guid = seq.sequencer_add_actor(cine_camera)
 
+    # Bind the camera section with the camera actor through camera id
     camera.CameraBindingID = MovieSceneObjectBindingID(
         Guid=ue.string_to_guid(camera_guid),
         Space=EMovieSceneObjectBindingSpace.Local
     )
+    seq.sequencer_changed(True)
 
-    seq.sequencer_remove_track(seq.sequencer_possessable_tracks(camera_guid)[0])
-    transform_track = seq.sequencer_add_track(MovieScene3DTransformTrack, camera_guid)
+    # seq.sequencer_remove_track(seq.sequencer_possessable_tracks(camera_guid)[0])
+    # transform_track = seq.sequencer_add_track(MovieScene3DTransformTrack, camera_guid)
+    # seq.sequencer_changed(True)
+    transform_track = seq.sequencer_possessable_tracks(camera_guid)[0]
     transform_section = transform_track.sequencer_track_add_section()
-    transform_section.sequencer_import_fbx_transform(fbx_file, source)
+    transform_section.sequencer_set_section_range(0.0, 12.0 / 25.0)
+    seq.sequencer_changed(True)
 
-    seq.MovieScene.DisplayRate.Numerator = 25.0
+    transform_section.sequencer_import_fbx_transform(source, 'MainCam')
     seq.sequencer_changed(True)
 
     seq.save_package()
