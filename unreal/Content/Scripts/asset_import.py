@@ -49,25 +49,27 @@ def setup_sequencer(source, target, shot_info):
     from unreal_engine.classes import LevelSequenceFactoryNew, CineCameraActor, MovieScene3DTransformTrack
     from unreal_engine.structs import MovieSceneObjectBindingID
     from unreal_engine.enums import EMovieSceneObjectBindingSpace
+    from unreal_engine import FTransform, FVector, FRotator
+    from fbx_extract import FbxCurvesExtractor
 
     name = os.path.basename(source).lower().split('.fbx')[0]
-
-    for seq in ue.get_assets_by_class('LevelSequence'):
-        if seq.get_display_name() == name:
-            seq.conditional_begin_destroy()
-            break
+    seq = ue.find_asset('%s/%s.%s' % (target, name, name))
+    if seq:
+        ue.delete_asset(seq.get_path_name())
 
     # Create Utility objects
+    fps = 25.0
+    end = 100.0
     world = ue.get_editor_world()
     factory = LevelSequenceFactoryNew()
 
     # Create LevelSequencer object and setup
     seq = factory.factory_create_new(target + ('/%s' % name))
-    seq.MovieScene.DisplayRate.Numerator = 25.0
-    seq.MovieScene.FixedFrameInterval = 1.0 / 25.0
-    seq.sequencer_set_view_range(0.0, 12.0 / 25.0)
-    seq.sequencer_set_working_range(0.0, 12.0 / 25.0)
-    seq.sequencer_set_playback_range(0.0, 12.0 / 25.0)
+    seq.MovieScene.DisplayRate.Numerator = fps
+    seq.MovieScene.FixedFrameInterval = 1.0 / fps
+    seq.sequencer_set_view_range(0.0, end / fps)
+    seq.sequencer_set_working_range(0.0, end / fps)
+    seq.sequencer_set_playback_range(0.0, end / fps)
     seq.sequencer_changed(True)
 
     # Create a camera actor in the level
@@ -80,7 +82,7 @@ def setup_sequencer(source, target, shot_info):
 
     # Create camera section upon the track and setup
     camera = camera_cut_track.sequencer_track_add_section()
-    camera.sequencer_set_section_range(0.0, 12.0 / 25.0)
+    camera.sequencer_set_section_range(0.0, end / fps)
 
     # Add the camera actor to the LevelSequencer
     camera_guid = seq.sequencer_add_actor(cine_camera)
@@ -97,10 +99,13 @@ def setup_sequencer(source, target, shot_info):
     # seq.sequencer_changed(True)
     transform_track = seq.sequencer_possessable_tracks(camera_guid)[0]
     transform_section = transform_track.sequencer_track_add_section()
-    transform_section.sequencer_set_section_range(0.0, 12.0 / 25.0)
+    transform_section.sequencer_set_section_range(0.0, end / fps)
     seq.sequencer_changed(True)
 
-    transform_section.sequencer_import_fbx_transform(source, 'MainCam')
+    extractor = FbxCurvesExtractor(source)
+    for curve in extractor.get_curves_by_name('MainCam'):
+        transform_section.sequencer_section_add_key()
+
     seq.sequencer_changed(True)
 
     seq.save_package()
