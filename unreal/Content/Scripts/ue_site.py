@@ -3,6 +3,7 @@ import asyncio
 import unreal_engine as ue
 from asset_import import import_asset
 
+
 def ticker_loop(delta_time):
     try:
         loop.stop()

@@ -49,7 +49,7 @@ def setup_sequencer(source, target, shot_info):
     from unreal_engine.classes import LevelSequenceFactoryNew, CineCameraActor, MovieScene3DTransformTrack
     from unreal_engine.structs import MovieSceneObjectBindingID
     from unreal_engine.enums import EMovieSceneObjectBindingSpace
-    from unreal_engine import FTransform, FVector, FRotator
+    from unreal_engine import FTransform
     from fbx_extract import FbxCurvesExtractor
 
     name = os.path.basename(source).lower().split('.fbx')[0]
@@ -94,17 +94,14 @@ def setup_sequencer(source, target, shot_info):
     )
     seq.sequencer_changed(True)
 
-    # seq.sequencer_remove_track(seq.sequencer_possessable_tracks(camera_guid)[0])
-    # transform_track = seq.sequencer_add_track(MovieScene3DTransformTrack, camera_guid)
-    # seq.sequencer_changed(True)
     transform_track = seq.sequencer_possessable_tracks(camera_guid)[0]
     transform_section = transform_track.sequencer_track_add_section()
     transform_section.sequencer_set_section_range(0.0, end / fps)
     seq.sequencer_changed(True)
 
     extractor = FbxCurvesExtractor(source)
-    for curve in extractor.get_curves_by_name('MainCam'):
-        transform_section.sequencer_section_add_key()
+    for k, v in extractor.object_keys('MainCam').items():
+        transform_section.sequencer_section_add_key(k, FTransform(*v))
 
     seq.sequencer_changed(True)
 
