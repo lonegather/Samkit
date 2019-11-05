@@ -81,6 +81,10 @@ class FbxCurvesExtractor:
             'Lcl Translation': {'X': 0, 'Y': 2, 'Z': 1},
             'Lcl Rotation': {'X': 0, 'Y': 1, 'Z': 2},
         }
+        value_map = {
+            'Lcl Translation': [2.0, 2.0, -2.0],
+            'Lcl Rotation': [2.0, 2.0, 2.0],
+        }
         trans_map = {
             'Lcl Translation': FVector,
             'Lcl Rotation': FRotator,
@@ -96,7 +100,9 @@ class FbxCurvesExtractor:
                     for i in range(len(frame)):
                         if not tmp.get(frame[i], None):
                             tmp[frame[i]] = [None, None, None]
-                        tmp[frame[i]][index] = value[i]
+                        for k in tmp:
+                            if k >= frame[i]:
+                                tmp[k][index] = value[i] * value_map[prop][index]
                 for k, v in tmp.items():
                     if not keys.get(k, None):
                         keys[k] = []
