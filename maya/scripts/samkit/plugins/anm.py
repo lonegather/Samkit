@@ -53,8 +53,13 @@ class AnimationCameraValidator(pyblish.api.InstancePlugin):
         for shape in cmds.ls(type='camera'):
             cam = cmds.listRelatives(shape, allParents=True)[0]
             if cam == 'MainCam':
-                return
-        assert False, 'MainCam NOT found.'
+                break
+        else:
+            assert False, 'MainCam NOT found.'
+        assert cmds.getAttr('MainCam.rotateOrder') == 3, 'MainCam\'s rotate order must be xzy.'
+        axis = cmds.getAttr('MainCam.rotateAxis')[0]
+        assert -0.01 < axis[0] < 0.01 and -0.01 < (axis[1] + 90) < 0.01 and -0.01 < axis[2] < 0.01, \
+            'MainCam\'s rotate axis must be (0.0, -90.0, 0.0).'
 
 
 class AnimationExtractor(pyblish.api.InstancePlugin):
@@ -150,6 +155,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
             cmds.select('MainCam', r=True)
             mel.eval('FBXExportCameras -v true;')
+            mel.eval('FBXExportApplyConstantKeyReducer -v false;')
             mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
 
             samkit.ue_command(instance.data['message'])

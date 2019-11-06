@@ -94,7 +94,9 @@ def setup_sequencer(source, target, shot_info):
     )
     seq.sequencer_changed(True)
 
-    transform_track = seq.sequencer_possessable_tracks(camera_guid)[0]
+    seq.sequencer_remove_track(seq.sequencer_possessable_tracks(camera_guid)[0])
+    seq.sequencer_changed(True)
+    transform_track = seq.sequencer_add_track(MovieScene3DTransformTrack, camera_guid)
     transform_section = transform_track.sequencer_track_add_section()
     transform_section.sequencer_set_section_range(0.0, end / fps)
     seq.sequencer_changed(True)
