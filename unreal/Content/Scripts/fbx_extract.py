@@ -82,7 +82,7 @@ class FbxCurvesExtractor:
             'Lcl Rotation': {'X': 0, 'Y': 1, 'Z': 2},
         }
         value_map = {
-            'Lcl Translation': [1.0, 1.0, 1.0],
+            'Lcl Translation': [1.0, -1.0, 1.0],
             'Lcl Rotation': [1.0, 1.0, -1.0],
         }
         trans_map = {
