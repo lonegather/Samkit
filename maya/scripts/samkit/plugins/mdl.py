@@ -238,7 +238,6 @@ class ModelExtractor(pyblish.api.InstancePlugin):
             'stage': task['stage'],
             'source': '{path}/{name}_mdl.fbx'.format(**locals()),
             'target': '/Game/%s' % task['path'].split(';')[1],
-            'skeleton': None
         }
 
         selection_list = []

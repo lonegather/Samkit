@@ -1,3 +1,4 @@
+import unreal_engine as ue
 from unreal_engine import FbxManager, FbxIOSettings, FbxImporter, FbxScene, FVector, FRotator
 
 
@@ -78,20 +79,25 @@ class FbxCurvesExtractor:
 
     def object_keys(self, name):
         channel_map = {
-            'Lcl Translation': {'X': 0, 'Y': 2, 'Z': 1},
-            'Lcl Rotation': {'X': 0, 'Y': 1, 'Z': 2},
+            'Lcl Translation': {'X': 0, 'Y': 1, 'Z': 2},
+            'Lcl Rotation': {'X': 0, 'Y': 2, 'Z': 1},
+            'FocalLength': {'FocalLength': 0},
         }
         value_map = {
             'Lcl Translation': [1.0, -1.0, 1.0],
             'Lcl Rotation': [1.0, 1.0, -1.0],
+            'FocalLength': [1.0],
         }
         trans_map = {
             'Lcl Translation': FVector,
             'Lcl Rotation': FRotator,
+            'FocalLength': lambda *f: f[0]
         }
         keys = {}
         for curve in self.get_curves_by_name(name):
             prop = curve['property']
+            # ue.log_warning(prop)
+            # ue.log_warning(curve['channels'])
             if trans_map.get(prop, None):
                 tmp = {}
                 for channel in curve['channels']:
@@ -107,4 +113,5 @@ class FbxCurvesExtractor:
                     if not keys.get(k, None):
                         keys[k] = []
                     keys[k].append(trans_map[prop](*v))
+        ue.log_warning(keys)
         return keys

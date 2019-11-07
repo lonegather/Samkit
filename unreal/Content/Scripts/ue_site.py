@@ -1,7 +1,7 @@
 import json
 import asyncio
+from importlib import reload
 import unreal_engine as ue
-from asset_import import import_asset
 
 
 def ticker_loop(delta_time):
@@ -15,6 +15,9 @@ def ticker_loop(delta_time):
 
 # this is called whenever a new client connects
 async def new_client_connected(reader, writer):
+    import asset_import
+    reload(asset_import)
+
     name = writer.get_extra_info('peername')
     ue.log('new client connection from {0}'.format(name))
     while True:
@@ -22,7 +25,7 @@ async def new_client_connected(reader, writer):
         data = await reader.readline()
         if not data:
             break
-        import_asset(**json.loads(data.decode()))
+        asset_import.import_asset(**json.loads(data.decode()))
 
     ue.log('client {0} disconnected'.format(name))
 
