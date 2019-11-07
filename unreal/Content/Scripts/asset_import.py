@@ -47,7 +47,7 @@ def import_asset(stage, source, target, skeleton=None, shot=None):
 def setup_sequencer(source, target, shot):
     import os
     from importlib import reload
-    from unreal_engine.classes import LevelSequenceFactoryNew, CineCameraActor, MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, MovieSceneObjectPropertyTrack, Character
+    from unreal_engine.classes import LevelSequenceFactoryNew, CineCameraActor, MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, Character
     from unreal_engine.structs import MovieSceneObjectBindingID
     from unreal_engine.enums import EMovieSceneObjectBindingSpace
     from unreal_engine import FTransform
@@ -58,7 +58,7 @@ def setup_sequencer(source, target, shot):
     seq = ue.find_asset('%s/%s.%s' % (target, name, name))
     if seq:
         ue.delete_asset(seq.get_path_name())
-    
+
     # Create Utility objects
     fps = shot['fps']
     start = shot['start']
@@ -136,14 +136,17 @@ def setup_sequencer(source, target, shot):
     transform_section.sequencer_set_section_range(start / fps, end / fps)
     seq.sequencer_changed(True)
 
+    focal_section = None
     for obj in seq.MovieScene.ObjectBindings:
-        ue.log_warning(ue.guid_to_string(obj.ObjectGuid))
         for track in obj.tracks:
-            ue.log_warning(track.get_display_name())
+            if track.sequencer_get_display_name() == 'CurrentFocalLength':
+                focal_section = track.sequencer_track_sections()[0]
+                focal_section.sequencer_set_section_range(start / fps, end / fps)
 
     extractor = fbx_extract.FbxCurvesExtractor(source)
     for k, v in extractor.object_keys('MainCam').items():
         transform_section.sequencer_section_add_key(k, FTransform(*v[1:]))
+        focal_section.sequencer_section_add_key(k, v[0])
 
     seq.sequencer_changed(True)
 

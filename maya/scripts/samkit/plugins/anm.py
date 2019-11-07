@@ -152,6 +152,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             }
 
             cmds.select('MainCam', r=True)
+            cmds.setKeyframe('MainCamShape.fl', t=['0sec'])
             mel.eval('FBXExportCameras -v true;')
             mel.eval('FBXExportApplyConstantKeyReducer -v false;')
             mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
