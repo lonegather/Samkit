@@ -2,7 +2,6 @@ import unreal_engine as ue
 
 
 def import_asset(stage, source, target, skeleton=None, shot=None):
-
     from unreal_engine.classes import PyFbxFactory, Skeleton
     from unreal_engine.enums import EFBXImportType
 
@@ -16,6 +15,7 @@ def import_asset(stage, source, target, skeleton=None, shot=None):
     factory = PyFbxFactory()
     factory.ImportUI.bCreatePhysicsAsset = False
     factory.ImportUI.bImportMaterials = True if stage in ['mdl'] else False
+    factory.ImportUI.bImportTextures = True if stage in ['mdl'] else False
     factory.ImportUI.bImportAnimations = True if stage in ['cam', 'lyt', 'anm'] else False
 
     if stage == 'cam':
@@ -41,13 +41,22 @@ def import_asset(stage, source, target, skeleton=None, shot=None):
             ue.log_error('<<<--- No matching skeleton found for "%s" --->>>' % skeleton)
             return
 
-    factory.factory_import_object(source, target)
+    asset = factory.factory_import_object(source, target)
+
+    if stage in ['skn', 'rig']:
+        skel_assets = ue.get_assets_by_class('Skeleton')
+        for skel in skel_assets:
+            if skel.get_name().count(target.split('/')[-1]):
+                skel.save_package()
+
+    asset.save_package()
 
 
 def setup_sequencer(source, target, shot):
     import os
     from importlib import reload
-    from unreal_engine.classes import LevelSequenceFactoryNew, CineCameraActor, MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, Character
+    from unreal_engine.classes import WorldFactory, LevelSequenceFactoryNew, CineCameraActor, \
+        MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, Character
     from unreal_engine.structs import MovieSceneObjectBindingID
     from unreal_engine.enums import EMovieSceneObjectBindingSpace
     from unreal_engine import FTransform
@@ -59,11 +68,17 @@ def setup_sequencer(source, target, shot):
     if seq:
         ue.delete_asset(seq.get_path_name())
 
+    world = ue.find_asset('%s/%s_scene.%s_scene' % (target, name, name))
+    if world:
+        ue.delete_asset(world.get_path_name())
+
+    factory = WorldFactory()
+    world = factory.factory_create_new(target + ('/%s_scene' % name))
+
     # Create Utility objects
     fps = shot['fps']
     start = shot['start']
     end = shot['end']
-    world = ue.get_editor_world()
     factory = LevelSequenceFactoryNew()
     skin_assets = ue.get_assets_by_class('SkeletalMesh')
     anim_assets = ue.get_assets_by_class('AnimSequence')
@@ -88,6 +103,7 @@ def setup_sequencer(source, target, shot):
 
         # spawn a new character and modify it (post_edit_change will allow the editor/sequencer to be notified of actor updates)
         character = world.actor_spawn(Character)
+        character.set_actor_label(skin_name)
         # notify modifications are about to happen...
         character.modify()
         character.Mesh.SkeletalMesh = skin
@@ -151,3 +167,4 @@ def setup_sequencer(source, target, shot):
     seq.sequencer_changed(True)
 
     seq.save_package()
+    world.save_package()
