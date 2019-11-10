@@ -56,7 +56,7 @@ def setup_sequencer(source, target, shot):
     import os
     from importlib import reload
     from unreal_engine.classes import WorldFactory, LevelSequenceFactoryNew, CineCameraActor, \
-        MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, Character
+        LevelSequenceActor, MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, Character
     from unreal_engine.structs import MovieSceneObjectBindingID
     from unreal_engine.enums import EMovieSceneObjectBindingSpace
     from unreal_engine import FTransform
@@ -64,16 +64,17 @@ def setup_sequencer(source, target, shot):
     reload(fbx_extract)
 
     name = os.path.basename(source).lower().split('.fbx')[0]
+    scene = name.split('_maincam_')[0]
     seq = ue.find_asset('%s/%s.%s' % (target, name, name))
     if seq:
         ue.delete_asset(seq.get_path_name())
 
-    world = ue.find_asset('%s/%s_scene.%s_scene' % (target, name, name))
-    if world:
-        ue.delete_asset(world.get_path_name())
-
-    factory = WorldFactory()
-    world = factory.factory_create_new(target + ('/%s_scene' % name))
+    world = ue.find_asset('%s/%s_world.%s_world' % (target, scene, scene))
+    if not world:
+        factory = WorldFactory()
+        world = factory.factory_create_new('%s/%s_world' % (target, scene))
+    ue.open_editor_for_asset(world)
+    world = ue.get_editor_world()
 
     # Create Utility objects
     fps = shot['fps']
@@ -92,16 +93,25 @@ def setup_sequencer(source, target, shot):
     seq.sequencer_set_playback_range(start / fps, end / fps)
     seq.sequencer_changed(True)
 
+    # world.actor_spawn(LevelSequenceActor).actor_set_level_sequence(seq)
+
     for skin_name, anim_name in zip(shot['chars'], shot['anims']):
         for skin in skin_assets:
             if skin.get_name().count(skin_name):
                 break
+        else:
+            ue.log_error('%s does not exist.' % skin_name)
+            return
         for anim in anim_assets:
             if anim.get_name().count(anim_name):
                 break
-        ue.log_warning(skin.get_name() + ': ' + anim.get_name())
+        else:
+            ue.log_error('%s does not exist.' % anim_name)
+            return
 
-        # spawn a new character and modify it (post_edit_change will allow the editor/sequencer to be notified of actor updates)
+        # ue.log_warning(skin.get_name() + ': ' + anim.get_name())
+
+        # spawn a new character and modify it
         character = world.actor_spawn(Character)
         character.set_actor_label(skin_name)
         # notify modifications are about to happen...
@@ -111,7 +121,9 @@ def setup_sequencer(source, target, shot):
         character.post_edit_change()
 
         # add to the sequencer as a possessable (shortcut method returning the guid as string)
-        guid = seq.sequencer_add_actor(character)
+        # guid = seq.sequencer_add_actor(character)
+        guid = seq.sequencer_make_new_spawnable(character)
+        character.actor_destroy()
 
         # add an animation track mapped to the just added actor
         anim_track = seq.sequencer_add_track(MovieSceneSkeletalAnimationTrack, guid)
@@ -130,13 +142,15 @@ def setup_sequencer(source, target, shot):
     camera_cut_track = seq.sequencer_add_camera_cut_track()
     seq.sequencer_changed(True)
 
+    # seq.sequencer_make_new_spawnable(cine_camera)
+
     # Create camera section upon the track and setup
     camera = camera_cut_track.sequencer_track_add_section()
     camera.sequencer_set_section_range(start / fps, end / fps)
 
     # Add the camera actor to the LevelSequencer
-    camera_guid = seq.sequencer_add_actor(cine_camera)
-    ue.log_warning(camera_guid)
+    camera_guid = seq.sequencer_make_new_spawnable(cine_camera)
+    cine_camera.actor_destroy()
 
     # Bind the camera section with the camera actor through camera id
     camera.CameraBindingID = MovieSceneObjectBindingID(
@@ -145,26 +159,36 @@ def setup_sequencer(source, target, shot):
     )
     seq.sequencer_changed(True)
 
-    seq.sequencer_remove_track(seq.sequencer_possessable_tracks(camera_guid)[0])
+    focal_section = None
+    for obj in seq.MovieScene.ObjectBindings:
+        for track in obj.tracks:
+            try:
+                if track.sequencer_get_display_name() == 'CurrentFocalLength':
+                    focal_section = track.sequencer_track_sections()[0]
+                    focal_section.sequencer_set_section_range(start / fps, end / fps)
+                if track.sequencer_get_display_name() == 'Transform':
+                    seq.sequencer_remove_track(track)
+            except Exception:
+                continue
+
     seq.sequencer_changed(True)
     transform_track = seq.sequencer_add_track(MovieScene3DTransformTrack, camera_guid)
     transform_section = transform_track.sequencer_track_add_section()
     transform_section.sequencer_set_section_range(start / fps, end / fps)
     seq.sequencer_changed(True)
 
-    focal_section = None
-    for obj in seq.MovieScene.ObjectBindings:
-        for track in obj.tracks:
-            if track.sequencer_get_display_name() == 'CurrentFocalLength':
-                focal_section = track.sequencer_track_sections()[0]
-                focal_section.sequencer_set_section_range(start / fps, end / fps)
-
     extractor = fbx_extract.FbxCurvesExtractor(source)
     for k, v in extractor.object_keys('MainCam').items():
-        transform_section.sequencer_section_add_key(k, FTransform(*v[1:]))
+        transform_section.sequencer_section_add_key(k, FTransform(*v[1:]), 1)
         focal_section.sequencer_section_add_key(k, v[0])
 
     seq.sequencer_changed(True)
-
     seq.save_package()
+
+    sequence_actor = world.find_actor_by_label(scene)
+    if not sequence_actor:
+        sequence_actor = world.actor_spawn(LevelSequenceActor)
+        sequence_actor.set_actor_label(scene)
+    sequence_actor.actor_set_level_sequence(seq)
+
     world.save_package()
