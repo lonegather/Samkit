@@ -12,7 +12,6 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
 
         joints = []
         for shape in cmds.ls(type='mesh', noIntermediate=True):
-            print(shape)
             skin = cmds.listConnections(shape, d=False, t='skinCluster')
             if not skin:
                 continue
@@ -24,7 +23,7 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
         context.data['root'] = ''
         if not len(joints):
             return
-        print(joints)
+
         for root in cmds.ls(type='joint'):
             if root in joints:
                 continue
@@ -40,6 +39,21 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
                 cmds.setAttr('%s.UE_Skeleton' % root, context[0].data['name'], type='string')
                 context.data['root'] = root
                 break
+
+        if not context.data['root']:
+            return
+
+        for bs in cmds.ls(type='blendShape'):
+            for plug in cmds.listConnections('%s.weight' % bs, connections=True, p=True):
+                if plug.find('%s.' % bs) == 0:
+                    attr = plug[(len(bs)+1):]
+                    dest = '%s.%s' % (context.data['root'], attr)
+                    try:
+                        cmds.getAttr(dest)
+                    except ValueError:
+                        cmds.addAttr(context.data['root'], ln=attr, at='double', dv=0)
+                        cmds.setAttr(dest, keyable=True)
+                    cmds.connectAttr(plug, dest, f=True)
 
 
 class SkinSkeletonValidator(pyblish.api.InstancePlugin):
@@ -135,7 +149,9 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
                     'groupId',
                     'transform',
                     'shadingEngine',
+                    'groupParts',
                 ]:
+                    print(node + ':' + cmds.objectType(node))
                     success = False
                     self.log.info(shape)
                     break
@@ -160,15 +176,20 @@ class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
         for shape in cmds.ls(type='mesh', noIntermediate=True):
             for obj in cmds.listConnections(shape, type='objectSet', d=False) or list():
                 for bs in cmds.listConnections(obj, type='blendShape', d=False) or list():
-                    if cmds.listConnections(bs, d=False):
-                        success = False
-                        self.log.info(shape)
-                        break
-                else:
-                    continue
-                break
+                    for target in cmds.listConnections(bs, type='mesh', d=False) or list():
+                        for node in cmds.listConnections(target, d=False) or list():
+                            if cmds.objectType(node) not in [
+                                'tweak',
+                                'groupId',
+                                'transform',
+                                'shadingEngine',
+                                'groupParts',
+                            ]:
+                                success = False
+                                self.log.info(target)
+                                break
 
-        assert success, 'Mesh BlendShape must have NO history.'
+        assert success, 'BlendShape target must have NO history.'
 
 
 class SkinExtractor(pyblish.api.InstancePlugin):

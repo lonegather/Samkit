@@ -36,10 +36,6 @@ class AnimationCameraValidator(pyblish.api.InstancePlugin):
                 break
         else:
             assert False, 'MainCam NOT found.'
-        assert cmds.getAttr('MainCam.rotateOrder') == 3, 'MainCam\'s rotate order must be xzy.'
-        axis = cmds.getAttr('MainCam.rotateAxis')[0]
-        assert -0.01 < axis[0] < 0.01 and -0.01 < (axis[1] + 90) < 0.01 and -0.01 < axis[2] < 0.01, \
-            'MainCam\'s rotate axis must be (0.0, -90.0, 0.0).'
 
 
 class AnimationExtractor(pyblish.api.InstancePlugin):
@@ -127,6 +123,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             }
 
             cmds.select(joint, r=True)
+            cmds.parent(joint, world=True)
 
             if namespace != ':':
                 cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
@@ -134,8 +131,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
             mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
 
             samkit.ue_command(instance.data['message'])
-
-        samkit.open_file(task, True)
+            cmds.rename(namespace + '__' + joint)
 
         try:
             instance.data['message'] = {
@@ -151,8 +147,13 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
                 }
             }
 
-            cmds.select('MainCam', r=True)
-            cmds.setKeyframe('MainCamShape.fl', t=['0sec'])
+            cmds.duplicate('MainCam', name='OutputCam')
+            cmds.xform('OutputCam', ra=[0.0, -90.0, 0.0], roo='xzy', p=True)
+            cmds.parentConstraint('MainCam', 'OutputCam', mo=True)
+            cmds.connectAttr('MainCamShape.focalLength', 'OutputCamShape.focalLength', f=True)
+
+            cmds.select('OutputCam', r=True)
+            cmds.setKeyframe('OutputCamShape.fl', t=['0sec'])
             mel.eval('FBXExportCameras -v true;')
             mel.eval('FBXExportApplyConstantKeyReducer -v false;')
             mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
@@ -161,3 +162,5 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
         except ValueError:
             pass
+        finally:
+            samkit.open_file(task, True)

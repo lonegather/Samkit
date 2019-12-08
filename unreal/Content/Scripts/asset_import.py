@@ -178,7 +178,7 @@ def setup_sequencer(source, target, shot):
     seq.sequencer_changed(True)
 
     extractor = fbx_extract.FbxCurvesExtractor(source)
-    for k, v in extractor.object_keys('MainCam').items():
+    for k, v in extractor.object_keys('OutputCam').items():
         transform_section.sequencer_section_add_key(k, FTransform(*v[1:]), 1)
         focal_section.sequencer_section_add_key(k, v[0])
 
