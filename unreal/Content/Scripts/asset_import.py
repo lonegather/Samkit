@@ -93,8 +93,6 @@ def setup_sequencer(source, target, shot):
     seq.sequencer_set_playback_range(start / fps, end / fps)
     seq.sequencer_changed(True)
 
-    # world.actor_spawn(LevelSequenceActor).actor_set_level_sequence(seq)
-
     for skin_name, anim_name in zip(shot['chars'], shot['anims']):
         for skin in skin_assets:
             if skin.get_name().count(skin_name):
@@ -108,8 +106,6 @@ def setup_sequencer(source, target, shot):
         else:
             ue.log_error('%s does not exist.' % anim_name)
             return
-
-        # ue.log_warning(skin.get_name() + ': ' + anim.get_name())
 
         # spawn a new character and modify it
         character = world.actor_spawn(Character)

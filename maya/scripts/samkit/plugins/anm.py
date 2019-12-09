@@ -65,102 +65,107 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        for ref in cmds.ls(type='reference'):
-            if ref != 'sharedReferenceNode':
-                cmds.file(importReference=True, referenceNode=ref)
-
-        mel.eval('FBXExportAnimationOnly -v false;')
-        mel.eval('FBXExportApplyConstantKeyReducer -v false;')
-        mel.eval('FBXExportBakeComplexStart -v %s;' % (mint - 5))
-        mel.eval('FBXExportBakeComplexEnd -v %s;' % maxt)
-        mel.eval('FBXExportBakeComplexStep -v 1;')
-        mel.eval('FBXExportBakeResampleAnimation -v true;')
-        mel.eval('FBXExportAxisConversionMethod convertAnimation;')
-        mel.eval('FBXExportBakeComplexAnimation -v true;')
-        mel.eval('FBXExportCameras -v false;')
-        mel.eval('FBXExportConstraints -v false;')
-        mel.eval('FBXExportEmbeddedTextures -v false;')
-        mel.eval('FBXExportFileVersion -v FBX201400;')
-        mel.eval('FBXExportGenerateLog -v false;')
-        mel.eval('FBXExportLights -v false;')
-        mel.eval('FBXExportQuaternion -v quaternion;')
-        mel.eval('FBXExportReferencedAssetsContent -v false;')
-        mel.eval('FBXExportScaleFactor 1.0;')
-        mel.eval('FBXExportShapes -v false;')
-        mel.eval('FBXExportSkeletonDefinitions -v false;')
-        mel.eval('FBXExportSkins -v false;')
-        mel.eval('FBXExportSmoothingGroups -v false;')
-        mel.eval('FBXExportSmoothMesh -v false;')
-        mel.eval('FBXExportTangents -v true;')
-        mel.eval('FBXExportUpAxis z;')
-        mel.eval('FBXExportUseSceneName -v true;')
-
-        chars = []
-        anims = []
-        for joint in cmds.ls(type='joint'):
-            try:
-                cmds.getAttr('%s.UE_Skeleton' % joint)
-            except ValueError:
-                continue
-
-            namespace = ':'+':'.join(joint.split(':')[:-1])
-            char = joint.split(':')[0]
-            chars.append(char)
-
-            anim = '{project}_{tag}_{name}_{char}_anm'.format(**locals())
-            anims.append(anim)
-
-            instance.data['message'] = {
-                'stage': task['stage'],
-                'source': '%s/%s.fbx' % (path, anim),
-                'target': '/Game/%s' % task['path'].split(';')[1],
-                'skeleton': char,
-                'shot': {
-                    'fps': 25.0,
-                    'start': float(mint),
-                    'end': float(maxt),
-                }
-            }
-
-            cmds.select(joint, r=True)
-            cmds.parent(joint, world=True)
-
-            if namespace != ':':
-                cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
-
-            mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
-
-            samkit.ue_command(instance.data['message'])
-            cmds.rename(namespace + '__' + joint)
-
         try:
-            instance.data['message'] = {
-                'stage': 'cam',
-                'source': '{path}/{project}_{tag}_{name}_MainCam_S{mins}_E{maxs}.fbx'.format(**locals()),
-                'target': '/Game/%s' % task['path'].split(';')[1],
-                'shot': {
-                    'fps': 25.0,
-                    'start': float(mint),
-                    'end': float(maxt),
-                    'chars': chars,
-                    'anims': anims,
-                }
-            }
+            for ref in cmds.ls(type='reference'):
+                if ref != 'sharedReferenceNode':
+                    cmds.file(importReference=True, referenceNode=ref)
 
-            cmds.duplicate('MainCam', name='OutputCam')
-            cmds.xform('OutputCam', ra=[0.0, -90.0, 0.0], roo='xzy', p=True)
-            cmds.parentConstraint('MainCam', 'OutputCam', mo=True)
-            cmds.connectAttr('MainCamShape.focalLength', 'OutputCamShape.focalLength', f=True)
-
-            cmds.select('OutputCam', r=True)
-            cmds.setKeyframe('OutputCamShape.fl', t=['0sec'])
-            mel.eval('FBXExportCameras -v true;')
+            mel.eval('FBXExportAnimationOnly -v false;')
             mel.eval('FBXExportApplyConstantKeyReducer -v false;')
-            mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+            mel.eval('FBXExportBakeComplexStart -v %s;' % (mint - 5))
+            mel.eval('FBXExportBakeComplexEnd -v %s;' % maxt)
+            mel.eval('FBXExportBakeComplexStep -v 1;')
+            mel.eval('FBXExportBakeResampleAnimation -v true;')
+            mel.eval('FBXExportAxisConversionMethod convertAnimation;')
+            mel.eval('FBXExportBakeComplexAnimation -v true;')
+            mel.eval('FBXExportCameras -v false;')
+            mel.eval('FBXExportConstraints -v false;')
+            mel.eval('FBXExportEmbeddedTextures -v false;')
+            mel.eval('FBXExportFileVersion -v FBX201400;')
+            mel.eval('FBXExportGenerateLog -v false;')
+            mel.eval('FBXExportLights -v false;')
+            mel.eval('FBXExportQuaternion -v quaternion;')
+            mel.eval('FBXExportReferencedAssetsContent -v false;')
+            mel.eval('FBXExportScaleFactor 1.0;')
+            mel.eval('FBXExportShapes -v false;')
+            mel.eval('FBXExportSkeletonDefinitions -v false;')
+            mel.eval('FBXExportSkins -v false;')
+            mel.eval('FBXExportSmoothingGroups -v false;')
+            mel.eval('FBXExportSmoothMesh -v false;')
+            mel.eval('FBXExportTangents -v true;')
+            mel.eval('FBXExportUpAxis z;')
+            mel.eval('FBXExportUseSceneName -v true;')
 
-            samkit.ue_command(instance.data['message'])
+            chars = []
+            anims = []
+            for joint in cmds.ls(type='joint'):
+                try:
+                    skel = cmds.getAttr('%s.UE_Skeleton' % joint)
+                except ValueError:
+                    continue
 
-        except ValueError:
-            pass
+                namespace = ':'+':'.join(joint.split(':')[:-1])
+                chars.append(skel)
+
+                char = joint.split(':')[0]
+                anim = '{project}_{tag}_{name}_{char}_anm'.format(**locals())
+                anims.append(anim)
+
+                instance.data['message'] = {
+                    'stage': task['stage'],
+                    'source': '%s/%s.fbx' % (path, anim),
+                    'target': '/Game/%s' % task['path'].split(';')[1],
+                    'skeleton': skel,
+                    'shot': {
+                        'fps': 25.0,
+                        'start': float(mint),
+                        'end': float(maxt),
+                    }
+                }
+
+                cmds.select(joint, r=True)
+                try:
+                    cmds.parent(joint, world=True)
+                except: pass
+
+                if namespace != ':':
+                    cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
+
+                mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+
+                samkit.ue_command(instance.data['message'])
+                cmds.delete()
+
+            try:
+                instance.data['message'] = {
+                    'stage': 'cam',
+                    'source': '{path}/{project}_{tag}_{name}_MainCam_S{mins}_E{maxs}.fbx'.format(**locals()),
+                    'target': '/Game/%s' % task['path'].split(';')[1],
+                    'shot': {
+                        'fps': 25.0,
+                        'start': float(mint),
+                        'end': float(maxt),
+                        'chars': chars,
+                        'anims': anims,
+                    }
+                }
+
+                cmds.duplicate('MainCam', name='OutputCam')
+                try: cmds.parent('OutputCam', world=True)
+                except: pass
+                cmds.xform('OutputCam', ra=[0.0, -90.0, 0.0], roo='xzy', p=True)
+                cmds.parentConstraint('MainCam', 'OutputCam', mo=True)
+                cmds.connectAttr('MainCamShape.focalLength', 'OutputCamShape.focalLength', f=True)
+
+                cmds.select('OutputCam', r=True)
+                cmds.setKeyframe('OutputCamShape.fl', t=['0sec'])
+                mel.eval('FBXExportCameras -v true;')
+                mel.eval('FBXExportApplyConstantKeyReducer -v false;')
+                mel.eval('FBXExport -f "%s" -s' % instance.data['message']['source'])
+
+                samkit.ue_command(instance.data['message'])
+
+            except ValueError:
+                pass
         finally:
             samkit.open_file(task, True)
