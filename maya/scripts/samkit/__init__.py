@@ -12,7 +12,9 @@ from samcon.utils import *
 __all__ = [
     'evalDeferred',
     'scriptJob',
-    'access',
+    'auth_stats',
+    'login',
+    'logout',
     'get_data',
     'set_data',
     'ue_command',
@@ -46,7 +48,9 @@ __all__ = [
 
 evalDeferred = cmds.evalDeferred
 scriptJob = cmds.scriptJob
-access = samcon.access
+auth_stats = samcon.auth_stats
+login = samcon.login
+logout = samcon.logout
 get_data = samcon.get_data
 set_data = samcon.set_data
 ue_command = samcon.ue_command

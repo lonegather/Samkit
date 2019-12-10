@@ -3,7 +3,7 @@ from Qt.QtGui import QIcon, QPixmap
 from Qt.QtCore import Signal, Qt
 
 import samkit
-from . import setup_ui, Docker
+from . import access, setup_ui, Docker
 from .model import GenusModel, TagModel, AssetModel, PluginModel, PluginItem, ResultItem
 from .delegate import AssetDelegate, TaskDelegate, PluginDelegate
 
@@ -38,6 +38,7 @@ class DockerMain(Docker):
         self.ui.lw_task.setItemDelegate(TaskDelegate())
         self.ui.tv_plugin.setItemDelegate(PluginDelegate())
 
+        self.ui.le_filter.setClearButtonEnabled(True)
         self.ui.detail.setVisible(False)
         self.ui.lv_asset.setWrapping(True)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
@@ -100,7 +101,7 @@ class DockerMain(Docker):
         self.ui.lbl_project.setStyleSheet('background-color: rgba(0, 0, 0, 0);')
         self.ui.lbl_project.setText('Retrieving...')
 
-        samkit.access(force=force)
+        access(force=force)
 
         self.connected = samkit.hasenv(samkit.OPT_HOST)
         self.authorized = samkit.hasenv(samkit.OPT_COOKIES)
@@ -112,8 +113,10 @@ class DockerMain(Docker):
             self.project_id = samkit.getenv(samkit.OPT_PROJECT_ID)
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
-        self.ui.tw_main.setTabEnabled(1, samkit.hasenv(samkit.OPT_USERNAME))
-
+        self.ui.tw_main.setTabEnabled(1, self.authorized)
+        self.ui.tw_main.setTabEnabled(2, self.authorized)
+        self.ui.tb_add.setEnabled(self.authorized)
+        self.ui.tb_delete.setEnabled(self.authorized)
         self.ui.cb_genus.model().update()
 
     def refresh_repository_genus(self, *_):
@@ -142,7 +145,8 @@ class DockerMain(Docker):
         menu = QMenu()
         edit_action = QAction('Edit...', menu)
         edit_action.triggered.connect(lambda *_: self.open_detail(asset_id))
-        menu.addAction(edit_action)
+        if self.authorized:
+            menu.addAction(edit_action)
         for task in data_task:
             stage_menu = TaskMenu(task)
             stage_menu.Checked.connect(self.checkout_repository)

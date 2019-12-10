@@ -1,5 +1,6 @@
 import os
 import json
+import pickle
 import requests
 from requests.exceptions import ConnectionError
 from Qt.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
@@ -26,6 +27,54 @@ def get_auth():
         return dialog.get_info()
     else:
         return '*', '', '', '', '', '', ''
+
+
+def access(force=False):
+    host = cmds.optionVar(q=samkit.OPT_HOST)
+    project_local = cmds.optionVar(q=samkit.OPT_PROJECT_ID)
+    project_data = samkit.get_data('project')
+    project_server = [prj['id'] for prj in project_data]
+    cookies = pickle.loads(cmds.optionVar(q=samkit.OPT_COOKIES)) \
+        if cmds.optionVar(exists=samkit.OPT_COOKIES) \
+        else None
+
+    if force or not host or (project_local not in project_server):
+        print('Get host and user info from user.')
+        host, project, prj_id, prj_root, workspace, username, password = get_auth()
+        if host == '*':
+            return samkit.AUTH_ABORT
+
+        result = samkit.AUTH_SUCCESS if samkit.auth_stats(host) else samkit.login(host, username, password)
+
+        cmds.optionVar(sv=(samkit.OPT_HOST, host))
+        cmds.optionVar(sv=(samkit.OPT_PROJECT, project))
+        cmds.optionVar(sv=(samkit.OPT_PROJECT_ID, prj_id))
+        cmds.optionVar(sv=(samkit.OPT_PROJECT_ROOT, prj_root))
+        cmds.optionVar(sv=(samkit.OPT_WORKSPACE, workspace))
+
+        if result == samkit.CONNECT_FAILED:
+            samkit.clear_ov()
+
+        return result
+    else:
+        print('Retrieve host and cookies from optionVar.')
+        for prj in project_data:
+            if prj['id'] == project_local:
+                cmds.optionVar(sv=(samkit.OPT_PROJECT, prj['info']))
+                cmds.optionVar(sv=(samkit.OPT_PROJECT_ROOT, prj['root']))
+        if not cookies:
+            return samkit.AUTH_FAILED
+        samkit.samcon.session.cookies.update(cookies)
+        try:
+            if not samkit.auth_stats(host):
+                cmds.optionVar(remove=samkit.OPT_USERNAME)
+                cmds.optionVar(remove=samkit.OPT_COOKIES)
+                return samkit.AUTH_FAILED
+            else:
+                return samkit.AUTH_SUCCESS
+        except ConnectionError:
+            samkit.clear_ov()
+            return samkit.CONNECT_FAILED
 
 
 def setup_ui(container, ui):
@@ -80,6 +129,7 @@ class AuthDialog(QDialog):
         setup_ui(self, self.UI_PATH)
         self.project_id = []
         self.project_root = []
+        self.host = ''
 
         self.setWindowTitle(self.ui.windowTitle())
         self.ui.tb_browse.setIcon(QIcon('%s\\icons\\folder.png' % samkit.MODULE_PATH))
@@ -100,17 +150,28 @@ class AuthDialog(QDialog):
 
         self.ui.accepted.connect(self.accept)
         self.ui.rejected.connect(self.reject)
-        self.ui.btn_test.clicked.connect(self.test)
+        self.ui.btn_test.clicked.connect(self.conn_apply)
+        self.ui.btn_login.clicked.connect(self.auth_apply)
         self.ui.tb_browse.clicked.connect(self.browse)
 
-    def test(self, *_):
+    def refresh(self):
+        authed = samkit.auth_stats(self.host)
+        username = cmds.optionVar(q=samkit.OPT_USERNAME)
+        username = str(username) if username else ''
+        self.ui.le_usr.setText(username)
+        self.ui.le_usr.setReadOnly(authed)
+        self.ui.lbl_pwd.setVisible(not authed)
+        self.ui.le_pwd.setVisible(not authed)
+        self.ui.le_pwd.setText('')
+        self.ui.btn_login.setText('Logout' if authed else 'Login')
+
+    def conn_apply(self, *_):
         self.project_id = []
         self.project_root = []
+        self.host = '%s:%s' % (self.ui.le_host.text(), self.ui.le_port.text())
         while self.ui.cb_project.count():
             self.ui.cb_project.removeItem(0)
-        host = self.ui.le_host.text()
-        port = self.ui.le_port.text()
-        url = 'http://%s:%s/api/project' % (host, port)
+        url = 'http://%s/api/project' % self.host
         try:
             result = requests.get(url)
             projects = json.loads(result.text)
@@ -119,13 +180,23 @@ class AuthDialog(QDialog):
                 self.project_id.append(p['id'])
                 self.project_root.append(p['root'])
             self.ui.btn_test.setStyleSheet('color: #000000; background-color: #33CC33')
+            self.ui.wgt_workspace.setEnabled(True)
+            self.refresh()
         except ConnectionError:
             self.ui.btn_test.setStyleSheet('color: #000000; background-color: #CC3333')
         except ValueError:
             self.ui.btn_test.setStyleSheet('color: #000000; background-color: #CC3333')
         finally:
             self.ui.bbox.setEnabled(True)
-            self.ui.wgt_workspace.setEnabled(True)
+
+    def auth_apply(self, *_):
+        username = self.ui.le_usr.text()
+        password = self.ui.le_pwd.text()
+        if self.ui.btn_login.text() == 'Logout':
+            samkit.logout()
+        else:
+            samkit.login(self.host, username, password)
+        self.refresh()
 
     def browse(self, *_):
         dialog = QFileDialog()

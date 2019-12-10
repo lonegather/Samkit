@@ -6,56 +6,61 @@ import requests
 from requests.exceptions import ConnectionError
 from maya import cmds
 
-import samgui
 from .utils import *
 
 
 session = requests.Session()
 
 
-def access(force=False):
-    host = cmds.optionVar(q=OPT_HOST)
-    project_local = cmds.optionVar(q=OPT_PROJECT_ID)
-    project_data = get_data('project')
-    project_server = [prj['id'] for prj in project_data]
-    cookies = pickle.loads(cmds.optionVar(q=OPT_COOKIES)) if cmds.optionVar(exists=OPT_COOKIES) else None
+def auth_stats(host):
+    return json.loads(session.get("http://%s/auth/" % host).text)
 
-    if force or not host or (project_local not in project_server):
-        print('Get host and user info from user.')
-        host, project, prj_id, prj_root, workspace, username, password = samgui.get_auth()
-        if host == '*':
-            return AUTH_ABORT
-        result = login(session, host, username, password) if host else CONNECT_FAILED
 
-        cmds.optionVar(sv=(OPT_HOST, host))
-        cmds.optionVar(sv=(OPT_PROJECT, project))
-        cmds.optionVar(sv=(OPT_PROJECT_ID, prj_id))
-        cmds.optionVar(sv=(OPT_PROJECT_ROOT, prj_root))
-        cmds.optionVar(sv=(OPT_WORKSPACE, workspace))
-
-        if result == CONNECT_FAILED:
-            clear_ov()
-
-        return result
-    else:
-        print('Retrieve host and cookies from optionVar.')
-        for prj in project_data:
-            if prj['id'] == project_local:
-                cmds.optionVar(sv=(OPT_PROJECT, prj['info']))
-                cmds.optionVar(sv=(OPT_PROJECT_ROOT, prj['root']))
-        if not cookies:
+def login(host, username, password):
+    server = "http://%s/auth/" % host
+    kwargs = {
+        'username': username,
+        'password': password,
+    }
+    try:
+        response = session.post(server, data=kwargs)
+        if json.loads(response.text):
+            cmds.optionVar(sv=(OPT_USERNAME, json.loads(response.text)['name']))
+            cmds.optionVar(sv=(OPT_COOKIES, pickle.dumps(session.cookies)))
+            return AUTH_SUCCESS
+        else:
+            cmds.optionVar(remove=OPT_USERNAME)
+            cmds.optionVar(remove=OPT_COOKIES)
             return AUTH_FAILED
-        session.cookies.update(cookies)
-        try:
-            if not json.loads(session.get("http://%s/auth/" % host).text):
-                cmds.optionVar(remove=OPT_USERNAME)
-                cmds.optionVar(remove=OPT_COOKIES)
-                return AUTH_FAILED
-            else:
-                return AUTH_SUCCESS
-        except ConnectionError:
-            clear_ov()
-            return CONNECT_FAILED
+    except ConnectionError:
+        return CONNECT_FAILED
+    except ValueError:
+        return CONNECT_FAILED
+
+
+def logout():
+    global session
+    cmds.optionVar(remove=OPT_USERNAME)
+    cmds.optionVar(remove=OPT_COOKIES)
+    session.close()
+    session = requests.Session()
+
+
+def update(host, table, **fields):
+    server = "http://%s/api" % host
+    url = "{server}/{table}".format(**locals())
+    kwargs = {'data': {}}
+    for field in fields:
+        if field == 'file':
+            kwargs['files'] = fields[field]
+        else:
+            kwargs['data'][field] = fields[field]
+
+    try:
+        session.post(url, **kwargs)
+        return True
+    except ConnectionError:
+        return False
 
 
 def get_data(table, **filters):
@@ -73,7 +78,7 @@ def get_data(table, **filters):
 
 def set_data(table, **filters):
     host = cmds.optionVar(q=OPT_HOST)
-    return update(session, host, table, **filters)
+    return update(host, table, **filters)
 
 
 def ue_command(data=None):

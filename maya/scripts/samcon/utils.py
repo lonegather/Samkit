@@ -26,8 +26,6 @@ __all__ = [
     'UE_ADD_SEQUENCE',
     'UE_EDIT_SEQUENCE',
     'clear_ov',
-    'login',
-    'update',
 ]
 
 TMP_PATH = os.getenv('TMP')
@@ -60,42 +58,3 @@ def clear_ov():
     cmds.optionVar(remove=OPT_PROJECT_ROOT)
     cmds.optionVar(remove=OPT_WORKSPACE)
     cmds.optionVar(remove=OPT_COOKIES)
-
-
-def login(session, host, username, password):
-    server = "http://%s/auth/" % host
-    kwargs = {
-        'username': username,
-        'password': password,
-    }
-    try:
-        response = session.post(server, data=kwargs)
-        if json.loads(response.text):
-            cmds.optionVar(sv=(OPT_USERNAME, json.loads(response.text)['name']))
-            cmds.optionVar(sv=(OPT_COOKIES, pickle.dumps(session.cookies)))
-            return AUTH_SUCCESS
-        else:
-            cmds.optionVar(remove=OPT_USERNAME)
-            cmds.optionVar(remove=OPT_COOKIES)
-            return AUTH_FAILED
-    except ConnectionError:
-        return CONNECT_FAILED
-    except ValueError:
-        return CONNECT_FAILED
-
-
-def update(session, host, table, **fields):
-    server = "http://%s/api" % host
-    url = "{server}/{table}".format(**locals())
-    kwargs = {'data': {}}
-    for field in fields:
-        if field == 'file':
-            kwargs['files'] = fields[field]
-        else:
-            kwargs['data'][field] = fields[field]
-
-    try:
-        session.post(url, **kwargs)
-        return True
-    except ConnectionError:
-        return False
