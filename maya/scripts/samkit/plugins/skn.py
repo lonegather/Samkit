@@ -173,21 +173,19 @@ class SkinBlendShapeValidator(pyblish.api.InstancePlugin):
         samkit.open_file(task)
         success = True
 
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            for obj in cmds.listConnections(shape, type='objectSet', d=False) or list():
-                for bs in cmds.listConnections(obj, type='blendShape', d=False) or list():
-                    for target in cmds.listConnections(bs, type='mesh', d=False) or list():
-                        for node in cmds.listConnections(target, d=False) or list():
-                            if cmds.objectType(node) not in [
-                                'tweak',
-                                'groupId',
-                                'transform',
-                                'shadingEngine',
-                                'groupParts',
-                            ]:
-                                success = False
-                                self.log.info(target)
-                                break
+        for bs in cmds.ls(type='blendShape'):
+            for target in cmds.listConnections(bs, type='mesh', d=False) or list():
+                for node in cmds.listConnections(target, d=False) or list():
+                    if cmds.objectType(node) not in [
+                        'tweak',
+                        'groupId',
+                        'transform',
+                        'shadingEngine',
+                        'groupParts',
+                    ]:
+                        success = False
+                        self.log.info(target)
+                        break
 
         assert success, 'BlendShape target must have NO history.'
 
