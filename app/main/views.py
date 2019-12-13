@@ -2,17 +2,18 @@
 from __future__ import unicode_literals
 
 import json
-# from channels import Group
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
 from main import models
 
 
 # Create your views here.
 def index(request):
-    return HttpResponse(u"Samkit is running...")
+    context = {
+        'projects': models.Project.all()
+    }
+    return render(request, 'index.html', context)
 
 
 def auth(request):

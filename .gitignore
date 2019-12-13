@@ -4,7 +4,7 @@
 # Django migrations / statics
 migrations/
 app/media/
-app/static/
+app/static/admin/
 app/backups/
 app/setup.csv
 !app/media/default.png
