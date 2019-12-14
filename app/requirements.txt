@@ -1,4 +1,4 @@
 django
 django-dbbackup
-django-mkdocs
+markdown
 Pillow

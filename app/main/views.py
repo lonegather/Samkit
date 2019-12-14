@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
 import json
+import markdown
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
@@ -11,9 +13,25 @@ from main import models
 # Create your views here.
 def index(request):
     context = {
-        'projects': models.Project.all()
+        'projects': models.Project.all(),
     }
     return render(request, 'index.html', context)
+
+
+def doc(request):
+    doc_dir = os.path.dirname(os.path.abspath(__file__))
+    doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
+    with open(doc_file, 'r') as f:
+        txt = f.read()
+        html = markdown.markdown(txt, extensions=[
+            'markdown.extensions.extra',
+            'markdown.extensions.codehilite',
+        ])
+        context = {
+            'projects': models.Project.all(),
+            'doc': html,
+        }
+        return render(request, 'help.html', context)
 
 
 def auth(request):

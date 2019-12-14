@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'css/default.css' %}" type="text/css">
+    <title>
+        {% block title %}
+        {{ page_title|default:"Untitled Page" }}
+        {% endblock title %}
+    </title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="dropdown">
+            <button class="dropbtn">项目
+                <i class="fa fa-caret-down"></i>
+            </button>
+            <div class="dropdown-content">
+                {% for project in projects %}
+                <a href="#">{{ project.info }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        <a href="{% url 'help' %}">帮助</a>
+        {% include 'auth.html' %}
+    </div>
+    {% block content %}
+    <p>Placeholder text in base template. Replace with page content.</p>
+    {% endblock content %}
+</body>
+</html>

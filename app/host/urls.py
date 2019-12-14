@@ -24,5 +24,6 @@ urlpatterns = [
     url(r'^api/', views.api, name='api'),
     url(r'^auth/', views.auth, name='auth'),
     url(r'^admin/', admin.site.urls),
-    path('', views.index, name='index')
+    path('', views.index, name='index'),
+    path('help/', views.doc, name='help'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
