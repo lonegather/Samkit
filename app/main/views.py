@@ -66,12 +66,6 @@ def api(request):
 def api_get(request, table):
     flt = {}
     query_dict = {
-        'preset': lambda **__: {
-            "project": models.Project.all(),
-            "stage": models.Stage.get(),
-            "tag": models.Tag.get(),
-            "batch": models.Entity.get(genus='batch'),
-        },
         'project': models.Project.all,
         'entity': models.Entity.get,
         'stage': models.Stage.get,
