@@ -10,12 +10,23 @@ from django.contrib.auth import authenticate, login
 from main import models
 
 
-# Create your views here.
-def index(request):
+def context_render(request, page, **kwargs):
     context = {
         'projects': models.Project.all(),
+        'username': request.user.username,
+        'authenticated': request.user.is_authenticated,
     }
-    return render(request, 'index.html', context)
+    for k, v in kwargs.items():
+        context[k] = v
+    return render(request, page, context)
+
+
+# Create your views here.
+def index(request):
+    return context_render(
+        request,
+        'index.html'
+    )
 
 
 def doc(request):
@@ -23,15 +34,15 @@ def doc(request):
     doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
     with open(doc_file, 'r') as f:
         txt = f.read()
-        html = markdown.markdown(txt, extensions=[
-            'markdown.extensions.extra',
-            'markdown.extensions.codehilite',
-        ])
-        context = {
-            'projects': models.Project.all(),
-            'doc': html,
-        }
-        return render(request, 'help.html', context)
+
+        return context_render(
+            request,
+            'help.html',
+            doc=markdown.markdown(txt, extensions=[
+                'markdown.extensions.extra',
+                'markdown.extensions.codehilite',
+            ])
+        )
 
 
 def auth(request):

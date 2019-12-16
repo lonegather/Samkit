@@ -1,19 +1,25 @@
+{% if authenticated %}
+<div class="login-info" style="float:right">
+    {{ username }}
+    <a style="float:right" href="#">注销</a>
+</div>
+
+{% else %}
 <div>
     <a style="float:right" href="#" onclick="document.getElementById('id01').style.display='block'">登录</a>
 </div>
+{% endif %}
 
 <div id="id01" class="modal">
 
     <!-- Modal Content -->
-    <form class="modal-content animate">
-
+    <form class="modal-content animate" method="post">
+    {% csrf_token %}
         <div class="container">
             <label for="uname"><b>Username</b></label>
             <input type="text" placeholder="Enter Username" name="uname" required>
-            <br>
             <label for="psw"><b>Password</b></label>
             <input type="password" placeholder="Enter Password" name="psw" required>
-            <br>
             <button type="submit">Login</button>
         </div>
 

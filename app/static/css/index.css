@@ -12,6 +12,16 @@
   text-decoration: none;
 }
 
+.navbar .login-info {
+  float: right;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  padding: 0 0;
+  text-decoration: none;
+  margin: 0 0;
+}
+
 .dropdown {
   float: left;
   overflow: hidden;
