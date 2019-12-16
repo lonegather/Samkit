@@ -1,9 +1,8 @@
 {% if authenticated %}
 <div class="login-info" style="float:right">
-    {{ username }}
     <a style="float:right" href="#">注销</a>
+    <div style="float:right;padding:13px 10px">{{ username }}</div>
 </div>
-
 {% else %}
 <div>
     <a style="float:right" href="#" onclick="document.getElementById('id01').style.display='block'">登录</a>
