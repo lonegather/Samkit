@@ -1,18 +1,22 @@
-{% if authenticated %}
-<div class="login-info" style="float:right">
-    <a style="float:right" href="#">注销</a>
-    <div style="float:right;padding:13px 10px">{{ username }}</div>
+{% if user.is_authenticated %}
+<div style="float:right">
+    <div class="login-info">{{ user.username }}</div>
+    <a class="login-info" href="{% url 'user_logout' %}?next={{ request.path }}">
+        {% include "svg_logout.html" %}
+    </a>
 </div>
 {% else %}
-<div>
-    <a style="float:right" href="#" onclick="document.getElementById('id01').style.display='block'">登录</a>
+<div style="float:right">
+    <a class="login-info" style="height:19px" href="#" onclick="document.getElementById('id01').style.display='block'">
+        {% include "svg_login.html" %}
+    </a>
 </div>
 {% endif %}
 
 <div id="id01" class="modal">
 
     <!-- Modal Content -->
-    <form class="modal-content animate" method="post">
+    <form class="modal-content animate" action="{% url 'user_login' %}?next={{ request.path }}" method="post">
     {% csrf_token %}
         <div class="container">
             <label for="uname"><b>Username</b></label>

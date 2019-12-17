@@ -5,8 +5,8 @@ import os
 import json
 import markdown
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.contrib.auth import authenticate, login
+from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth import authenticate, login, logout
 from main import models
 
 
@@ -33,15 +33,13 @@ def doc(request):
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
     with open(doc_file, 'r') as f:
-        txt = f.read()
-
         return context_render(
             request,
             'help.html',
-            doc=markdown.markdown(txt, extensions=[
+            doc=markdown.markdown(f.read(), extensions=[
                 'markdown.extensions.extra',
                 'markdown.extensions.codehilite',
-            ])
+            ]),
         )
 
 
@@ -64,6 +62,21 @@ def auth(request):
                 pass
 
         return HttpResponse(json.dumps(response))
+
+
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST['uname']
+        password = request.POST['psw']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+        return HttpResponseRedirect(request.GET['next'])
+
+
+def user_logout(request):
+    logout(request)
+    return HttpResponseRedirect(request.GET['next'])
 
 
 def api(request):

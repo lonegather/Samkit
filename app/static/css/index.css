@@ -3,23 +3,13 @@
   background-color: #333;
 }
 
-.navbar a {
+.navbar a, .navbar .login-info {
   float: left;
   font-size: 16px;
   color: white;
   text-align: center;
-  padding: 14px 16px;
+  padding: 14px 8px;
   text-decoration: none;
-}
-
-.navbar .login-info {
-  float: right;
-  font-size: 16px;
-  color: white;
-  text-align: center;
-  padding: 0 0;
-  text-decoration: none;
-  margin: 0 0;
 }
 
 .dropdown {
@@ -32,7 +22,7 @@
   border: none;
   outline: none;
   color: white;
-  padding: 14px 16px;
+  padding: 14px 8px;
   background-color: inherit;
   font-family: inherit;
   margin: 0;
