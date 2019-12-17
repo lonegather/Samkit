@@ -10,15 +10,17 @@
     <link rel="stylesheet" href="{% static 'css/auth.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/default.css' %}" type="text/css">
     <title>
+        Samkit Source Manager
         {% block title %}
-        {{ page_title|default:"Untitled Page" }}
+        {{ page_title|default:"" }}
         {% endblock title %}
     </title>
 </head>
 <body>
     <div class="navbar">
         <div class="dropdown">
-            <button class="dropbtn">项目
+            <button class="dropbtn" onclick="location.href='{% url 'index_project' current_project.id %}'">
+                {{ current_project.info }}
                 <i class="fa fa-caret-down"></i>
             </button>
             <div class="dropdown-content">
@@ -27,7 +29,7 @@
                 {% endfor %}
             </div>
         </div>
-        <a href="{% url 'help' %}">帮助</a>
+        <a href="{% url 'help' current_project.id %}">帮助</a>
         {% include 'auth.html' %}
     </div>
     <div class="main">

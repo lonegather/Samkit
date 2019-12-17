@@ -10,11 +10,13 @@ from django.contrib.auth import authenticate, login, logout
 from main import models
 
 
-def context_render(request, page, **kwargs):
+def context_render(request, project_id, page, **kwargs):
+    current_project = models.Project.objects.get(id=project_id)
     context = {
+        'current_project': current_project,
         'projects': models.Project.all(),
-        'username': request.user.username,
-        'authenticated': request.user.is_authenticated,
+        'request': request,
+        'user': request.user,
     }
     for k, v in kwargs.items():
         context[k] = v
@@ -23,18 +25,25 @@ def context_render(request, page, **kwargs):
 
 # Create your views here.
 def index(request):
+    prj_id = models.Project.all()[0]['id']
+    return HttpResponseRedirect(request.path + prj_id)
+
+
+def index_project(request, project_id):
     return context_render(
         request,
-        'index.html'
+        project_id,
+        'index.html',
     )
 
 
-def doc(request):
+def doc(request, project_id):
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
     with open(doc_file, 'r') as f:
         return context_render(
             request,
+            project_id,
             'help.html',
             doc=markdown.markdown(f.read(), extensions=[
                 'markdown.extensions.extra',
