@@ -1,9 +1,13 @@
 .navbar {
   overflow: hidden;
   background-color: #333;
+  position: fixed; /* Set the navbar to fixed position */
+  top: 0; /* Position the navbar at the top of the page */
+  left: 0;
+  width: 100%; /* Full width */
 }
 
-.navbar a, .navbar .login-info {
+.navbar a, .navbar button, .navbar .login-info {
   float: left;
   font-size: 16px;
   color: white;
@@ -12,48 +16,52 @@
   text-decoration: none;
 }
 
-.dropdown {
-  float: left;
-  overflow: hidden;
+.navbar a:hover {
+  background-color: #9933cc;
 }
 
-.dropdown .dropbtn {
-  font-size: 16px;
-  border: none;
-  outline: none;
-  color: white;
-  padding: 14px 8px;
-  background-color: inherit;
-  font-family: inherit;
-  margin: 0;
+/* Main content */
+.main {
+  margin-top: 50px; /* Add a top margin to avoid content overlay */
 }
 
-.navbar a:hover, .dropdown:hover .dropbtn {
-  background-color: red;
+/* The sidebar menu */
+.sidebar {
+  height: 100%; /* 100% Full-height */
+  width: 0; /* 0 width - change this with JavaScript */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Stay on top */
+  top: 50px;
+  left: 0;
+  background-color: #333; /* Black*/
+  overflow-x: hidden; /* Disable horizontal scroll */
+  padding-top: 15px; /* Place content 60px from the top */
+  transition: 0.25s; /* 0.5 second transition effect to slide in the sidebar */
 }
 
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-
-.dropdown-content a {
-  float: none;
-  color: black;
-  padding: 12px 16px;
+/* The sidebar links */
+.sidebar a {
   text-decoration: none;
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 16px;
+  color: #cccccc;
   display: block;
-  text-align: left;
+  transition: 0.25s;
 }
 
-.dropdown-content a:hover {
-  background-color: #ddd;
+/* When you mouse over the navigation links, change their color */
+.sidebar a:hover {
+  color: #f1f1f1;
 }
 
-.dropdown:hover .dropdown-content {
-  display: block;
+#root {
+  transition: margin-left .25s;
+  padding: 16px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  .sidebar {padding-top: 15px;}
+  .sidebar a {font-size: 18px;}
 }

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{% static 'css/index.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/auth.css' %}" type="text/css">
-    <link rel="stylesheet" href="{% static 'css/default.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'css/monokai.css' %}" type="text/css">
     <title>
         Samkit Source Manager
         {% block title %}
@@ -17,19 +17,31 @@
     </title>
 </head>
 <body>
-    <div class="navbar">
-        <div class="dropdown">
-            <button class="dropbtn" onclick="location.href='{% url 'index_project' current_project.id %}'">
-                {{ current_project.info }}
-                <i class="fa fa-caret-down"></i>
-            </button>
-            <div class="dropdown-content">
-                {% for project in projects %}
-                <a href="#">{{ project.info }}</a>
-                {% endfor %}
-            </div>
+<div id="id01" class="modal">
+
+    <!-- Modal Content -->
+    <form class="modal-content animate" action="{% url 'user_login' %}?next={{ request.path }}" method="post">
+        {% csrf_token %}
+        <div class="container">
+            <label for="uname"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="uname" required>
+            <label for="psw"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="psw" required>
+            <button type="submit">Login</button>
         </div>
-        <a href="{% url 'help' current_project.id %}">帮助</a>
+
+    </form>
+</div>
+<div id="root">
+    <div id="mySidebar" class="sidebar">
+        {% for project in projects %}
+        <a href="{% url 'index_project' project.id %}">{{ project.info }}</a>
+        {% endfor %}
+    </div>
+    <div class="navbar">
+        <a href="#" onclick="toggleNav()">&#9776;</a>
+        <a href="{% url 'index_project' current_project.id %}">{{ current_project.info }}</a>
+        <a href="{% url 'help' current_project.id %}">DOCUMENTS</a>
         {% include 'auth.html' %}
     </div>
     <div class="main">
@@ -37,7 +49,7 @@
     <p>Placeholder text in base template. Replace with page content.</p>
     {% endblock content %}
     </div>
-
+</div>
 <script>
 // Get the modal
 var modal = document.getElementById('id01');
@@ -46,6 +58,18 @@ var modal = document.getElementById('id01');
 window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";
+    }
+}
+
+function toggleNav() {
+    var sidebar = document.getElementById("mySidebar");
+    var root = document.getElementById("root");
+    if (sidebar.style.width == 0 || sidebar.style.width == "0px") {
+        sidebar.style.width = "250px";
+        root.style.marginLeft = "250px";
+    } else {
+        sidebar.style.width = "0";
+        root.style.marginLeft = "0";
     }
 }
 </script>
