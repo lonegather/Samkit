@@ -1,3 +1,7 @@
+body {
+  font-family:"Microsoft YaHei" ! important;
+}
+
 .navbar {
   overflow: hidden;
   background-color: #333;

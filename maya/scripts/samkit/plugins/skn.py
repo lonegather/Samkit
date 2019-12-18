@@ -1,14 +1,15 @@
 import pyblish.api
 
 
-class SkinJointsCollector(pyblish.api.ContextPlugin):
+class SkinSkeletonValidator(pyblish.api.InstancePlugin):
 
-    order = pyblish.api.CollectorOrder + 0.11
-    label = 'Collect Influences'
+    order = pyblish.api.ValidatorOrder - 0.39
+    label = 'Detect influences'
     families = ['skn', 'rig']
 
-    def process(self, context):
+    def process(self, instance):
         from maya import cmds
+        import samkit
 
         joints = []
         for shape in cmds.ls(type='mesh', noIntermediate=True):
@@ -19,8 +20,8 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
                 if joint not in joints:
                     joints.append(joint)
 
-        context.data['joints'] = joints
-        context.data['root'] = ''
+        instance.context.data['joints'] = joints
+        instance.context.data['root'] = ''
         if not len(joints):
             return
 
@@ -32,38 +33,31 @@ class SkinJointsCollector(pyblish.api.ContextPlugin):
                 if joint not in root_children:
                     break
             else:
-                try:
-                    cmds.addAttr(root, longName='UE_Skeleton', dataType='string', keyable=False)
-                except RuntimeError:
-                    pass
-                cmds.setAttr('%s.UE_Skeleton' % root, context[0].data['name'], type='string')
-                context.data['root'] = root
+                # Root found
+                instance.context.data['root'] = root
                 break
+            continue
 
-        if not context.data['root']:
+        if not instance.context.data['root']:
             return
+
+        try:
+            cmds.getAttr(instance.context.data['root'] + '.UE_Skeleton')
+        except ValueError:
+            cmds.addAttr(instance.context.data['root'], longName='UE_Skeleton', dataType='string', keyable=False)
+        cmds.setAttr('%s.UE_Skeleton' % instance.context.data['root'], instance.context[0].data['name'], type='string')
 
         for bs in cmds.ls(type='blendShape'):
             for plug in cmds.listConnections('%s.weight' % bs, connections=True, p=True):
                 if plug.find('%s.' % bs) == 0:
-                    attr = plug[(len(bs)+1):]
-                    dest = '%s.%s' % (context.data['root'], attr)
+                    attr = plug[(len(bs) + 1):]
+                    dest = '%s.%s' % (instance.context.data['root'], attr)
                     try:
                         cmds.getAttr(dest)
                     except ValueError:
-                        cmds.addAttr(context.data['root'], ln=attr, at='double', dv=0)
+                        cmds.addAttr(instance.context.data['root'], ln=attr, at='double', dv=0)
                         cmds.setAttr(dest, keyable=True)
-                    cmds.connectAttr(plug, dest, f=True)
-
-
-class SkinSkeletonValidator(pyblish.api.InstancePlugin):
-
-    order = pyblish.api.ValidatorOrder - 0.39
-    label = 'Detect influences'
-    families = ['skn', 'rig']
-
-    def process(self, instance):
-        import samkit
+                        cmds.connectAttr(plug, dest, f=True)
 
         task = instance.data['task']
         samkit.open_file(task)

@@ -23,6 +23,13 @@ class EntityCollector(pyblish.api.ContextPlugin):
             instance.data['pathSrc'] = samkit.get_source_path(task)
             instance.data['pathDat'] = samkit.get_data_path(task)
 
+        for item in cmds.ls(type="unknown"):
+            if cmds.objExists(item):
+                cmds.delete(item)
+
+        for up in cmds.unknownPlugin(q=True, list=True) or list():
+            cmds.unknownPlugin(up, remove=True)
+
         cmds.file(save=True)
 
 
