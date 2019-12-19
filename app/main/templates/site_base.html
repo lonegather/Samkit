@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{% static 'css/w3.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/index.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/auth.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/monokai.css' %}" type="text/css">
     <title>
-        Samkit Source Manager
+        Samkit
         {% block title %}
         {{ page_title|default:"" }}
         {% endblock title %}
