@@ -13,11 +13,11 @@ session = requests.Session()
 
 
 def auth_stats(host):
-    return json.loads(session.get("http://%s/auth/" % host).text)
+    return json.loads(session.get("http://%s/api/auth" % host).text)
 
 
 def login(host, username, password):
-    server = "http://%s/auth/" % host
+    server = "http://%s/api/auth" % host
     kwargs = {
         'username': username,
         'password': password,

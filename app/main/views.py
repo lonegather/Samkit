@@ -10,67 +10,47 @@ from django.contrib.auth import authenticate, login, logout
 from main import models
 
 
-def context_render(request, project_id, page, **kwargs):
-    current_project = models.Project.objects.get(id=project_id)
-    context = {
-        'current_project': current_project,
-        'projects': models.Project.all(),
-        'request': request,
-        'user': request.user,
-    }
-    for k, v in kwargs.items():
-        context[k] = v
-    return render(request, page, context)
+def template_context(func):
+    def inner(request, project_id):
+        context = func()
+        current_project = models.Project.objects.get(id=project_id)
+        context['current_project'] = current_project
+        context['projects'] = models.Project.all()
+        context['request'] = request
+        context['user'] = request.user
+        for key, val in request.GET.items():
+            context[key] = val
+        return render(request, context['page'], context)
+    return inner
 
 
-# Create your views here.
-def index(request):
-    prj_id = models.Project.all()[0]['id']
-    return HttpResponseRedirect(request.path + prj_id)
+@template_context
+def index_project():
+    return {'page': 'index.html'}
 
 
-def index_project(request, project_id):
-    return context_render(
-        request,
-        project_id,
-        'index.html',
-    )
+@template_context
+def settings():
+    return {'page': 'settings.html'}
 
 
-def doc(request, project_id):
+@template_context
+def doc():
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
     with open(doc_file, 'r') as f:
-        return context_render(
-            request,
-            project_id,
-            'help.html',
-            doc=markdown.markdown(f.read(), extensions=[
+        return {
+            'page': 'help.html',
+            'doc': markdown.markdown(f.read(), extensions=[
                 'markdown.extensions.extra',
                 'markdown.extensions.codehilite',
-            ]),
-        )
+            ])
+        }
 
 
-def auth(request):
-    if request.method == 'GET':
-        return HttpResponse(json.dumps(request.user.is_authenticated))
-    elif request.method == 'POST':
-        response = {}
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            response['session'] = request.session.session_key
-            response['name'] = user.username
-            try:
-                response['info'] = user.profile.name
-                response['role'] = user.profile.role.name
-            except:
-                pass
-
-        return HttpResponse(json.dumps(response))
+def index(request):
+    prj_id = models.Project.all()[0]['id']
+    return HttpResponseRedirect(request.path + prj_id)
 
 
 def user_login(request):
@@ -90,6 +70,8 @@ def user_logout(request):
 
 def api(request):
     table = request.path.split('/')[-1]
+    if table == 'auth':
+        return api_auth(request)
     if request.method == 'GET':
         return api_get(request, table)
     elif request.method == 'POST':
@@ -122,5 +104,25 @@ def api_set(request, table):
         for f in request.FILES:
             form[f] = request.FILES[f]
     modify_dict[table](form)
-    # Group('global').send({'text': '%s changed' % form['name']})
     return HttpResponse("")
+
+
+def api_auth(request):
+    if request.method == 'GET':
+        return HttpResponse(json.dumps(request.user.is_authenticated))
+    elif request.method == 'POST':
+        response = {}
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            response['session'] = request.session.session_key
+            response['name'] = user.username
+            try:
+                response['info'] = user.profile.name
+                response['role'] = user.profile.role.name
+            except:
+                pass
+
+        return HttpResponse(json.dumps(response))

@@ -41,6 +41,9 @@
     <div class="navbar">
         <a href="#" onclick="toggleNav()">&#9776;</a>
         <a href="{% url 'index_project' current_project.id %}">{{ current_project.info }}</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'settings' current_project.id %}">SETTINGS</a>
+        {% endif %}
         <a href="{% url 'help' current_project.id %}">DOCUMENTS</a>
         {% include 'auth.html' %}
     </div>

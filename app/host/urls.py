@@ -21,12 +21,12 @@ from django.contrib import admin
 from main import views
 
 urlpatterns = [
-    url(r'^api/', views.api, name='api'),
-    url(r'^auth/', views.auth, name='auth'),
     url(r'^admin/', admin.site.urls),
+    url(r'^api/', views.api, name='api'),
     path('', views.index, name='index'),
-    path('<uuid:project_id>/', views.index_project, name='index_project'),
-    path('<uuid:project_id>/help/', views.doc, name='help'),
     path('user_login/', views.user_login, name='user_login'),
     path('user_logout/', views.user_logout, name='user_logout'),
+    path('<uuid:project_id>/', views.index_project, name='index_project'),
+    path('<uuid:project_id>/help/', views.doc, name='help'),
+    path('<uuid:project_id>/settings/', views.settings, name='settings'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
