@@ -3,13 +3,13 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{% static 'css/w3.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'css/monokai.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/index.css' %}" type="text/css">
     <link rel="stylesheet" href="{% static 'css/auth.css' %}" type="text/css">
-    <link rel="stylesheet" href="{% static 'css/monokai.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'css/settings.css' %}" type="text/css">
     <title>
         Samkit
         {% block title %}
@@ -19,26 +19,26 @@
 </head>
 <body>
 <div id="id01" class="modal">
-
-    <!-- Modal Content -->
-    <form class="modal-content animate" action="{% url 'user_login' %}?next={{ request.path }}" method="post">
+    <!-- Modal Login Form -->
+    <form class="modal-content animate" action="{% url 'user_login' %}?next={{ current_path }}" method="post">
         {% csrf_token %}
         <div class="container">
             <label for="uname"><b>Username</b></label>
             <input type="text" placeholder="Enter Username" name="uname" required>
             <label for="psw"><b>Password</b></label>
             <input type="password" placeholder="Enter Password" name="psw" required>
-            <button type="submit">Login</button>
+            <button type="submit">SIGN IN</button>
         </div>
-
     </form>
 </div>
 <div id="root">
+    <!-- Side Project List -->
     <div id="mySidebar" class="sidebar">
         {% for project in projects %}
         <a href="{% url 'index_project' project.id %}">{{ project.info }}</a>
         {% endfor %}
     </div>
+    <!-- Navigation Bar -->
     <div class="navbar">
         <a href="#" onclick="toggleNav()">&#9776;</a>
         <a href="{% url 'index_project' current_project.id %}">{{ current_project.info }}</a>
@@ -48,6 +48,7 @@
         <a href="{% url 'help' current_project.id %}">DOCUMENTS</a>
         {% include 'auth.html' %}
     </div>
+    <!-- Main Content -->
     <div class="main">
     {% block content %}
     <p>Placeholder text in base template. Replace with page content.</p>
@@ -77,6 +78,5 @@ function toggleNav() {
     }
 }
 </script>
-
 </body>
 </html>

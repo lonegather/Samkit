@@ -6,7 +6,7 @@
         {% include "svg_admin.html" %}
     </a>
     {% endif %}
-    <a class="login-info" href="{% url 'user_logout' %}?next={{ request.path }}">
+    <a class="login-info" href="{% url 'user_logout' %}?next={{ current_path }}">
         {% include "svg_logout.html" %}
     </a>
 </div>

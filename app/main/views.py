@@ -4,19 +4,28 @@ from __future__ import unicode_literals
 import os
 import json
 import markdown
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
+
 from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+
 from main import models
 
 
-def template_context(func):
+def renderer(func):
     def inner(request, project_id):
-        context = func()
-        current_project = models.Project.objects.get(id=project_id)
+        try:
+            current_project = models.Project.objects.get(id=project_id)
+            request.session['current_project_id'] = str(project_id)
+        except ObjectDoesNotExist:
+            request.session['current_project_id'] = None
+            return HttpResponseRedirect('/')
+
+        context = func(**request.GET)
+        context['current_path'] = request.path
         context['current_project'] = current_project
         context['projects'] = models.Project.all()
-        context['request'] = request
         context['user'] = request.user
         for key, val in request.GET.items():
             context[key] = val
@@ -24,18 +33,18 @@ def template_context(func):
     return inner
 
 
-@template_context
-def index_project():
+@renderer
+def index_project(**kwargs):
     return {'page': 'index.html'}
 
 
-@template_context
-def settings():
+@renderer
+def settings(**kwargs):
     return {'page': 'settings.html'}
 
 
-@template_context
-def doc():
+@renderer
+def doc(**kwargs):
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
     with open(doc_file, 'r') as f:
@@ -49,8 +58,9 @@ def doc():
 
 
 def index(request):
-    prj_id = models.Project.all()[0]['id']
-    return HttpResponseRedirect(request.path + prj_id)
+    if not request.session.get('current_project_id', None):
+        request.session['current_project_id'] = str(models.Project.all()[0]['id'])
+    return HttpResponseRedirect(request.path + request.session['current_project_id'])
 
 
 def user_login(request):
@@ -65,11 +75,17 @@ def user_login(request):
 
 def user_logout(request):
     logout(request)
+    tokens = request.GET['next'].split('/')
+    if 'settings' in tokens:
+        tokens.remove('settings')
+        return HttpResponseRedirect('/'.join(tokens))
     return HttpResponseRedirect(request.GET['next'])
 
 
 def api(request):
     table = request.path.split('/')[-1]
+    if not table:
+        return HttpResponse('')
     if table == 'auth':
         return api_auth(request)
     if request.method == 'GET':

@@ -5,5 +5,27 @@
 {% endblock title %}
 
 {% block content %}
-<h1>Settings Page</h1>
+<div class="content-settings" xmlns="http://www.w3.org/1999/html">
+    <section>
+        <nav>
+            <ul>
+                <li><a href="#">Basic Options</a></li>
+                <li><a href="#">Path Configuration</a></li>
+                <li><a href="#">Episode Management</a></li>
+            </ul>
+        </nav>
+        <article>
+            <h3>Project Information</h3>
+            <form>
+                <label for="setting_project_info"><b>Name</b></label>
+                <input name="setting_project_info" type="text" value="{{ current_project.info }}"/>
+                <label for="setting_project_name"><b>Codename</b></label>
+                <input name="setting_project_name" type="text" value="{{ current_project.name }}"/>
+                <label for="setting_project_path"><b>Root Directory</b></label>
+                <input name="setting_project_path" type="text" value="{{ current_project.root }}"/>
+                <button type="submit">APPLY</button>
+            </form>
+        </article>
+    </section>
+</div>
 {% endblock content %}
