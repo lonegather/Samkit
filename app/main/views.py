@@ -22,7 +22,7 @@ def renderer(func):
             request.session['current_project_id'] = None
             return HttpResponseRedirect('/')
 
-        context = func(**request.GET)
+        context = func(request, current_project)
         context['current_path'] = request.path
         context['current_project'] = current_project
         context['projects'] = models.Project.all()
@@ -34,17 +34,21 @@ def renderer(func):
 
 
 @renderer
-def index_project(**kwargs):
+def index_project(request, project):
     return {'page': 'index.html'}
 
 
 @renderer
-def settings(**kwargs):
-    return {'page': 'settings.html'}
+def settings(request, project):
+    return {
+        'page': 'settings.html',
+        'tags': models.Tag.objects.filter(project=project),
+        'stages': models.Stage.objects.filter(project=project),
+    }
 
 
 @renderer
-def doc(**kwargs):
+def doc(request, project):
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
     with open(doc_file, 'r') as f:
@@ -120,7 +124,7 @@ def api_set(request, table):
         for f in request.FILES:
             form[f] = request.FILES[f]
     modify_dict[table](form)
-    return HttpResponse("")
+    return HttpResponseRedirect(request.GET['next'])
 
 
 def api_auth(request):

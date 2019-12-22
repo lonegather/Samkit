@@ -5,26 +5,27 @@
 {% endblock title %}
 
 {% block content %}
-<div class="content-settings" xmlns="http://www.w3.org/1999/html">
+<div class="content-settings">
     <section>
-        <nav>
-            <ul>
-                <li><a href="#">Basic Options</a></li>
-                <li><a href="#">Path Configuration</a></li>
-                <li><a href="#">Episode Management</a></li>
-            </ul>
-        </nav>
         <article>
             <h3>Project Information</h3>
-            <form>
-                <label for="setting_project_info"><b>Name</b></label>
-                <input name="setting_project_info" type="text" value="{{ current_project.info }}"/>
-                <label for="setting_project_name"><b>Codename</b></label>
-                <input name="setting_project_name" type="text" value="{{ current_project.name }}"/>
-                <label for="setting_project_path"><b>Root Directory</b></label>
-                <input name="setting_project_path" type="text" value="{{ current_project.root }}"/>
-                <button type="submit">APPLY</button>
+            <form action="/api/project?next={{ current_path }}" method="post" class="w3-container">
+                <input name="id" type="hidden" value="{{ current_project.id }}"/>
+                <label><b>Name</b></label>
+                <input name="info" type="text" value="{{ current_project.info }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
+                <label><b>Codename</b></label>
+                <input name="name" type="text" value="{{ current_project.name }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
+                <label><b>Root Directory</b></label>
+                <input name="root" type="text" value="{{ current_project.root }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
+                <button type="submit" class="w3-btn w3-purple" style="margin-bottom:10px;width:100%">APPLY</button>
             </form>
+            <h3>Asset Classification</h3>
+            <form action="#" method="post" class="w3-container">
+            {% for tag in tags %}
+                <label>{{ tag.name }}</label>
+            {% endfor %}
+            </form>
+            <h3>Stage Configuration</h3>
         </article>
     </section>
 </div>
