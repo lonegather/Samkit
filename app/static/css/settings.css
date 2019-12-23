@@ -63,3 +63,20 @@
   border-bottom: 1px solid #ccc;
   padding-bottom: 10px;
 }
+
+.content-settings .row {
+  display: flex;
+  transition: 0.25s;
+}
+
+.content-settings .row .list {
+  flex-grow: 1;
+}
+
+.content-settings .row .detail {
+  display: none;
+  flex-grow: 100;
+  border-left:1px solid #ccc;
+  padding-left: 10px;
+  transition: 0.25s;
+}

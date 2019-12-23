@@ -128,7 +128,7 @@ def api_set(request, table):
 
 
 def api_delete(request, object_id):
-    print(object_id)
+    print(request.path)
     return HttpResponseRedirect(request.GET['next'])
 
 
