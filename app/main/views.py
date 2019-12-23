@@ -127,6 +127,11 @@ def api_set(request, table):
     return HttpResponseRedirect(request.GET['next'])
 
 
+def api_delete(request, object_id):
+    print(object_id)
+    return HttpResponseRedirect(request.GET['next'])
+
+
 def api_auth(request):
     if request.method == 'GET':
         return HttpResponse(json.dumps(request.user.is_authenticated))

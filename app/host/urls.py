@@ -26,6 +26,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('user_login/', views.user_login, name='user_login'),
     path('user_logout/', views.user_logout, name='user_logout'),
+    path('object_delete/<uuid:object_id>', views.api_delete, name='object_delete'),
     path('<uuid:project_id>/', views.index_project, name='index_project'),
     path('<uuid:project_id>/help/', views.doc, name='help'),
     path('<uuid:project_id>/settings/', views.settings, name='settings'),

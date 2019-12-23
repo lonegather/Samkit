@@ -1,4 +1,5 @@
 {% extends 'site_base.html' %}
+{% load samkit %}
 
 {% block title %}
 - Settings
@@ -17,15 +18,39 @@
                 <input name="name" type="text" value="{{ current_project.name }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
                 <label><b>Root Directory</b></label>
                 <input name="root" type="text" value="{{ current_project.root }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
-                <button type="submit" class="w3-btn w3-purple" style="margin-bottom:10px;width:100%">APPLY</button>
-            </form>
-            <h3>Asset Classification</h3>
-            <form action="#" method="post" class="w3-container">
-            {% for tag in tags %}
-                <label>{{ tag.name }}</label>
-            {% endfor %}
+                <button type="submit" class="w3-btn w3-purple" style="width:80px;margin-bottom:10px;">APPLY</button>
             </form>
             <h3>Stage Configuration</h3>
+            <div class="w3-container">
+                {% for stage in stages %}
+                <a href="{% url 'object_delete' stage.id %}?next={{ current_path }}">[{{ stage.name }}] {{ stage.info }}</a>
+                {% empty %}
+                <p>No stage found. Click ADD to create a new one.</p>
+                {% endfor %}
+                <button type="submit" class="w3-btn w3-purple" style="width:80px;margin-top:10px;margin-bottom:10px;">ADD</button>
+            </div>
+            <h3>Asset Category</h3>
+            <div class="w3-container">
+                {% for tag in tags %}
+                    {% if tag.genus.name == 'asset' %}
+                    <a href="#">[{{ tag.name }}] {{ tag.info }}</a>
+                    {% endif %}
+                {% empty %}
+                <p>No asset category found. Click ADD to create a new one.</p>
+                {% endfor %}
+                <button type="button" class="w3-btn w3-purple" style="width:80px;margin-top:10px;margin-bottom:10px;">ADD</button>
+            </div>
+            <h3>Episode Configuration</h3>
+            <div class="w3-container">
+                {% for tag in tags %}
+                    {% if tag.genus.name == 'shot' %}
+                    <a href="#">[{{ tag.name }}] {{ tag.info }}</a>
+                    {% endif %}
+                {% empty %}
+                <p>No episode found. Click ADD to create a new one.</p>
+                {% endfor %}
+                <button type="button" class="w3-btn w3-purple" style="width:80px;margin-top:10px;margin-bottom:10px;">ADD</button>
+            </div>
         </article>
     </section>
 </div>

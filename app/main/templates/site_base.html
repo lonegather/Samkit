@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 {% load static %}
-{% load samkit %}
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -44,9 +43,13 @@
         <a href="#" onclick="toggleNav()">&#9776;</a>
         <a href="{% url 'index_project' current_project.id %}">{{ current_project.info }}</a>
         {% if user.is_authenticated %}
-        <a href="{% url 'settings' current_project.id %}">SETTINGS</a>
+        <a href="{% url 'settings' current_project.id %}">
+            {% include "svg_settings.html" %}
+        </a>
         {% endif %}
-        <a href="{% url 'help' current_project.id %}">DOCUMENTS</a>
+        <a href="{% url 'help' current_project.id %}">
+            {% include "svg_doc.html" %}
+        </a>
         {% include 'auth.html' %}
     </div>
     <!-- Main Content -->
