@@ -65,7 +65,7 @@
                     <input id="stage_detail_data" name="data" class="w3-input field" placeholder="Enter Data Pattern:"/>
                     <button class="w3-btn w3-purple" type="button" onclick="close_stage_detail()" style="float:right">DISCARD</button>
                     <button class="w3-btn w3-purple" type="submit" style="float:right;margin-right:10px;">APPLY</button>
-                    <button id="stage_detail_delete" class="w3-btn w3-red" type="button" onclick="delete_by_admin('stage_detail_id')">DELETE</button>
+                    <button id="stage_detail_delete" class="w3-btn w3-red" type="button" onclick="delete_by_admin('stage_detail_id','stage')">DELETE</button>
                 </form>
             </div>
             <h3>Asset Category</h3>
@@ -96,7 +96,7 @@
                     <input id="tag_detail_info" name="info" class="w3-input field" placeholder="Enter Name:"/>
                     <button class="w3-btn w3-purple" type="button" onclick="close_tag_detail()" style="float:right">DISCARD</button>
                     <button class="w3-btn w3-purple" type="submit" style="float:right;margin-right:10px;">APPLY</button>
-                    <button id="tag_detail_delete" class="w3-btn w3-red" type="button" onclick="delete_by_admin('tag_detail_id')">DELETE</button>
+                    <button id="tag_detail_delete" class="w3-btn w3-red" type="button" onclick="delete_by_admin('tag_detail_id','tag')">DELETE</button>
                 </form>
             </div>
         </article>
@@ -108,9 +108,9 @@
 {% endblock content %}
 
 {% block script %}
-function delete_by_admin(ele) {
+function delete_by_admin(ele, table) {
     obj_id = document.getElementById(ele).getAttribute('value');
-    location.href = '/admin/main/stage/' + obj_id + '/delete/';
+    location.href = '/admin/main/' + table + '/' + obj_id + '/delete/';
 }
 
 function open_tag_detail(tag_id, tag_name, tag_info) {
