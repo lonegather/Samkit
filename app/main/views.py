@@ -42,6 +42,8 @@ def index_project(request, project):
 def settings(request, project):
     return {
         'page': 'settings.html',
+        'genus_asset': models.Genus.objects.get(name='asset'),
+        'genus_shot': models.Genus.objects.get(name='shot'),
         'tags': models.Tag.objects.filter(project=project),
         'stages': models.Stage.objects.filter(project=project),
     }

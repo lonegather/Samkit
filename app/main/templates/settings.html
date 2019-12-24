@@ -14,64 +14,90 @@
             <form action="/api/project?next={{ current_path }}" method="post" class="w3-container">
                 <input name="id" type="hidden" value="{{ current_project.id }}"/>
                 <label><b>Name</b></label>
-                <input name="info" type="text" value="{{ current_project.info }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
+                <input name="info"
+                       type="text"
+                       value="{{ current_project.info }}"
+                       class="w3-input field"
+                       style="margin-bottom:20px;background-color:#f1f1f1"/>
                 <label><b>Codename</b></label>
-                <input name="name" type="text" value="{{ current_project.name }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
+                <input name="name"
+                       type="text"
+                       value="{{ current_project.name }}"
+                       class="w3-input field"
+                       style="margin-bottom:20px;background-color:#f1f1f1"/>
                 <label><b>Root Directory</b></label>
-                <input name="root" type="text" value="{{ current_project.root }}" class="w3-input" style="margin-bottom:20px;background-color:#f1f1f1"/>
-                <button type="submit" class="w3-btn w3-purple" style="width:80px;margin-bottom:10px;">APPLY</button>
+                <input name="root"
+                       type="text"
+                       value="{{ current_project.root }}"
+                       class="w3-input field"
+                       style="margin-bottom:20px;background-color:#f1f1f1"/>
+                <button type="submit"
+                        class="w3-btn w3-purple"
+                        style="width:80px;margin-bottom:10px;">
+                    APPLY
+                </button>
             </form>
             <h3>Stage Configuration</h3>
             <div class="row">
                 <div class="w3-container list" id="stage_list">
                     {% for stage in stages %}
-                    <button style="display:block;width:100%;text-align:left" class="w3-btn" onclick="open_stage_detail('{{ stage.id }}','{{ stage.name }}','{{ stage.info }}')">
+                    <button style="display:block;width:100%;text-align:left"
+                            class="w3-btn"
+                            onclick="open_stage_detail('{{ stage.id }}','<b>{{ stage.name }}</b>','{{ stage.info }}','{{ stage.source }}','{{ stage.data }}')">
                         [{{ stage.name }}] {{ stage.info }}
                     </button>
                     {% empty %}
                     <p>No stage found. Click ADD to create a new one.</p>
                     {% endfor %}
-                    <button type="button" class="w3-btn" style="display:block;width:100%;text-align:left">ADD...</button>
+                    <button type="button"
+                            class="w3-btn"
+                            style="display:block;width:100%;text-align:left"
+                            onclick="open_stage_detail('','','','','')">
+                        ADD...
+                    </button>
                 </div>
-                <div class="detail" id="stage_detail">
-                    <button onclick="close_stage_detail()">close</button>
-                </div>
+                <form class="detail" id="stage_detail" method="post">
+                    <input id="stage_detail_id" name="id" type="hidden"/>
+                    <h4 id="stage_detail_title"></h4>
+                    <input id="stage_detail_name" name="name" class="w3-input field" placeholder="Enter Codename:"/>
+                    <input id="stage_detail_info" name="info" class="w3-input field" placeholder="Enter Name:"/>
+                    <input id="stage_detail_source" name="source" class="w3-input field" placeholder="Enter Source Pattern:"/>
+                    <input id="stage_detail_data" name="data" class="w3-input field" placeholder="Enter Data Pattern:"/>
+                    <button class="w3-btn w3-purple" type="button" onclick="close_stage_detail()" style="float:right">DISCARD</button>
+                    <button class="w3-btn w3-purple" type="submit" style="float:right;margin-right:10px;">APPLY</button>
+                    <button id="stage_detail_delete" class="w3-btn w3-red" type="button" onclick="delete_by_admin('stage_detail_id')">DELETE</button>
+                </form>
             </div>
             <h3>Asset Category</h3>
             <div class="row">
                 <div class="w3-container list" id="tag_list">
                     {% for tag in tags %}
-                        {% if tag.genus.name == 'asset' %}
-                        <button style="display:block;width:100%;text-align:left" class="w3-btn" onclick="open_tag_detail('{{ tag.id }}','{{ tag.name }}','{{ tag.info }}')">
-                            [{{ tag.name }}] {{ tag.info }}
-                        </button>
-                        {% endif %}
+                    {% if tag.genus == genus_asset %}
+                    <button style="display:block;width:100%;text-align:left"
+                            class="w3-btn"
+                            onclick="open_tag_detail('{{ tag.id }}','<b>{{ tag.name }}</b>','{{ tag.info }}')">
+                        [{{ tag.name }}] {{ tag.info }}
+                    </button>
+                    {% endif %}
                     {% empty %}
                     <p>No asset category found. Click ADD to create a new one.</p>
                     {% endfor %}
-                    <button type="button" class="w3-btn" style="display:block;width:100%;text-align:left">ADD...</button>
+                    <button type="button"
+                            class="w3-btn"
+                            style="display:block;width:100%;text-align:left"
+                            onclick="open_tag_detail('','','','','')">
+                        ADD...
+                    </button>
                 </div>
-                <div class="detail" id="tag_detail">
-                    <button onclick="close_tag_detail()">close</button>
-                </div>
-            </div>
-            <h3>Episode Configuration</h3>
-            <div class="row">
-                <div class="w3-container list" id="ep_list">
-                    {% for tag in tags %}
-                        {% if tag.genus.name == 'shot' %}
-                        <button style="display:block;width:100%;text-align:left" class="w3-btn" onclick="open_ep_detail('{{ tag.id }}','{{ tag.name }}','{{ tag.info }}')">
-                            [{{ tag.name }}] {{ tag.info }}
-                        </button>
-                        {% endif %}
-                    {% empty %}
-                    <p>No episode found. Click ADD to create a new one.</p>
-                    {% endfor %}
-                    <button type="button" class="w3-btn" style="display:block;width:100%;text-align:left">ADD...</button>
-                </div>
-                <div class="detail" id="ep_detail">
-                    <button onclick="close_ep_detail()">close</button>
-                </div>
+                <form class="detail" id="tag_detail" method="post">
+                    <input id="tag_detail_id" name="id" type="hidden"/>
+                    <h4 id="tag_detail_title"></h4>
+                    <input id="tag_detail_name" name="name" class="w3-input field" placeholder="Enter Codename:"/>
+                    <input id="tag_detail_info" name="info" class="w3-input field" placeholder="Enter Name:"/>
+                    <button class="w3-btn w3-purple" type="button" onclick="close_tag_detail()" style="float:right">DISCARD</button>
+                    <button class="w3-btn w3-purple" type="submit" style="float:right;margin-right:10px;">APPLY</button>
+                    <button id="tag_detail_delete" class="w3-btn w3-red" type="button" onclick="delete_by_admin('tag_detail_id')">DELETE</button>
+                </form>
             </div>
         </article>
     </section>
@@ -82,25 +108,50 @@
 {% endblock content %}
 
 {% block script %}
+function delete_by_admin(ele) {
+    obj_id = document.getElementById(ele).getAttribute('value');
+    location.href = '/admin/main/stage/' + obj_id + '/delete/';
+}
+
 function open_tag_detail(tag_id, tag_name, tag_info) {
+    if (tag_id) {
+        document.getElementById('tag_detail_name').setAttribute('type', 'hidden');
+        document.getElementById('tag_detail_delete').style.display = 'inline-block';
+        document.getElementById('tag_detail_title').style.paddingTop = '10px';
+        document.getElementById('tag_detail_title').style.height = '49px';
+    } else {
+        document.getElementById('tag_detail_name').setAttribute('type', 'visible');
+        document.getElementById('tag_detail_delete').style.display = 'none';
+        document.getElementById('tag_detail_title').style.paddingTop = '0px';
+        document.getElementById('tag_detail_title').style.height = '0px';
+    }
     document.getElementById('tag_detail').style.display = 'block';
+    document.getElementById('tag_detail_id').setAttribute('value', tag_id);
+    document.getElementById('tag_detail_title').innerHTML = tag_name;
 }
 
 function close_tag_detail() {
     document.getElementById('tag_detail').style.display = 'none';
 }
-function open_ep_detail(tag_id, tag_name, tag_info) {
-    document.getElementById('ep_detail').style.display = 'block';
-}
 
-function close_ep_detail() {
-    document.getElementById('ep_detail').style.display = 'none';
-}
-function open_stage_detail(stage_id, stage_name, stage_info) {
-document.getElementById('stage_detail').style.display = 'block';
+function open_stage_detail(stage_id, stage_name, stage_info, stage_source, stage_data) {
+    if (stage_id) {
+        document.getElementById('stage_detail_name').setAttribute('type', 'hidden');
+        document.getElementById('stage_detail_delete').style.display = 'inline-block';
+        document.getElementById('stage_detail_title').style.paddingTop = '10px';
+        document.getElementById('stage_detail_title').style.height = '49px';
+    } else {
+        document.getElementById('stage_detail_name').setAttribute('type', 'visible');
+        document.getElementById('stage_detail_delete').style.display = 'none';
+        document.getElementById('stage_detail_title').style.paddingTop = '0px';
+        document.getElementById('stage_detail_title').style.height = '0px';
+    }
+    document.getElementById('stage_detail').style.display = 'block';
+    document.getElementById('stage_detail_id').setAttribute('value', stage_id);
+    document.getElementById('stage_detail_title').innerHTML = stage_name;
 }
 
 function close_stage_detail() {
-document.getElementById('stage_detail').style.display = 'none';
+    document.getElementById('stage_detail').style.display = 'none';
 }
 {% endblock script %}
