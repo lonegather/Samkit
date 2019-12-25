@@ -153,6 +153,27 @@ class Tag(models.Model):
                 'genus_info': tag.genus.info,
             })
         return result
+
+    @classmethod
+    def set(cls, form):
+        prj_id = form['project_id'][0]
+        prj = Project.objects.get(id=prj_id)
+        genus_name = form['genus_name'][0]
+        gns = Genus.objects.get(name=genus_name)
+        if form.get('id', [None])[0]:
+            tag = cls.objects.get(id=form['id'][0])
+            tag.name = form['name'][0]
+            tag.info = form['info'][0]
+            tag.project = prj
+            tag.genus = gns
+        else:
+            tag = cls(
+                project=prj,
+                genus=gns,
+                name=form.get('name', ['undefined'])[0],
+                info=form.get('info', [u'未命名'])[0],
+            )
+        tag.save()
     
     def __str__(self):
         return self.name if self.project.name == '|' else '%s | %s' % (self.project, self.name)
@@ -321,6 +342,31 @@ class Stage(models.Model):
                            'genus': stg.genus.name, 'genus_info': stg.genus.info,
                            'source': stg.source, 'data': stg.data})
         return result
+
+    @classmethod
+    def set(cls, form):
+        prj_id = form['project_id'][0]
+        prj = Project.objects.get(id=prj_id)
+        genus_name = form['genus_name'][0]
+        gns = Genus.objects.get(name=genus_name)
+        if form.get('id', [None])[0]:
+            stg = cls.objects.get(id=form['id'][0])
+            stg.name = form['name'][0]
+            stg.info = form['info'][0]
+            stg.source = form['source'][0]
+            stg.data = form['data'][0]
+            stg.project = prj
+            stg.genus = gns
+        else:
+            stg = cls(
+                project=prj,
+                genus=gns,
+                name=form.get('name', ['undefined'])[0],
+                info=form.get('info', [u'未命名'])[0],
+                source=form.get('source', [''])[0],
+                data=form.get('data', [''])[0],
+            )
+        stg.save()
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, default=uuid.uuid4, on_delete=models.CASCADE)
@@ -384,7 +430,10 @@ class Task(models.Model):
         genus = self.stage.genus.name
         entity = self.entity.name
         stage = self.stage.name
-        return ';'.join((self.stage.source.format(**locals()), self.stage.data.format(**locals())))
+        return ';'.join((
+            self.stage.source.format(**locals()),
+            self.stage.data.format(**locals())
+        ))
 
     @classmethod
     def set(cls, form):

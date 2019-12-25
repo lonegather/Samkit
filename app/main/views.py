@@ -119,6 +119,8 @@ def api_set(request, table):
     form = dict(request.POST)
     modify_dict = {
         'project': models.Project.set,
+        'tag': models.Tag.set,
+        'stage': models.Stage.set,
         'entity': models.Entity.set,
         'task': models.Task.set,
     }
