@@ -143,7 +143,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
                 'target': '/Game/%s' % task['path'].split(';')[1],
                 'shot': {
                     'fps': 25.0,
-                    'start': float(mint - 5),
+                    'start': float(mint),
                     'end': float(maxt),
                     'chars': chars,
                     'anims': anims,
