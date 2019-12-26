@@ -23,6 +23,8 @@ def import_asset(stage, source, target, skeleton=None, shot=None):
         return
 
     if stage in ['lyt', 'anm']:
+        factory.ImportUI.AnimStartFrame = str(shot['start'])
+        factory.ImportUI.AnimEndFrame = str(shot['end'])
         factory.ImportUI.MeshTypeToImport = EFBXImportType.FBXIT_Animation
         data = factory.ImportUI.AnimSequenceImportData
         data.CustomSampleRate = shot['fps']
@@ -59,7 +61,7 @@ def setup_sequencer(source, target, shot):
         LevelSequenceActor, MovieScene3DTransformTrack, MovieSceneSkeletalAnimationTrack, Character
     from unreal_engine.structs import MovieSceneObjectBindingID
     from unreal_engine.enums import EMovieSceneObjectBindingSpace
-    from unreal_engine import FTransform
+    from unreal_engine import FTransform, FFrameNumber
     import fbx_extract
     reload(fbx_extract)
 
@@ -91,6 +93,7 @@ def setup_sequencer(source, target, shot):
     seq.sequencer_set_view_range(start / fps, end / fps)
     seq.sequencer_set_working_range(start / fps, end / fps)
     seq.sequencer_set_playback_range(start / fps, end / fps)
+    tick = seq.MovieScene.TickResolution.Numerator
     seq.sequencer_changed(True)
 
     for skin_name, anim_name in zip(shot['chars'], shot['anims']):
@@ -126,7 +129,7 @@ def setup_sequencer(source, target, shot):
 
         # create animation section (assign AnimSequence field to set the animation to play)
         anim_section = anim_track.sequencer_track_add_section()
-        anim_section.sequencer_set_section_range(start / fps, end / fps)
+        anim_section.sequencer_set_section_range(FFrameNumber(int(tick/fps*start)), FFrameNumber(int(tick/fps*end)))
         anim_section.Params.Animation = anim
         anim_section.RowIndex = 0
 
@@ -142,7 +145,7 @@ def setup_sequencer(source, target, shot):
 
     # Create camera section upon the track and setup
     camera = camera_cut_track.sequencer_track_add_section()
-    camera.sequencer_set_section_range(start / fps, end / fps)
+    camera.sequencer_set_section_range(FFrameNumber(int(tick/fps*start)), FFrameNumber(int(tick/fps*end)))
 
     # Add the camera actor to the LevelSequencer
     camera_guid = seq.sequencer_make_new_spawnable(cine_camera)
@@ -161,7 +164,7 @@ def setup_sequencer(source, target, shot):
             try:
                 if track.sequencer_get_display_name() == 'CurrentFocalLength':
                     focal_section = track.sequencer_track_sections()[0]
-                    focal_section.sequencer_set_section_range(start / fps, end / fps)
+                    focal_section.sequencer_set_section_range(FFrameNumber(int(tick/fps*start)), FFrameNumber(int(tick/fps*end)))
                 if track.sequencer_get_display_name() == 'Transform':
                     seq.sequencer_remove_track(track)
             except Exception:
@@ -170,7 +173,7 @@ def setup_sequencer(source, target, shot):
     seq.sequencer_changed(True)
     transform_track = seq.sequencer_add_track(MovieScene3DTransformTrack, camera_guid)
     transform_section = transform_track.sequencer_track_add_section()
-    transform_section.sequencer_set_section_range(start / fps, end / fps)
+    transform_section.sequencer_set_section_range(FFrameNumber(int(tick/fps*start)), FFrameNumber(int(tick/fps*end)))
     seq.sequencer_changed(True)
 
     extractor = fbx_extract.FbxCurvesExtractor(source)
