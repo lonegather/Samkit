@@ -71,7 +71,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
         mel.eval('FBXExportAnimationOnly -v false;')
         mel.eval('FBXExportApplyConstantKeyReducer -v false;')
-        mel.eval('FBXExportBakeComplexStart -v %s;' % (mint - 5))
+        mel.eval('FBXExportBakeComplexStart -v %s;' % mint)
         mel.eval('FBXExportBakeComplexEnd -v %s;' % maxt)
         mel.eval('FBXExportBakeComplexStep -v 1;')
         mel.eval('FBXExportBakeResampleAnimation -v true;')
