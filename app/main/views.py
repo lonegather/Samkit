@@ -14,7 +14,7 @@ from main import models
 
 
 def renderer(func):
-    def inner(request, project_id):
+    def inner(request, project_id, **kwargs):
         try:
             current_project = models.Project.objects.get(id=project_id)
             request.session['current_project_id'] = str(project_id)
@@ -22,10 +22,13 @@ def renderer(func):
             request.session['current_project_id'] = None
             return HttpResponseRedirect('/')
 
-        context = func(request, current_project)
+        context = func(request, current_project, **kwargs)
         context['current_path'] = request.path
         context['current_project'] = current_project
         context['projects'] = models.Project.all()
+        context['genus_asset'] = models.Genus.objects.get(name='asset')
+        context['genus_shot'] = models.Genus.objects.get(name='shot')
+        context['genus_batch'] = models.Genus.objects.get(name='batch')
         context['user'] = request.user
         for key, val in request.GET.items():
             context[key] = val
@@ -34,16 +37,16 @@ def renderer(func):
 
 
 @renderer
-def index_project(request, project):
-    return {'page': 'index.html'}
+def index_project(request, project, genus_id):
+    return {
+        'page': 'index.html',
+    }
 
 
 @renderer
 def settings(request, project):
     return {
         'page': 'settings.html',
-        'genus_asset': models.Genus.objects.get(name='asset'),
-        'genus_shot': models.Genus.objects.get(name='shot'),
         'tags': models.Tag.objects.filter(project=project),
         'stages': models.Stage.objects.filter(project=project),
     }

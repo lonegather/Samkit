@@ -5,5 +5,35 @@
 {% endblock title %}
 
 {% block content %}
-<h1>Repository Page</h1>
+<div class="w3-bar w3-purple">
+  <button class="w3-bar-item w3-button" onclick="openTab('{{ genus_asset.name }}')">{{ genus_asset.info }}</button>
+  <button class="w3-bar-item w3-button" onclick="openTab('{{ genus_shot.name }}')">{{ genus_shot.info }}</button>
+  <button class="w3-bar-item w3-button" onclick="openTab('{{ genus_batch.name }}')">{{ genus_batch.info }}</button>
+</div>
+
+<div id="{{ genus_asset.name }}" class="w3-container entity">
+  <h2>London</h2>
+  <p>London is the capital city of England.</p>
+</div>
+
+<div id="{{ genus_shot.name }}" class="w3-container entity" style="display:none">
+  <h2>Paris</h2>
+  <p>Paris is the capital of France.</p>
+</div>
+
+<div id="{{ genus_batch.name }}" class="w3-container entity" style="display:none">
+  <h2>Tokyo</h2>
+  <p>Tokyo is the capital of Japan.</p>
+</div>
 {% endblock content %}
+
+{% block script %}
+function openTab(tabName) {
+  var i;
+  var x = document.getElementsByClassName("entity");
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";
+  }
+  document.getElementById(tabName).style.display = "block";
+}
+{% endblock script %}

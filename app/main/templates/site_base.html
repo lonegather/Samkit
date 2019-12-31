@@ -35,13 +35,13 @@
     <!-- Side Project List -->
     <div id="mySidebar" class="sidebar">
         {% for project in projects %}
-        <a href="{% url 'index_project' project.id %}">{{ project.info }}</a>
+        <a href="{% url 'index_project' project.id genus_asset.id %}">{{ project.info }}</a>
         {% endfor %}
     </div>
     <!-- Navigation Bar -->
     <div class="navbar">
         <a href="#" onclick="toggleNav()">&#9776;</a>
-        <a href="{% url 'index_project' current_project.id %}">{{ current_project.info }}</a>
+        <a href="{% url 'index_project' current_project.id genus_asset.id %}">{{ current_project.info }}</a>
         {% if user.is_authenticated %}
         <a href="{% url 'settings' current_project.id %}">
             {% include "svg_settings.html" %}
