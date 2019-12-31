@@ -38,8 +38,10 @@ def renderer(func):
 
 @renderer
 def index_project(request, project, genus_id):
+    request.session['current_genus_id'] = str(genus_id)
     return {
         'page': 'index.html',
+        'current_genus': models.Genus.objects.get(id=genus_id)
     }
 
 
@@ -69,7 +71,13 @@ def doc(request, project):
 def index(request):
     if not request.session.get('current_project_id', None):
         request.session['current_project_id'] = str(models.Project.all()[0]['id'])
-    return HttpResponseRedirect(request.path + request.session['current_project_id'])
+    if not request.session.get('current_genus_id', None):
+        request.session['current_genus_id'] = str(models.Genus.objects.all()[0].id)
+    return HttpResponseRedirect(
+        request.path +
+        request.session['current_project_id'] + '/' +
+        request.session['current_genus_id']
+    )
 
 
 def user_login(request):
