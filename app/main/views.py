@@ -39,9 +39,16 @@ def renderer(func):
 @renderer
 def index_project(request, project, genus_id):
     request.session['current_genus_id'] = str(genus_id)
+    current_genus = models.Genus.objects.get(id=genus_id)
+    tags = models.Tag.objects.filter(genus=current_genus)
+    entities = []
+    for tag in tags:
+        entities += models.Entity.objects.filter(tag=tag)
     return {
         'page': 'index.html',
-        'current_genus': models.Genus.objects.get(id=genus_id)
+        'current_genus': current_genus,
+        'tags': tags,
+        'entities': entities,
     }
 
 

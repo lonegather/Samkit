@@ -19,9 +19,15 @@
       {{ genus_batch.info }}
   </button>
 </div>
-
-<div class="w3-container entity">
-  <h2>{{ current_genus.info }}</h2>
-  <p>London is the capital city of England.</p>
+<div class="w3-container gallery" style="display:inline-flex;">
+  {% for entity in entities %}
+    <div class="w3-card entity"
+         style="width:128px;margin:10px;">
+        <img src="/media/{{ entity.thumb }}" style="background-color:#ccc;"/>
+        <div class="w3-container w3-center">
+            <p>{{ entity.info }}</p>
+        </div>
+    </div>
+  {% endfor %}
 </div>
 {% endblock content %}
