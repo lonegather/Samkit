@@ -4,30 +4,53 @@
 - Repository
 {% endblock title %}
 
+{% block style %}
+.detail {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 50px;
+  left: 0;
+  background-color: #333;
+  overflow-x: hidden;
+  padding-top: 15px;
+  transition: 0.25s;
+}
+{% endblock style %}
+
 {% block content %}
-<div class="w3-bar w3-purple">
+<div class="w3-bar w3-dark-grey" style="margin-bottom:5px;">
   <button class="w3-bar-item w3-button"
+          {% if current_genus == genus_asset %}style="background-color:#9c27b0;"{% endif %}
           onclick="location.href='{% url 'index_project' current_project.id genus_asset.id %}'">
       {{ genus_asset.info }}
   </button>
   <button class="w3-bar-item w3-button"
+          {% if current_genus == genus_shot %}style="background-color:#9c27b0;"{% endif %}
           onclick="location.href='{% url 'index_project' current_project.id genus_shot.id %}'">
       {{ genus_shot.info }}
   </button>
   <button class="w3-bar-item w3-button"
+          {% if current_genus == genus_batch %}style="background-color:#9c27b0;"{% endif %}
           onclick="location.href='{% url 'index_project' current_project.id genus_batch.id %}'">
       {{ genus_batch.info }}
   </button>
 </div>
-<div class="w3-container gallery" style="display:inline-flex;">
+<div style="display:flex;flex-wrap:wrap;">
   {% for entity in entities %}
-    <div class="w3-card entity"
-         style="width:128px;margin:10px;">
-        <img src="/media/{{ entity.thumb }}" style="background-color:#ccc;"/>
+    <div class="w3-card"
+         style="width:128px;margin:5px;">
+        <img src="/media/{{ entity.thumb }}" style="background-color:#616161;"/>
         <div class="w3-container w3-center">
             <p>{{ entity.info }}</p>
         </div>
     </div>
   {% endfor %}
+</div>
+<div id="detail_panel" class="detail">
+    {% for project in projects %}
+    <a href="{% url 'index_project' project.id genus_asset.id %}">{{ project.info }}</a>
+    {% endfor %}
 </div>
 {% endblock content %}
