@@ -21,8 +21,8 @@
         {% endblock style %}
     </style>
 </head>
-<body>
-<div id="id01" class="modal">
+<body style="background-color:#f1f1f1;">
+<div id="login_panel" class="modal" onclick="modalExit(event);">
     <!-- Modal Login Form -->
     <form class="modal-content animate" action="{% url 'user_login' %}?next={{ current_path }}" method="post">
         {% csrf_token %}
@@ -51,7 +51,7 @@
             {% include "svg_settings.html" %}
         </a>
         {% endif %}
-        <a href="{% url 'help' current_project.id %}">
+        <a href="{% url 'help' %}">
             {% include "svg_doc.html" %}
         </a>
         {% include 'auth.html' %}
@@ -73,13 +73,10 @@ window.onbeforeunload = function(e) {
     localStorage.setItem('scrollpos', window.scrollY);
 };
 
-// Get the modal
-var modal = document.getElementById('id01');
-
 // When the user clicks anywhere outside of the modal, close it
-window.onclick = function(event) {
-    if (event.target == modal) {
-        modal.style.display = "none";
+function modalExit(event) {
+    if (event.target.className == 'modal') {
+        event.currentTarget.style.display = "none";
     }
 }
 

@@ -5,17 +5,19 @@
 {% endblock title %}
 
 {% block style %}
-.detail {
+.entity_link {
+  float: top;
+  width: 100%;
   height: 100%;
-  width: 0;
-  position: fixed;
-  z-index: 1;
-  top: 50px;
-  left: 0;
-  background-color: #333;
-  overflow-x: hidden;
-  padding-top: 15px;
-  transition: 0.25s;
+  background-color: #fff;
+}
+.detail-content {
+  background-color: #fefefe;
+  margin: auto auto;
+  width: 80%;
+  height: 80%;
+  border: none;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 {% endblock style %}
 
@@ -38,19 +40,25 @@
   </button>
 </div>
 <div style="display:flex;flex-wrap:wrap;">
-  {% for entity in entities %}
-    <div class="w3-card"
-         style="width:128px;margin:5px;">
+    {% for entity in entities %}
+    <div class="w3-card w3-btn"
+         style="width:128px;margin:5px;padding:0"
+         onclick="openEntity('{% url 'index_entity' current_project.id entity.id %}');">
         <img src="/media/{{ entity.thumb }}" style="background-color:#616161;"/>
         <div class="w3-container w3-center">
             <p>{{ entity.info }}</p>
         </div>
     </div>
-  {% endfor %}
-</div>
-<div id="detail_panel" class="detail">
-    {% for project in projects %}
-    <a href="{% url 'index_project' project.id genus_asset.id %}">{{ project.info }}</a>
     {% endfor %}
 </div>
+<div id="detail_panel" class="modal" onclick="modalExit(event)">
+    <iframe id="detail-content" class="detail-content animate"></iframe>
+</div>
 {% endblock content %}
+
+{% block script %}
+function openEntity(loc) {
+    document.getElementById('detail_panel').style.display='flex';
+    document.getElementById('detail-content').src = loc;
+}
+{% endblock script %}

@@ -38,8 +38,12 @@ def renderer(func):
 
 @renderer
 def index_project(request, project, genus_id):
-    request.session['current_genus_id'] = str(genus_id)
-    current_genus = models.Genus.objects.get(id=genus_id)
+    try:
+        current_genus = models.Genus.objects.get(id=genus_id)
+    except ObjectDoesNotExist:
+        current_genus = models.Genus.objects.get(name='asset')
+    request.session['current_genus_id'] = str(current_genus.id)
+
     tags = models.Tag.objects.filter(genus=current_genus, project=project)
     entities = []
     for tag in tags:
@@ -53,6 +57,14 @@ def index_project(request, project, genus_id):
 
 
 @renderer
+def index_entity(request, project, entity_id):
+    return {
+        'page': 'entity_base.html',
+        'entity': models.Entity.objects.get(id=entity_id),
+    }
+
+
+@renderer
 def settings(request, project):
     return {
         'page': 'settings.html',
@@ -62,9 +74,9 @@ def settings(request, project):
 
 
 @renderer
-def doc(request, project):
+def doc_episode(request, project, episode):
     doc_dir = os.path.dirname(os.path.abspath(__file__))
-    doc_file = os.path.abspath(os.path.join(doc_dir, '../../docs/README.md'))
+    doc_file = os.path.abspath(os.path.join(doc_dir, '../static/markdown/%s.md' % episode))
     with open(doc_file, 'r') as f:
         return {
             'page': 'help.html',
@@ -84,6 +96,18 @@ def index(request):
         request.path +
         request.session['current_project_id'] + '/' +
         request.session['current_genus_id']
+    )
+
+
+def doc(request):
+    if not request.session.get('current_project_id', None):
+        request.session['current_project_id'] = str(models.Project.all()[0]['id'])
+    if not request.session.get('current_episode', None):
+        request.session['current_episode'] = '01_server_setup'
+    return HttpResponseRedirect(
+        '/' +
+        request.session['current_project_id'] + '/help/' +
+        request.session['current_episode']
     )
 
 
