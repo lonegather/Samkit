@@ -4,17 +4,19 @@
  - Help
 {% endblock title %}
 
+{% block style %}
+
+{% endblock style %}
+
 {% block content %}
 <div class="content-help">
  <section>
   <nav>
    <ul>
-    <li><a href="#">服务器搭建</a></li>
-    <li><a href="#">Maya 插件安装</a></li>
-    <li><a href="#">Unreal 插件安装</a></li>
-    <li><a href="#">Unreal SVN 设置</a></li>
-    <li><a href="#">Maya 连接设置</a></li>
-    <li><a href="#">Checkout 资产/镜头</a></li>
+    <li><a href="{% url 'help_episode' current_project.id '01_server_setup' %}">服务器搭建</a></li>
+    <li><a href="{% url 'help_episode' current_project.id '02_maya_setup' %}">Maya 插件安装与设置</a></li>
+    <li><a href="#">SVN 安装与使用</a></li>
+    <li><a href="{% url 'help_episode' current_project.id '04_unreal_setup' %}">Unreal 工程设置</a></li>
    </ul>
   </nav>
   <article>

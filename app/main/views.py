@@ -75,6 +75,7 @@ def settings(request, project):
 
 @renderer
 def doc_episode(request, project, episode):
+    request.session['current_episode'] = episode
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../static/markdown/%s.md' % episode))
     with open(doc_file, 'r') as f:
@@ -83,7 +84,8 @@ def doc_episode(request, project, episode):
             'doc': markdown.markdown(f.read(), extensions=[
                 'markdown.extensions.extra',
                 'markdown.extensions.codehilite',
-            ])
+            ]),
+            'current_episode': episode,
         }
 
 
