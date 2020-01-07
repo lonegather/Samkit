@@ -78,7 +78,7 @@ def doc_episode(request, project, episode):
     request.session['current_episode'] = episode
     doc_dir = os.path.dirname(os.path.abspath(__file__))
     doc_file = os.path.abspath(os.path.join(doc_dir, '../static/markdown/%s.md' % episode))
-    with open(doc_file, 'r') as f:
+    with open(doc_file, 'r', encoding='GBK') as f:
         return {
             'page': 'help.html',
             'doc': markdown.markdown(f.read(), extensions=[
