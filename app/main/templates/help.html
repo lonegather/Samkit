@@ -1,7 +1,7 @@
 {% extends 'site_base.html' %}
 
 {% block title %}
- - Help
+- Help
 {% endblock title %}
 
 {% block style %}
@@ -10,18 +10,18 @@
 
 {% block content %}
 <div class="content-help">
- <section>
-  <nav>
-   <ul>
-    <li><a href="{% url 'help_episode' current_project.id '01_server_setup' %}">服务器搭建</a></li>
-    <li><a href="{% url 'help_episode' current_project.id '02_maya_setup' %}">Maya 插件安装与设置</a></li>
-    <li><a href="#">SVN 安装与使用</a></li>
-    <li><a href="{% url 'help_episode' current_project.id '04_unreal_setup' %}">Unreal 工程设置</a></li>
-   </ul>
-  </nav>
-  <article>
-   {{ doc|safe }}
-  </article>
- </section>
+    <section>
+        <nav>
+            <ul>
+                <li><a href="{% url 'help_episode' current_project.id '01_server_setup' %}">服务器维护</a></li>
+                <li><a href="{% url 'help_episode' current_project.id '02_maya_setup' %}">Maya 插件安装与设置</a></li>
+                <li><a href="#">SVN 安装与使用</a></li>
+                <li><a href="{% url 'help_episode' current_project.id '04_unreal_setup' %}">Unreal 工程设置</a></li>
+            </ul>
+        </nav>
+        <article>
+            {{ doc|safe }}
+        </article>
+    </section>
 </div>
 {% endblock content %}
