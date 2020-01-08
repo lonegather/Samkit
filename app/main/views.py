@@ -58,9 +58,11 @@ def index_project(request, project, genus_id):
 
 @renderer
 def index_entity(request, project, entity_id):
+    entity = models.Entity.objects.get(id=entity_id)
     return {
         'page': 'entity_base.html',
-        'entity': models.Entity.objects.get(id=entity_id),
+        'entity': entity,
+        'tasks': models.Task.objects.filter(entity=entity),
     }
 
 
