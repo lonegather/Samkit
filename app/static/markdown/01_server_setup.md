@@ -64,3 +64,30 @@ python3 manage.py setup
 
 ![](/static/images/01_002.png)
 
+创建完成后关闭 Unreal 编辑器。
+
+将 `Samkit/unreal/` 中的 `Content` 和 `Plugins` 复制到 Unreal 工程目录中，
+并将 `Plugins` 文件夹中的压缩文件解压至当前文件夹。解压完毕后删除压缩包：
+
+![](/static/images/01_003.png)
+
+Unreal 工程目录中，删除 `Config`、`Intermediate` 和 `Saved` 文件夹，然后在空白处右键SVN Checkout：
+
+![](/static/images/01_004.png)
+![](/static/images/01_005.png)
+
+SVN会提示文件夹非空，这是正常的，点击Checkout：
+
+![](/static/images/01_006.png)
+![](/static/images/01_007.png)
+
+Unreal 工程目录中，在空白处右键SVN Commit：
+
+![](/static/images/01_008.png)
+
+在 Message 一栏填入提交信息，在 Check 一栏点击 All 按钮选中所有文件，然后点击 OK 开始上传：
+
+![](/static/images/01_009.png)
+![](/static/images/01_010.png)
+
+由于文件较多，会有不响应的情况出现，这是正常的，耐心等待若干分钟即可。
