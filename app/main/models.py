@@ -142,7 +142,7 @@ class Project(models.Model):
             name='anm',
             info=u'动画',
             source='{project}/{genus}/source/{project}_{tag}_{entity}.ma',
-            data='{project}/{genus}/',
+            data='{project}/{genus}/{tag}/{entity}/',
         ).save()
     
     def __str__(self):
@@ -311,15 +311,16 @@ class Entity(models.Model):
     def set(cls, form):
         ent_id = form.get('id', [None])[0]
         del_method = form.get('delete', False)
+
+        if del_method and ent_id:
+            ent = Entity.objects.get(id=ent_id)
+            ent.delete()
+            return
+
         tag = Tag.objects.get(id=form['tag_id'][0])
 
         if ent_id:
             ent = Entity.objects.get(id=ent_id)
-
-            if del_method:
-                ent.delete()
-                return
-
             ent.name = form['name'][0]
             ent.info = form['info'][0]
             ent.tag = tag

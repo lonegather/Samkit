@@ -119,6 +119,7 @@ class DockerMain(Docker):
         self.ui.tb_add.setEnabled(self.authorized)
         self.ui.tb_delete.setEnabled(self.authorized)
         self.ui.cb_genus.model().update()
+        self.refresh_workspace()
 
     def refresh_repository_genus(self, *_):
         self.ui.cb_genus.setCurrentIndex(0)
@@ -127,6 +128,8 @@ class DockerMain(Docker):
         self.ui.cb_tag.setCurrentIndex(0)
         self.ui.cb_tag.setVisible(False)
         self.ui.cb_tag.setVisible(True)
+        self.ui.tb_add.setEnabled(self.ui.cb_tag.currentIndex() >= 0)
+        self.ui.tb_delete.setEnabled(self.ui.cb_tag.currentIndex() >= 0)
 
     def refresh_repository_asset(self, *_):
         model = self.ui.lv_asset.model()
@@ -190,6 +193,8 @@ class DockerMain(Docker):
     def delete_entity(self):
         current_index = self.ui.lv_asset.currentIndex()
         asset_id = current_index.data(AssetModel.IdRole)
+        samkit.set_data('entity', id=asset_id, delete=True)
+        self.refresh_repository()
 
     def thumb_detail(self):
         data = self.clipboard.mimeData()

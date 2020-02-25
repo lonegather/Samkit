@@ -17,6 +17,7 @@ def import_asset(stage, source, target, skeleton=None, shot=None):
     factory.ImportUI.bImportMaterials = True if stage in ['mdl'] else False
     factory.ImportUI.bImportTextures = True if stage in ['mdl'] else False
     factory.ImportUI.bImportAnimations = True if stage in ['cam', 'lyt', 'anm'] else False
+    factory.ImportUI.SkeletalMeshImportData.bImportMorphTargets = True
 
     if stage == 'cam':
         setup_sequencer(source, target, shot)
