@@ -44,31 +44,31 @@
                     <button style="display:block;width:100%;text-align:left"
                             class="w3-button"
                             onclick="open_stage_detail('{{ stage.id }}','{{ stage.name }}','{{ stage.info }}','{{ stage.source }}','{{ stage.data }}','{{ current_project.id }}','{{ stage.genus.name }}')">
-                        [{{ stage.name }}] {{ stage.info }}
+                        {{ stage.info }}
                     </button>
                     {% empty %}
                     <p>No stage found. Click ADD to create a new one.</p>
                     {% endfor %}
-                    <button type="button"
+                    <!--button type="button"
                             class="w3-button"
                             style="display:block;width:100%;text-align:left"
                             onclick="open_stage_detail('','','','','','{{ current_project.id }}','')">
                         ADD...
-                    </button>
+                    </button-->
                 </div>
                 <form class="detail" id="stage_detail" action="/api/stage?next={{ current_path }}" method="post">
                     <input id="stage_detail_id" name="id" type="hidden"/>
                     <input id="stage_detail_project_id" name="project_id" type="hidden"/>
                     <h4 id="stage_detail_title"></h4>
                     <input id="stage_detail_name" name="name" class="w3-input field" placeholder="Enter Codename:"/>
-                    <input id="stage_detail_info" name="info" class="w3-input field" placeholder="Enter Name:"/>
+                    <input id="stage_detail_info" name="info" type="hidden" />
                     <input id="stage_detail_source" name="source" class="w3-input field" placeholder="Enter Source Pattern:"/>
                     <input id="stage_detail_data" name="data" class="w3-input field" placeholder="Enter Data Pattern:"/>
                     <input id="stage_detail_genus_asset" name="genus_name" class="w3-radio" style="margin-right:5px;" type="radio" value="{{ genus_asset.name }}"/><label>{{ genus_asset.info }}</label>
                     <input id="stage_detail_genus_shot" name="genus_name" class="w3-radio" style="margin-right:5px;margin-left:20px;" type="radio" value="{{ genus_shot.name }}"/><label>{{ genus_shot.info }}</label><br>
                     <button class="w3-btn w3-purple" type="button" onclick="close_stage_detail()" style="margin-top:20px;float:right">DISCARD</button>
                     <button class="w3-btn w3-purple" type="submit" style="margin-top:20px;float:right;margin-right:10px;">APPLY</button>
-                    <button id="stage_detail_delete" class="w3-btn w3-red" type="button" style="margin-top:20px;" onclick="delete_by_admin('stage_detail_id','stage')">DELETE</button>
+                    <!--button id="stage_detail_delete" class="w3-btn w3-red" type="button" style="margin-top:20px;" onclick="delete_by_admin('stage_detail_id','stage')">DELETE</button-->
                 </form>
             </div>
             <h3>Asset Category</h3>
@@ -147,12 +147,12 @@ function open_stage_detail(stage_id, stage_name, stage_info, stage_source, stage
         document.getElementById('stage_detail_genus_asset').checked = Boolean(genus_name == '{{ genus_asset.name }}');
         document.getElementById('stage_detail_genus_shot').checked = Boolean(genus_name == '{{ genus_shot.name }}');
         document.getElementById('stage_detail_name').setAttribute('type', 'hidden');
-        document.getElementById('stage_detail_delete').style.display = 'inline-block';
+        //document.getElementById('stage_detail_delete').style.display = 'inline-block';
         document.getElementById('stage_detail_title').style.paddingTop = '10px';
         document.getElementById('stage_detail_title').style.height = '49px';
     } else {
         document.getElementById('stage_detail_name').setAttribute('type', 'visible');
-        document.getElementById('stage_detail_delete').style.display = 'none';
+        //document.getElementById('stage_detail_delete').style.display = 'none';
         document.getElementById('stage_detail_title').style.paddingTop = '0px';
         document.getElementById('stage_detail_title').style.height = '0px';
     }
@@ -163,7 +163,7 @@ function open_stage_detail(stage_id, stage_name, stage_info, stage_source, stage
     document.getElementById('stage_detail_info').setAttribute('value', stage_info);
     document.getElementById('stage_detail_source').setAttribute('value', stage_source);
     document.getElementById('stage_detail_data').setAttribute('value', stage_data);
-    document.getElementById('stage_detail_title').innerHTML = stage_name;
+    document.getElementById('stage_detail_title').innerHTML = stage_info;
 }
 
 function close_stage_detail() {

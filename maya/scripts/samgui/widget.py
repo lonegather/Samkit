@@ -66,6 +66,7 @@ class DockerMain(Docker):
         self.ui.cb_genus.currentIndexChanged.connect(genus_model.notify)
         self.ui.cb_tag.currentIndexChanged.connect(tag_model.notify)
         self.ui.tb_add.clicked.connect(lambda *_: self.open_detail())
+        self.ui.tb_delete.clicked.connect(lambda *_: self.delete_entity())
         self.ui.tb_connect.clicked.connect(lambda *_: self.refresh_repository(force=True))
         self.ui.lv_asset.customContextMenuRequested.connect(self.refresh_repository_context_menu)
         self.ui.lv_asset.doubleClicked.connect(self.refresh_filter)
@@ -186,6 +187,10 @@ class DockerMain(Docker):
         self.detail_thumb = entity['thumb']
         self.thumb_detail()
 
+    def delete_entity(self):
+        current_index = self.ui.lv_asset.currentIndex()
+        asset_id = current_index.data(AssetModel.IdRole)
+
     def thumb_detail(self):
         data = self.clipboard.mimeData()
         if self.ui.cb_thumb.isChecked() and data.hasImage():
@@ -222,12 +227,12 @@ class DockerMain(Docker):
             file_path = '%s\\%s.png' % (samkit.TMP_PATH, name)
             self.ui.lbl_thumb.pixmap().scaled(128, 128).save(file_path)
             kwargs['file'] = {'thumb': open(file_path, 'rb')}
-
+        '''
         entities = samkit.get_data('entity', name=name)
         if entities and self.detail_id != entities[0]['id']:
             samkit.get_confirm('Duplicated Name: %s' % name, icon='critical', choose=False)
             return
-
+        '''
         samkit.set_data('entity', **kwargs)
         self.refresh_repository()
         self.close_detail()

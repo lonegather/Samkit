@@ -85,6 +85,65 @@ class Project(models.Model):
                 camera=form.get('camera', ['MainCam'])[0],
             )
         prj.save()
+
+    def save(self, *args, **kwargs):
+        is_edit = len(Project.objects.filter(id=self.id))
+        super(Project, self).save(*args, **kwargs)
+
+        if is_edit:
+            return
+
+        gns_asset = Genus.objects.get(name='asset')
+        gns_shot = Genus.objects.get(name='shot')
+        gns_batch = Genus.objects.get(name='batch')
+        Tag(
+            project=self,
+            genus=gns_batch,
+            name='EP',
+            info=u'集数'
+        ).save()
+        Tag(
+            project=self,
+            genus=gns_asset,
+            name='CH',
+            info=u'角色'
+        ).save()
+        Tag(
+            project=self,
+            genus=gns_asset,
+            name='Prop',
+            info=u'道具'
+        ).save()
+        Tag(
+            project=self,
+            genus=gns_asset,
+            name='SC',
+            info=u'场景'
+        ).save()
+        Stage(
+            project=self,
+            genus=gns_asset,
+            name='mdl',
+            info=u'模型',
+            source='{project}/{genus}/{tag}/{entity}/{entity}_{stage}.ma',
+            data='{project}/{genus}/{tag}/{entity}/',
+        ).save()
+        Stage(
+            project=self,
+            genus=gns_asset,
+            name='rig',
+            info=u'绑定',
+            source='{project}/{genus}/{tag}/{entity}/{entity}_{stage}.ma',
+            data='{project}/{genus}/{tag}/{entity}/',
+        ).save()
+        Stage(
+            project=self,
+            genus=gns_shot,
+            name='anm',
+            info=u'动画',
+            source='{project}/{genus}/source/{project}_{tag}_{entity}.ma',
+            data='{project}/{genus}/',
+        ).save()
     
     def __str__(self):
         return self.name
@@ -251,10 +310,16 @@ class Entity(models.Model):
     @classmethod
     def set(cls, form):
         ent_id = form.get('id', [None])[0]
+        del_method = form.get('delete', False)
         tag = Tag.objects.get(id=form['tag_id'][0])
 
         if ent_id:
             ent = Entity.objects.get(id=ent_id)
+
+            if del_method:
+                ent.delete()
+                return
+
             ent.name = form['name'][0]
             ent.info = form['info'][0]
             ent.tag = tag

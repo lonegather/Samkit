@@ -134,6 +134,11 @@ def user_logout(request):
     return HttpResponseRedirect(request.GET['next'])
 
 
+def object_delete(request, object_id):
+    print(request.path)
+    return HttpResponseRedirect(request.GET['next'])
+
+
 def api(request):
     table = request.path.split('/')[-1]
     if not table:
@@ -174,11 +179,6 @@ def api_set(request, table):
         for f in request.FILES:
             form[f] = request.FILES[f]
     modify_dict[table](form)
-    return HttpResponseRedirect(request.GET['next'])
-
-
-def api_delete(request, object_id):
-    print(request.path)
     return HttpResponseRedirect(request.GET['next'])
 
 
