@@ -5,7 +5,7 @@ class AnimationFPSValidator(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.29
     label = 'Validate Animation FPS'
-    families = ['blk', 'anm']
+    families = ['lyt', 'anm']
 
     def process(self, instance):
         from maya import cmds
@@ -25,7 +25,7 @@ class AnimationCameraValidator(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.28
     label = 'Validate Animation Camera'
-    families = ['blk', 'anm']
+    families = ['lyt', 'anm']
 
     def process(self, instance):
         from maya import cmds
@@ -42,7 +42,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ExtractorOrder
     label = 'Export FBX Data'
-    families = ['anm']
+    families = ['lyt', 'anm']
 
     def process(self, instance):
         import os
@@ -97,11 +97,12 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
 
         chars = []
         anims = []
+        family = instance.data['family']
         for joint in cmds.ls(type='joint'):
             try:
                 char = joint.split(':')[0]
                 skel = cmds.getAttr('%s.UE_Skeleton' % joint)
-                anim = '{project}_{tag}_{name}_{char}_anm'.format(**locals())
+                anim = '{project}_{tag}_{name}_{family}_{char}'.format(**locals())
                 chars.append(skel)
                 anims.append(anim)
                 print('joint ------------ ' + joint)
@@ -139,7 +140,7 @@ class AnimationExtractor(pyblish.api.InstancePlugin):
         try:
             instance.data['message'] = {
                 'stage': 'cam',
-                'source': '{path}/{project}_{tag}_{name}_MainCam_S{mins}_E{maxs}.fbx'.format(**locals()),
+                'source': '{path}/{project}_{tag}_{name}_{family}_MainCam_S{mins}_E{maxs}.fbx'.format(**locals()),
                 'target': '/Game/%s' % task['path'].split(';')[1],
                 'shot': {
                     'fps': 25.0,

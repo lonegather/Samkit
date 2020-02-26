@@ -139,6 +139,14 @@ class Project(models.Model):
         Stage(
             project=self,
             genus=gns_shot,
+            name='lyt',
+            info=u'布局',
+            source='{project}/{genus}/source/{project}_{tag}_{entity}_layout.ma',
+            data='{project}/{genus}/{tag}/{entity}/',
+        ).save()
+        Stage(
+            project=self,
+            genus=gns_shot,
             name='anm',
             info=u'动画',
             source='{project}/{genus}/source/{project}_{tag}_{entity}.ma',
