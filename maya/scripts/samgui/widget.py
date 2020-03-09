@@ -23,6 +23,7 @@ class DockerMain(Docker):
         self.filter = ''
         self.detail_id = ''
         self.detail_thumb = ''
+        self.history = []
         self.clipboard = QApplication.clipboard()
 
         genus_model = GenusModel()
@@ -48,19 +49,9 @@ class DockerMain(Docker):
         self.ui.tb_delete.setIcon(QIcon('%s\\icons\\delete.png' % samkit.MODULE_PATH))
         self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
-        self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
-        self.ui.tb_checkin.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
         self.ui.tb_submit.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
         self.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
         self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
-        self.ui.lw_task.setStyleSheet("""
-            QListWidget#lw_task {
-                background: #00000000;
-            }
-            QListWidget:focus {
-                border: none;
-            }
-        """)
 
         genus_model.dataChanged.connect(self.refresh_repository_genus)
         tag_model.dataChanged.connect(self.refresh_repository_tag)
@@ -82,9 +73,9 @@ class DockerMain(Docker):
         self.ui.cb_thumb.clicked.connect(self.thumb_detail)
         self.clipboard.dataChanged.connect(self.thumb_detail)
 
+        self.ui.lw_task.clicked.connect(self.refresh_history)
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
-        self.ui.tb_renew.clicked.connect(self.refresh_workspace)
-        self.ui.tb_checkin.clicked.connect(self.checkin_workspace)
+        self.ui.lw_version.clicked.connect(self.refresh_history_comment)
 
         # self.ui.tv_plugin.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.tv_plugin.clicked.connect(self.refresh_check_doc)
@@ -98,7 +89,6 @@ class DockerMain(Docker):
 
         samkit.scriptJob(event=['SceneOpened', self.refresh_workspace])
         samkit.evalDeferred(self.refresh_repository)
-        samkit.evalDeferred(self.refresh_workspace)
 
     def refresh_repository(self, force=False):
         self.project_id = ''
@@ -118,7 +108,6 @@ class DockerMain(Docker):
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
         self.ui.tw_main.setTabEnabled(1, self.authorized)
-        self.ui.tw_main.setTabEnabled(2, self.authorized)
         self.ui.tb_add.setEnabled(self.authorized)
         self.ui.tb_delete.setEnabled(self.authorized)
         self.ui.cb_genus.model().update()
@@ -270,7 +259,22 @@ class DockerMain(Docker):
     def checkout_repository(self, task):
         if samkit.checkout(task):
             self.refresh_workspace()
-            self.ui.tw_main.setCurrentIndex(1)
+
+    def refresh_history(self, *_):
+        item = self.ui.lw_task.currentItem()
+        task = item.data(TaskItem.TASK)
+        self.history = samkit.get_history(task)
+
+        while self.ui.lw_version.count():
+            self.ui.lw_version.takeItem(0)
+
+        self.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self.history))
+        self.ui.lw_version.setCurrentRow(0)
+        self.refresh_history_comment()
+
+    def refresh_history_comment(self, *_):
+        index = self.ui.lw_version.currentRow()
+        self.ui.te_history.setText(self.history[index]['comment'] if self.history else '')
 
     def open_workspace(self, *_):
         item = self.ui.lw_task.currentItem()
@@ -289,7 +293,7 @@ class DockerMain(Docker):
         samkit.open_file(task)
         samkit.checkin([task], False)
         self.ui.tv_plugin.model().update(task)
-        self.ui.tw_main.setCurrentIndex(2)
+        self.ui.tw_main.setCurrentIndex(1)
         # self.ui.btn_export.setEnabled(False)
         self.ui.btn_submit.setEnabled(False)
         self.ui.tab_check.setEnabled(True)
@@ -305,7 +309,7 @@ class DockerMain(Docker):
 
     def integrate(self):
         self.ui.tv_plugin.model().integrate(self.ui.te_comment.toPlainText())
-        self.ui.tw_main.setCurrentIndex(1)
+        self.ui.tw_main.setCurrentIndex(0)
         self.refresh_workspace()
 
     def refresh_check_state(self, *_):
@@ -378,19 +382,9 @@ class TaskItem(QListWidgetItem):
         }
 
         setup_ui(self.widget, self.UI_PATH)
-        self.widget.setFocusPolicy(Qt.NoFocus)
-        self.widget.ui.tb_submit.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
-        self.widget.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
-        self.widget.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
+        # self.widget.setFocusPolicy(Qt.NoFocus)
         self.widget.ui.lbl_name.setText(task['entity'])
         self.widget.ui.lbl_stage.setText(task['stage_info'])
-        self.widget.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self._history))
-        self.widget.ui.lw_version.setCurrentRow(0)
-        self.widget.ui.tb_submit.clicked.connect(self.submit)
-        self.widget.ui.tb_sync.clicked.connect(self.sync)
-        self.widget.ui.tb_revert.clicked.connect(self.revert)
-        self.widget.ui.lw_version.clicked.connect(self.select)
-        self.select()
         self.update_icon(samkit.get_context('id'))
 
     def submit(self, *_):
@@ -411,10 +405,6 @@ class TaskItem(QListWidgetItem):
         samkit.revert(self._data)
         self._widget.refresh_workspace()
 
-    def select(self, *_):
-        index = self.widget.ui.lw_version.currentRow()
-        self.widget.ui.lbl_comment.setText(self._history[index]['comment'] if self._history else '')
-
     def data(self, role):
         if role in self._map:
             return self._data[self._map[role]]
@@ -423,13 +413,9 @@ class TaskItem(QListWidgetItem):
         return None
 
     def update_icon(self, context=None):
-        self.widget.ui.tb_submit.setEnabled(False)
-        self.widget.ui.tb_sync.setEnabled(False)
         if samkit.local_path_exists(self._data):
             if context == self._data['id']:
                 self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\bookmark.png' % samkit.MODULE_PATH))
-                self.widget.ui.tb_submit.setEnabled(True)
-                self.widget.ui.tb_sync.setEnabled(True)
             else:
                 self.widget.ui.lbl_icon.setPixmap(QPixmap('%s\\icons\\checked.png' % samkit.MODULE_PATH))
         else:
