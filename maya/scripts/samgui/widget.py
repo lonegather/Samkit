@@ -50,6 +50,9 @@ class DockerMain(Docker):
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
         self.ui.tb_renew.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
         self.ui.tb_checkin.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
+        self.ui.tb_submit.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
+        self.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
+        self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
         self.ui.lw_task.setStyleSheet("""
             QListWidget#lw_task {
                 background: #00000000;
