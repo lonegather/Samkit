@@ -41,6 +41,7 @@ class DockerMain(Docker):
 
         self.ui.le_filter.setClearButtonEnabled(True)
         self.ui.detail.setVisible(False)
+        self.ui.submit.setVisible(False)
         self.ui.lv_asset.setWrapping(True)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
@@ -73,16 +74,19 @@ class DockerMain(Docker):
         self.ui.cb_thumb.clicked.connect(self.thumb_detail)
         self.clipboard.dataChanged.connect(self.thumb_detail)
 
-        self.ui.lw_task.clicked.connect(self.refresh_history)
+        self.ui.lw_task.itemSelectionChanged.connect(self.refresh_history)
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
-        self.ui.lw_version.clicked.connect(self.refresh_history_comment)
+        self.ui.lw_version.itemSelectionChanged.connect(self.refresh_history_comment)
+        self.ui.tb_submit.clicked.connect(lambda: self.ui.lw_task.currentItem().submit())
+        self.ui.tb_revert.clicked.connect(lambda: self.ui.lw_task.currentItem().revert())
+        self.ui.tb_sync.clicked.connect(lambda: self.ui.lw_task.currentItem().sync())
 
-        # self.ui.tv_plugin.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.tv_plugin.clicked.connect(self.refresh_check_doc)
         self.ui.tv_plugin.doubleClicked.connect(self.validate)
         self.ui.btn_check.clicked.connect(lambda: self.ui.tv_plugin.model().validate())
         self.ui.btn_export.clicked.connect(lambda: self.ui.tv_plugin.model().extract())
         self.ui.btn_submit.clicked.connect(self.integrate)
+        self.ui.btn_cancel_submit.clicked.connect(self.submit_cancel)
         plugin_model.resultGenerated.connect(self.set_result_widget)
         plugin_model.dataChanged.connect(self.refresh_check_state)
         self.ui.te_comment.textChanged.connect(self.refresh_check_state)
@@ -107,7 +111,7 @@ class DockerMain(Docker):
             self.project_id = samkit.getenv(samkit.OPT_PROJECT_ID)
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
-        self.ui.tw_main.setTabEnabled(1, self.authorized)
+        self.ui.submit.setEnabled(self.authorized)
         self.ui.tb_add.setEnabled(self.authorized)
         self.ui.tb_delete.setEnabled(self.authorized)
         self.ui.cb_genus.model().update()
@@ -165,6 +169,7 @@ class DockerMain(Docker):
         self.ui.tb_connect.setEnabled(False)
         self.ui.lv_asset.setEnabled(False)
         self.ui.detail.setVisible(True)
+        self.ui.workspace.setVisible(False)
         self.ui.cb_thumb.setChecked(False)
         self.ui.le_name.setText('')
         self.ui.le_info.setText('')
@@ -208,6 +213,7 @@ class DockerMain(Docker):
         self.ui.tb_connect.setEnabled(True)
         self.ui.lv_asset.setEnabled(True)
         self.ui.detail.setVisible(False)
+        self.ui.workspace.setVisible(True)
 
     def commit_detail(self, *_):
         name = self.ui.le_name.text()
@@ -224,12 +230,7 @@ class DockerMain(Docker):
             file_path = '%s\\%s.png' % (samkit.TMP_PATH, name)
             self.ui.lbl_thumb.pixmap().scaled(128, 128).save(file_path)
             kwargs['file'] = {'thumb': open(file_path, 'rb')}
-        '''
-        entities = samkit.get_data('entity', name=name)
-        if entities and self.detail_id != entities[0]['id']:
-            samkit.get_confirm('Duplicated Name: %s' % name, icon='critical', choose=False)
-            return
-        '''
+
         samkit.set_data('entity', **kwargs)
         self.refresh_repository()
         self.close_detail()
@@ -242,7 +243,9 @@ class DockerMain(Docker):
             self.ui.tv_plugin.model().clear()
         except RuntimeError:
             pass
-        self.ui.tab_check.setEnabled(False)
+        self.ui.tb_submit.setEnabled(False)
+        self.ui.tb_revert.setEnabled(False)
+        self.ui.tb_sync.setEnabled(False)
         while self.ui.lw_task.count():
             self.ui.lw_task.takeItem(0)
         if not samkit.hasenv(samkit.OPT_USERNAME):
@@ -261,20 +264,28 @@ class DockerMain(Docker):
             self.refresh_workspace()
 
     def refresh_history(self, *_):
-        item = self.ui.lw_task.currentItem()
-        task = item.data(TaskItem.TASK)
-        self.history = samkit.get_history(task)
-
+        self.ui.te_history.setText('')
         while self.ui.lw_version.count():
             self.ui.lw_version.takeItem(0)
 
+        item = self.ui.lw_task.currentItem()
+
+        if not item:
+            return
+
+        task = item.data(TaskItem.TASK)
+        self.history = samkit.get_history(task)
+        self.ui.tb_revert.setEnabled(True)
+        self.ui.tb_submit.setEnabled(samkit.get_context('id') == task['id'])
         self.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self.history))
         self.ui.lw_version.setCurrentRow(0)
         self.refresh_history_comment()
 
     def refresh_history_comment(self, *_):
         index = self.ui.lw_version.currentRow()
-        self.ui.te_history.setText(self.history[index]['comment'] if self.history else '')
+        if index >= 0:
+            self.ui.tb_sync.setEnabled(True)
+            self.ui.te_history.setText(self.history[index]['comment'] if self.history else '')
 
     def open_workspace(self, *_):
         item = self.ui.lw_task.currentItem()
@@ -289,15 +300,6 @@ class DockerMain(Docker):
 
         samkit.checkin(submit_list)
 
-    def submit(self, task):
-        samkit.open_file(task)
-        samkit.checkin([task], False)
-        self.ui.tv_plugin.model().update(task)
-        self.ui.tw_main.setCurrentIndex(1)
-        # self.ui.btn_export.setEnabled(False)
-        self.ui.btn_submit.setEnabled(False)
-        self.ui.tab_check.setEnabled(True)
-
     def refresh_check_doc(self, index):
         doc = index.data(PluginItem.PluginRole).__doc__
         doc = doc if doc else 'No description'
@@ -309,8 +311,15 @@ class DockerMain(Docker):
 
     def integrate(self):
         self.ui.tv_plugin.model().integrate(self.ui.te_comment.toPlainText())
-        self.ui.tw_main.setCurrentIndex(0)
+        self.ui.repo.setVisible(True)
+        self.ui.submit.setVisible(False)
+        self.ui.workspace.setVisible(True)
         self.refresh_workspace()
+
+    def submit_cancel(self):
+        self.ui.repo.setVisible(True)
+        self.ui.submit.setVisible(False)
+        self.ui.workspace.setVisible(True)
 
     def refresh_check_state(self, *_):
         model = self.ui.tv_plugin.model()
@@ -382,20 +391,26 @@ class TaskItem(QListWidgetItem):
         }
 
         setup_ui(self.widget, self.UI_PATH)
-        # self.widget.setFocusPolicy(Qt.NoFocus)
-        self.widget.ui.lbl_name.setText(task['entity'])
+        self.widget.setFocusPolicy(Qt.NoFocus)
+        self.widget.ui.lbl_name.setText('%s - %s' % (task['tag_info'], task['entity']))
         self.widget.ui.lbl_stage.setText(task['stage_info'])
         self.update_icon(samkit.get_context('id'))
 
     def submit(self, *_):
-        self._widget.submit(self._data)
+        samkit.open_file(self._data)
+        samkit.checkin([self._data], False)
+        self._widget.ui.tv_plugin.model().update(self._data)
+        self._widget.ui.repo.setVisible(False)
+        self._widget.ui.submit.setVisible(True)
+        self._widget.ui.workspace.setVisible(False)
+        self._widget.ui.btn_submit.setEnabled(False)
 
     def merge(self, *_):
         samkit.merge(self._data)
         self._widget.refresh_workspace()
 
     def sync(self, *_):
-        item = self.widget.ui.lw_version.currentItem()
+        item = self._widget.ui.lw_version.currentItem()
         version_txt = item.text()
         version = version_txt.split(' - ')[0]
         version = version if self.widget.ui.lw_version.currentRow() else 'latest'
