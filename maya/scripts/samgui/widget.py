@@ -52,6 +52,7 @@ class DockerMain(Docker):
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
         self.ui.tb_submit.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
         self.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
+        self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))
         self.ui.tb_revert.setIcon(QIcon('%s\\icons\\revert.png' % samkit.MODULE_PATH))
 
         genus_model.dataChanged.connect(self.refresh_repository_genus)
@@ -78,6 +79,7 @@ class DockerMain(Docker):
         self.ui.lw_task.doubleClicked.connect(self.open_workspace)
         self.ui.lw_version.itemSelectionChanged.connect(self.refresh_history_comment)
         self.ui.tb_submit.clicked.connect(lambda: self.ui.lw_task.currentItem().submit())
+        self.ui.tb_merge.clicked.connect(lambda: self.ui.lw_task.currentItem().merge())
         self.ui.tb_revert.clicked.connect(lambda: self.ui.lw_task.currentItem().revert())
         self.ui.tb_sync.clicked.connect(lambda: self.ui.lw_task.currentItem().sync())
 
@@ -112,6 +114,7 @@ class DockerMain(Docker):
         if self.authorized:
             self.ui.lbl_project.setStyleSheet('color: #000000; background-color: #33CC33;')
         self.ui.submit.setEnabled(self.authorized)
+        self.ui.workspace.setVisible(self.authorized)
         self.ui.tb_add.setEnabled(self.authorized)
         self.ui.tb_delete.setEnabled(self.authorized)
         self.ui.cb_genus.model().update()
@@ -244,6 +247,7 @@ class DockerMain(Docker):
         except RuntimeError:
             pass
         self.ui.tb_submit.setEnabled(False)
+        self.ui.tb_merge.setEnabled(False)
         self.ui.tb_revert.setEnabled(False)
         self.ui.tb_sync.setEnabled(False)
         while self.ui.lw_task.count():
@@ -275,6 +279,7 @@ class DockerMain(Docker):
 
         task = item.data(TaskItem.TASK)
         self.history = samkit.get_history(task)
+        self.ui.tb_merge.setEnabled(True)
         self.ui.tb_revert.setEnabled(True)
         self.ui.tb_submit.setEnabled(samkit.get_context('id') == task['id'])
         self.ui.lw_version.addItems(map(lambda h: '%s - %s' % (h['version'], h['time']), self.history))
@@ -313,13 +318,13 @@ class DockerMain(Docker):
         self.ui.tv_plugin.model().integrate(self.ui.te_comment.toPlainText())
         self.ui.repo.setVisible(True)
         self.ui.submit.setVisible(False)
-        self.ui.workspace.setVisible(True)
+        self.ui.workspace.setVisible(self.authorized)
         self.refresh_workspace()
 
     def submit_cancel(self):
         self.ui.repo.setVisible(True)
         self.ui.submit.setVisible(False)
-        self.ui.workspace.setVisible(True)
+        self.ui.workspace.setVisible(self.authorized)
 
     def refresh_check_state(self, *_):
         model = self.ui.tv_plugin.model()
