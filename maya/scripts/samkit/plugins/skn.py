@@ -11,65 +11,45 @@ class SkinSkeletonValidator(pyblish.api.InstancePlugin):
         from maya import cmds
         import samkit
 
-        joints = []
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            skin = cmds.listConnections(shape, d=False, t='skinCluster')
-            if not skin:
-                continue
-            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
-                if joint not in joints:
-                    joints.append(joint)
-
-        instance.context.data['joints'] = joints
-        instance.context.data['root'] = ''
-        if not len(joints):
-            return
-
         for root in cmds.ls(type='joint'):
-            if root in joints:
-                continue
             if root.count('UnrealRoot'):
                 # Root found
-                instance.context.data['root'] = root
                 break
+        else:
+            assert False, 'Unable to locate \'UnrealRoot\'.'
 
-        assert instance.context.data['root'], \
-            'Cannot locate \'UnrealRoot\'.'
-
-        for rv in cmds.xform(instance.context.data['root'], q=True, rotation=True, ws=True):
+        for rv in cmds.xform('UnrealRoot', q=True, rotation=True, ws=True):
             rv_str = '%.2f' % rv
             if rv_str != '0.00':
-                self.log.info(instance.context.data['root'])
+                self.log.info('UnrealRoot')
                 assert False, 'Global rotation (including joint orient) of \'UnrealRoot\' is NOT 0.0'
 
-        for tv in cmds.xform(instance.context.data['root'], q=True, translation=True, ws=True):
+        for tv in cmds.xform('UnrealRoot', q=True, translation=True, ws=True):
             tv_str = '%.2f' % tv
             if tv_str != '0.00':
-                self.log.info(instance.context.data['root'])
+                self.log.info('UnrealRoot')
                 assert False, 'Global translation of \'UnrealRoot\' is NOT 0.0'
 
         try:
-            cmds.getAttr(instance.context.data['root'] + '.UE_Skeleton')
+            cmds.getAttr('UnrealRoot.UE_Skeleton')
         except ValueError:
-            cmds.addAttr(instance.context.data['root'], longName='UE_Skeleton', dataType='string', keyable=False)
-        cmds.setAttr('%s.UE_Skeleton' % instance.context.data['root'], instance.context[0].data['name'], type='string')
+            cmds.addAttr('UnrealRoot', longName='UE_Skeleton', dataType='string', keyable=False)
+        cmds.setAttr('UnrealRoot.UE_Skeleton', instance.context[0].data['name'], type='string')
 
         for bs in cmds.ls(type='blendShape'):
             for plug in cmds.listConnections('%s.weight' % bs, connections=True, p=True):
                 if plug.find('%s.' % bs) == 0:
                     attr = plug[(len(bs) + 1):]
-                    dest = '%s.%s' % (instance.context.data['root'], attr)
+                    dest = 'UnrealRoot.%s' % attr
                     try:
                         cmds.getAttr(dest)
                     except ValueError:
-                        cmds.addAttr(instance.context.data['root'], ln=attr, at='double', dv=0)
+                        cmds.addAttr('UnrealRoot', ln=attr, at='double', dv=0)
                         cmds.setAttr(dest, keyable=True)
                         cmds.connectAttr(plug, dest, f=True)
 
         task = instance.data['task']
         samkit.open_file(task)
-
-        assert len(instance.context.data['joints']), 'No skin found.'
 
 
 class SkinScaleValidator(pyblish.api.InstancePlugin):
@@ -86,14 +66,12 @@ class SkinScaleValidator(pyblish.api.InstancePlugin):
         samkit.open_file(task)
         success = True
 
-        joints = []
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
-            skin = cmds.listConnections(shape, d=False, t='skinCluster')
-            if not skin:
-                continue
-            for joint in cmds.listConnections(skin, d=False, t='joint') or list():
-                if joint not in joints:
-                    joints.append(joint)
+        for root in cmds.ls(type='joint'):
+            if root.count('UnrealRoot'):
+                joints = [joint for joint in cmds.listRelatives(root, allDescendents=True, type='joint')]
+                break
+        else:
+            assert False, "Unable to locate \'UnrealRoot\'"
 
         for joint in joints:
             for sv in cmds.xform(joint, q=True, scale=True, ws=True):
@@ -119,8 +97,10 @@ class SkinHistoryValidator(pyblish.api.InstancePlugin):
         task = instance.data['task']
         samkit.open_file(task)
         success = True
+        shapes = cmds.ls(type='mesh', noIntermediate=True)
+        assert len(shapes), 'No mesh found.'
 
-        for shape in cmds.ls(type='mesh', noIntermediate=True):
+        for shape in shapes:
             for node in cmds.listConnections(shape, d=False) or list():
                 if cmds.objectType(node) not in [
                     'skinCluster',
@@ -196,7 +176,7 @@ class SkinExtractor(pyblish.api.InstancePlugin):
             'skeleton': instance.data['name']
         }
 
-        root = instance.context.data['root']
+        root = 'UnrealRoot'
         namespace = ':'+':'.join(root.split(':')[:-1])
 
         if namespace != ':':

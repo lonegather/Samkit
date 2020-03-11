@@ -273,7 +273,6 @@ class DockerMain(Docker):
             self.ui.lw_version.takeItem(0)
 
         item = self.ui.lw_task.currentItem()
-
         if not item:
             return
 
