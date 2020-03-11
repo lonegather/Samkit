@@ -1,4 +1,4 @@
-from Qt.QtWidgets import QApplication, QWidget, QListView, QListWidgetItem, QMenu, QAction, QToolButton
+from Qt.QtWidgets import QApplication, QWidget, QListView, QListWidgetItem, QMenu, QAction, QSplitter
 from Qt.QtGui import QIcon, QPixmap
 from Qt.QtCore import Signal, Qt
 
@@ -17,6 +17,7 @@ class DockerMain(Docker):
     def __init__(self, parent=None):
         super(DockerMain, self).__init__(parent=parent)
         setup_ui(self, self.UI_PATH)
+
         self.connected = False
         self.authorized = False
         self.project_id = ''
@@ -216,7 +217,7 @@ class DockerMain(Docker):
         self.ui.tb_connect.setEnabled(True)
         self.ui.lv_asset.setEnabled(True)
         self.ui.detail.setVisible(False)
-        self.ui.workspace.setVisible(True)
+        self.ui.workspace.setVisible(self.authorized)
 
     def commit_detail(self, *_):
         name = self.ui.le_name.text()
@@ -315,15 +316,13 @@ class DockerMain(Docker):
 
     def integrate(self):
         self.ui.tv_plugin.model().integrate(self.ui.te_comment.toPlainText())
-        self.ui.repo.setVisible(True)
+        self.ui.splitter.setVisible(True)
         self.ui.submit.setVisible(False)
-        self.ui.workspace.setVisible(self.authorized)
         self.refresh_workspace()
 
     def submit_cancel(self):
-        self.ui.repo.setVisible(True)
+        self.ui.splitter.setVisible(True)
         self.ui.submit.setVisible(False)
-        self.ui.workspace.setVisible(self.authorized)
 
     def refresh_check_state(self, *_):
         model = self.ui.tv_plugin.model()
@@ -404,9 +403,8 @@ class TaskItem(QListWidgetItem):
         samkit.open_file(self._data)
         samkit.checkin([self._data], False)
         self._widget.ui.tv_plugin.model().update(self._data)
-        self._widget.ui.repo.setVisible(False)
+        self._widget.ui.splitter.setVisible(False)
         self._widget.ui.submit.setVisible(True)
-        self._widget.ui.workspace.setVisible(False)
         self._widget.ui.btn_submit.setEnabled(False)
 
     def merge(self, *_):
@@ -417,7 +415,7 @@ class TaskItem(QListWidgetItem):
         item = self._widget.ui.lw_version.currentItem()
         version_txt = item.text()
         version = version_txt.split(' - ')[0]
-        version = version if self.widget.ui.lw_version.currentRow() else 'latest'
+        version = version if self._widget.ui.lw_version.currentRow() else 'latest'
         samkit.sync(self._data, version)
 
     def revert(self, *_):
