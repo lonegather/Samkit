@@ -51,6 +51,7 @@ class DockerMain(Docker):
         self.ui.tb_delete.setIcon(QIcon('%s\\icons\\delete.png' % samkit.MODULE_PATH))
         self.ui.tb_refresh.setIcon(QIcon('%s\\icons\\refresh.png' % samkit.MODULE_PATH))
         self.ui.tb_connect.setIcon(QIcon('%s\\icons\\setting.png' % samkit.MODULE_PATH))
+        self.ui.tb_batch.setIcon(QIcon('%s\\icons\\batch.png' % samkit.MODULE_PATH))
         self.ui.tb_submit.setIcon(QIcon('%s\\icons\\checkin.png' % samkit.MODULE_PATH))
         self.ui.tb_sync.setIcon(QIcon('%s\\icons\\sync.png' % samkit.MODULE_PATH))
         self.ui.tb_merge.setIcon(QIcon('%s\\icons\\merge.png' % samkit.MODULE_PATH))

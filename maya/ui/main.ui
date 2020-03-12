@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>525</width>
-    <height>887</height>
+    <height>733</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -332,7 +332,7 @@
          <property name="childrenCollapsible">
           <bool>false</bool>
          </property>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <property name="spacing">
             <number>3</number>
@@ -342,6 +342,16 @@
              <property name="spacing">
               <number>3</number>
              </property>
+             <item>
+              <widget class="QToolButton" name="tb_batch">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="autoRaise">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QToolButton" name="tb_sync">
                <property name="text">

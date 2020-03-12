@@ -18,33 +18,33 @@ class SkinSkeletonValidator(pyblish.api.InstancePlugin):
         else:
             assert False, 'Unable to locate \'UnrealRoot\'.'
 
-        for rv in cmds.xform('UnrealRoot', q=True, rotation=True, ws=True):
+        for rv in cmds.xform(root, q=True, rotation=True, ws=True):
             rv_str = '%.2f' % rv
             if rv_str != '0.00':
-                self.log.info('UnrealRoot')
+                self.log.info(root)
                 assert False, 'Global rotation (including joint orient) of \'UnrealRoot\' is NOT 0.0'
 
-        for tv in cmds.xform('UnrealRoot', q=True, translation=True, ws=True):
+        for tv in cmds.xform(root, q=True, translation=True, ws=True):
             tv_str = '%.2f' % tv
             if tv_str != '0.00':
-                self.log.info('UnrealRoot')
+                self.log.info(root)
                 assert False, 'Global translation of \'UnrealRoot\' is NOT 0.0'
 
         try:
-            cmds.getAttr('UnrealRoot.UE_Skeleton')
+            cmds.getAttr('%s.UE_Skeleton' % root)
         except ValueError:
-            cmds.addAttr('UnrealRoot', longName='UE_Skeleton', dataType='string', keyable=False)
-        cmds.setAttr('UnrealRoot.UE_Skeleton', instance.context[0].data['name'], type='string')
+            cmds.addAttr(root, longName='UE_Skeleton', dataType='string', keyable=False)
+        cmds.setAttr('%s.UE_Skeleton' % root, instance.context[0].data['name'], type='string')
 
         for bs in cmds.ls(type='blendShape'):
             for plug in cmds.listConnections('%s.weight' % bs, connections=True, p=True):
                 if plug.find('%s.' % bs) == 0:
                     attr = plug[(len(bs) + 1):]
-                    dest = 'UnrealRoot.%s' % attr
+                    dest = '%s.%s' % (root, attr)
                     try:
                         cmds.getAttr(dest)
                     except ValueError:
-                        cmds.addAttr('UnrealRoot', ln=attr, at='double', dv=0)
+                        cmds.addAttr(root, ln=attr, at='double', dv=0)
                         cmds.setAttr(dest, keyable=True)
                         cmds.connectAttr(plug, dest, f=True)
 
@@ -176,9 +176,14 @@ class SkinExtractor(pyblish.api.InstancePlugin):
             'skeleton': instance.data['name']
         }
 
-        root = 'UnrealRoot'
-        namespace = ':'+':'.join(root.split(':')[:-1])
+        for root in cmds.ls(type='joint'):
+            if root.count('UnrealRoot'):
+                # Root found
+                break
+        else:
+            assert False, 'Unable to locate \'UnrealRoot\'.'
 
+        namespace = ':'+':'.join(root.split(':')[:-1])
         if namespace != ':':
             cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
 
