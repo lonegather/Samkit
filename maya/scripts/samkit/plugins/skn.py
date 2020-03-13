@@ -37,7 +37,7 @@ class SkinSkeletonValidator(pyblish.api.InstancePlugin):
         cmds.setAttr('%s.UE_Skeleton' % root, instance.context[0].data['name'], type='string')
 
         for bs in cmds.ls(type='blendShape'):
-            for plug in cmds.listConnections('%s.weight' % bs, connections=True, p=True):
+            for plug in cmds.listConnections('%s.weight' % bs, connections=True, p=True) or list():
                 if plug.find('%s.' % bs) == 0:
                     attr = plug[(len(bs) + 1):]
                     dest = '%s.%s' % (root, attr)
