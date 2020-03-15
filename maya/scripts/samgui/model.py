@@ -1,3 +1,5 @@
+import os
+
 from Qt.QtCore import QAbstractListModel, QModelIndex, Qt, Signal
 from Qt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor, QIcon
 from Qt.QtWidgets import QWidget
@@ -12,12 +14,14 @@ class GenusModel(QAbstractListModel):
 
     genusChanged = Signal(str)
     GenusRole = Qt.UserRole + 1
+    IDRole = Qt.UserRole + 2
 
     def __init__(self, parent=None):
         super(GenusModel, self).__init__(parent)
         self._map = {
             Qt.DisplayRole: 'info',
             self.GenusRole: 'name',
+            self.IDRole: 'id',
         }
         # DATA FORMAT: [id, name, info]
         self._data = []
@@ -132,6 +136,28 @@ class AssetModel(QAbstractListModel):
     def data(self, index, role=Qt.DisplayRole):
         if len(self._data_filter) > index.row():
             return self._data_filter[index.row()].get(self._map.get(role, None), None)
+
+    def supportedDropActions(self):
+        return Qt.CopyAction
+
+    def flags(self, index):
+        default_flags = super(AssetModel, self).flags(index)
+        return Qt.ItemIsDropEnabled | default_flags
+
+    def mimeTypes(self):
+        return ['text/uri-list']
+
+    def dropMimeData(self, data, action, row, column, parent):
+        new_file = []
+
+        for url in data.urls() or list():
+            print(url, row, column)
+            file_path = url.toLocalFile()
+            file_name = os.path.split(file_path)[1]
+            if file_name.split('.')[-1] not in ["ma", "mb"]:
+                continue
+
+        return True
 
     def get_image(self, url):
         return self._hub.icon_set.get(url, self._hub.default_image)

@@ -21,6 +21,8 @@ class DockerMain(Docker):
         self.connected = False
         self.authorized = False
         self.project_id = ''
+        self.current_genus = ''
+        self.current_tag = ''
         self.filter = ''
         self.detail_id = ''
         self.detail_thumb = ''
@@ -44,6 +46,7 @@ class DockerMain(Docker):
         self.ui.detail.setVisible(False)
         self.ui.submit.setVisible(False)
         self.ui.lv_asset.setWrapping(True)
+        self.ui.lv_asset.setSpacing(3)
         self.ui.lv_asset.setResizeMode(QListView.Adjust)
         self.ui.lv_asset.setViewMode(QListView.IconMode)
         self.ui.lv_asset.setContextMenuPolicy(Qt.CustomContextMenu)
